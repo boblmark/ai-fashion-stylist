@@ -11,25 +11,21 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Basic middleware
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-
-// Configure CORS with all possible frontend URLs
+// Configure CORS before other middleware
 app.use(cors({
   origin: [
     'http://localhost:5173',
     'http://127.0.0.1:5173',
-    'http://0.0.0.0:5173',
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    'https://glowing-sundae-075e0b.netlify.app'  // 添加 Netlify 前端地址
+    'https://ai-fashion-stylist-web.onrender.com'
   ],
   methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
-  credentials: true,
-  optionsSuccessStatus: 204
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 }));
+
+// Basic middleware
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Request logging middleware
 app.use((req, res, next) => {
