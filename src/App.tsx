@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { Upload, Camera, Sparkles, Star, Palette, TrendingUp, ThumbsUp, Scale } from 'lucide-react';
 
 interface FormData {
@@ -77,6 +77,8 @@ function App() {
     percent: 0, 
     message: PROGRESS_STAGES.UPLOAD.zh 
   });
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   const [formData, setFormData] = useState<FormData>({
     height: '',
     weight: '',
@@ -203,6 +205,14 @@ function App() {
       return;
     }
 
+    // Cancel any existing request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Create new AbortController for this request
+    abortControllerRef.current = new AbortController();
+    
     setLoading(true);
     updateProgress('UPLOAD');
     
@@ -219,10 +229,16 @@ function App() {
         formDataToSend.append(key, value);
       });
 
-      console.log('Sending request to API...');
-      const response = await fetch('/api/generate-clothing', {
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const baseUrl = apiUrl || window.location.origin;
+      const fullUrl = `${baseUrl}/api/generate-clothing`;
+
+      console.log('Sending request to:', fullUrl);
+      
+      const response = await fetch(fullUrl, {
         method: 'POST',
-        body: formDataToSend
+        body: formDataToSend,
+        signal: abortControllerRef.current.signal
       });
 
       if (!response.ok) {
@@ -231,6 +247,7 @@ function App() {
       }
 
       const data = await response.json();
+      console.log('Received response:', data);
 
       const stages: ProgressStage[] = [
         'UPLOAD',
@@ -244,17 +261,29 @@ function App() {
       ];
 
       for (const stage of stages) {
+        if (abortControllerRef.current?.signal.aborted) {
+          throw new Error('Request cancelled');
+        }
         updateProgress(stage);
         await new Promise(resolve => setTimeout(resolve, 500));
       }
 
       setResult(data);
     } catch (error) {
-      console.error('Error:', error);
-      const errorMessage = error instanceof Error ? error.message : t.error.general[language];
-      showError(errorMessage);
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          console.log('Request cancelled');
+          return;
+        }
+        console.error('Error:', error);
+        showError(error.message);
+      } else {
+        console.error('Unknown error:', error);
+        showError(t.error.general[language]);
+      }
     } finally {
       setLoading(false);
+      abortControllerRef.current = null;
     }
   };
 
