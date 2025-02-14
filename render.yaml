@@ -28,7 +28,7 @@ services:
 
   - type: static
     name: ai-fashion-stylist-web
-    buildCommand: npm ci && npm run build
+    buildCommand: npm install && npm run build
     publishDir: dist
     envVars:
       - key: NODE_ENV
