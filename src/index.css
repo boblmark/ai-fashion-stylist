@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out forwards;
+}
+
+@layer base {
+  body {
+    @apply antialiased bg-gray-50;
+  }
+}
+
+@layer components {
+  .gradient-text {
+    @apply bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent;
+  }
+}
+
+/* Logo animation */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.logo-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Progress bar animation */
+@keyframes progress {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+.progress-bar {
+  animation: progress 2s ease-out forwards;
+}
