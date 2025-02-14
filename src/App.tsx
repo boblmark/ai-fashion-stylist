@@ -238,7 +238,9 @@ function App() {
       const response = await fetch(fullUrl, {
         method: 'POST',
         body: formDataToSend,
-        signal: abortControllerRef.current.signal
+        signal: abortControllerRef.current.signal,
+        credentials: 'include',
+        mode: 'cors'
       });
 
       if (!response.ok) {
