@@ -26,11 +26,10 @@ services:
     healthCheckPath: /api/health
     autoDeploy: true
 
-  - type: web
+  - type: static
     name: ai-fashion-stylist-web
-    env: static
-    buildCommand: npm install && npm run build
-    staticPublishPath: ./dist
+    buildCommand: npm ci && npm run build
+    publishDir: dist
     envVars:
       - key: NODE_ENV
         value: production
