@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
+import axios from 'axios'; // 新增
 import { Upload, Camera, Sparkles, Star, Palette, TrendingUp, ThumbsUp, Scale } from 'lucide-react';
 
 interface FormData {
@@ -32,6 +33,8 @@ interface Result {
   recommendations: string;
   custom: OutfitResult;
   generated: OutfitResult;
+  customHairstyleUrl?: string; // 新增字段
+  generatedHairstyleUrl?: string; // 新增字段
 }
 
 interface ProgressState {
@@ -325,7 +328,8 @@ function App() {
 
   const renderOutfitResult = useCallback((
     outfit: OutfitResult,
-    title: { en: string; zh: string }
+    title: { en: string; zh: string },
+    hairstyleUrl?: string // 新增参数
   ) => {
     const commentaryLines = outfit.commentary.split('\n').filter(line => line.trim());
     const scoreMatch = outfit.commentary.match(/综合评分[：:]\s*(\d+(\.\d+)?)\s*分/);
@@ -356,6 +360,13 @@ function App() {
               alt="Try-on result"
               className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
+            {hairstyleUrl && (
+              <img
+                src={hairstyleUrl}
+                alt="Hairstyle result"
+                className="hairstyle-image" // 使用之前定义的样式类
+              />
+            )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           </div>
 
@@ -587,8 +598,8 @@ function App() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {renderOutfitResult(result.custom, t.results.custom)}
-                    {renderOutfitResult(result.generated, t.results.generated)}
+                    {renderOutfitResult(result.custom, t.results.custom, result.customHairstyleUrl)}
+                    {renderOutfitResult(result.generated, t.results.generated, result.generatedHairstyleUrl)}
                   </div>
                 </div>
               )}
