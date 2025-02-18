@@ -345,7 +345,7 @@ function App() {
           showError(t.error.general[language]);
         }
       }
-      // Bug 修复：添加 finally 块
+      // Bug fix: Remove the extra semicolon
       finally {
         setLoading(false);
         abortControllerRef.current = null;
