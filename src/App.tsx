@@ -344,7 +344,9 @@ function App() {
           console.error('Unknown error:', error);
           showError(t.error.general[language]);
         }
-      } finally {
+      }
+      // Bug 修复：添加 finally 块
+      finally {
         setLoading(false);
         abortControllerRef.current = null;
       }
