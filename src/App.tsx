@@ -209,24 +209,24 @@ function App() {
       showError(t.error.upload[language]);
       return;
     }
-  
+
     // Cancel any existing request
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
-  
+
     // Create new AbortController for this request
     abortControllerRef.current = new AbortController();
-    
+
     setLoading(true);
     updateProgress('UPLOAD');
-    
+
     try {
       const formDataToSend = new FormData();
       formDataToSend.append('person_photo', personPhoto.file);
       formDataToSend.append('custom_top_garment', topGarment.file);
       formDataToSend.append('custom_bottom_garment', bottomGarment.file);
-      
+  
       Object.entries(formData).forEach(([key, value]) => {
         if (!value) {
           throw new Error('All measurements are required');
@@ -239,7 +239,7 @@ function App() {
       const fullUrl = `${baseUrl}/api/generate-clothing`;
   
       console.log('Sending request to:', fullUrl);
-      
+  
       const response = await fetch(fullUrl, {
         method: 'POST',
         body: formDataToSend,
@@ -291,11 +291,11 @@ function App() {
             'Content-Type': 'application/json'
           }
         });
-        
+  
         if (customHairstyleResponse.data.code !== 0) {
           throw new Error(`Custom hairstyle API error: ${customHairstyleResponse.data.msg}`);
         }
-        
+  
         const generatedHairstyleResponse = await axios.post('https://api.coze.cn/v1/workflow/run', {
           workflow_id: '7472218638747467817',
           parameters: {
@@ -344,13 +344,25 @@ function App() {
           console.error('Unknown error:', error);
           showError(t.error.general[language]);
         }
-      }
-      // Bug fix: Remove the extra semicolon
-      finally {
+      } finally {
         setLoading(false);
         abortControllerRef.current = null;
       }
-    };
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          console.log('Request cancelled');
+          return;
+        }
+        console.error('Error:', error);
+        showError(error.message);
+      } else {
+        console.error('Unknown error:', error);
+        showError(t.error.general[language]);
+      }
+      setLoading(false);
+      abortControllerRef.current = null;
+    }
 
   const renderUploadBox = useCallback((
     preview: UploadPreview | null,
