@@ -254,6 +254,32 @@ function App() {
       const data = await response.json();
       console.log('Received response:', data);
 
+      // 调用虚拟换发API
+      const hairstyleResponse = await axios.post('https://api.coze.cn/v1/workflow/run', {
+        workflow_id: '7472218638747467817',
+        parameters: {
+          input_image: 'https://ccgb2025-1316863744.cos.ap-shanghai.myqcloud.com/578.jpg'
+        }
+      }, {
+        headers: {
+          Authorization: 'Bearer pat_XCdzRC2c6K7oMcc2xVJv37KYJR311nrU8uUCPbdnAPlWKaDY9TikL2W8nnkW9cbY',
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (hairstyleResponse.data.code === 0) {
+        const hairstyleData = JSON.parse(hairstyleResponse.data.data);
+        console.log('Hairstyle recommendations:', hairstyleData.output);
+        // 将发型推荐结果存储在状态中
+        setResult({
+          ...data,
+          customHairstyleUrl: hairstyleData.output[0]?.img,
+          generatedHairstyleUrl: hairstyleData.output[1]?.img
+        });
+      } else {
+        console.error('Hairstyle API error:', hairstyleResponse.data.msg);
+      }
+
       const stages: ProgressStage[] = [
         'UPLOAD',
         'ANALYSIS',
