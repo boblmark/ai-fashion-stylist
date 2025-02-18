@@ -51,7 +51,8 @@ const PROGRESS_STAGES = {
   TRYON_CUSTOM: { percent: 60, en: 'Processing custom outfit', zh: '处理自选服装中...' },
   TRYON_GENERATED: { percent: 80, en: 'Processing generated outfit', zh: '处理生成服装中...' },
   COMMENTARY: { percent: 90, en: 'Getting style commentary', zh: '获取穿搭点评中...' },
-  COMPLETE: { percent: 100, en: 'Completed', zh: '完成' }
+  COMPLETE: { percent: 100, en: 'Completed', zh: '完成' },
+  GENERATE_HAIRSTYLE: { percent: 70, en: 'Generating hairstyle', zh: '生成发型中...' } // Added missing comma before this line
 } as const;
 
 type ProgressStage = keyof typeof PROGRESS_STAGES;
@@ -207,12 +208,12 @@ function App() {
       showError(t.error.upload[language]);
       return;
     }
-
+  
     // Cancel any existing request
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
-
+  
     // Create new AbortController for this request
     abortControllerRef.current = new AbortController();
     
@@ -231,11 +232,11 @@ function App() {
         }
         formDataToSend.append(key, value);
       });
-
+  
       const apiUrl = import.meta.env.VITE_API_URL || '';
       const baseUrl = apiUrl || window.location.origin;
       const fullUrl = `${baseUrl}/api/generate-clothing`;
-
+  
       console.log('Sending request to:', fullUrl);
       
       const response = await fetch(fullUrl, {
@@ -245,15 +246,41 @@ function App() {
         credentials: 'include',
         mode: 'cors'
       });
-
+  
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Failed to parse error response' }));
         throw new Error(errorData.error || `Server error: ${response.status}`);
       }
-
+  
       const data = await response.json();
       console.log('Received response:', data);
-
+  
+      // 调用虚拟换发API，使用用户上传的个人照片
+      const hairstyleResponseUserPhoto = await axios.post('https://api.coze.cn/v1/workflow/run', {
+        workflow_id: '7472218638747467817',
+        parameters: {
+          input_image: personPhoto.preview
+        }
+      }, {
+        headers: {
+          Authorization: 'Bearer pat_XCdzRC2c6K7oMcc2xVJv37KYJR311nrU8uUCPbdnAPlWKaDY9TikL2W8nnkW9cbY',
+          'Content-Type': 'application/json'
+        }
+      });
+  
+      if (hairstyleResponseUserPhoto.data.code === 0) {
+        const hairstyleData = JSON.parse(hairstyleResponseUserPhoto.data.data);
+        console.log('Hairstyle recommendations:', hairstyleData.output);
+        // 将发型推荐结果存储在状态中
+        setResult({
+          ...data,
+          customHairstyleUrl: hairstyleData.output[0]?.img,
+          generatedHairstyleUrl: hairstyleData.output[1]?.img
+        });
+      } else {
+        console.error('Hairstyle API error:', hairstyleResponseUserPhoto.data.msg);
+      }
+  
       const stages: ProgressStage[] = [
         'UPLOAD',
         'ANALYSIS',
@@ -264,7 +291,7 @@ function App() {
         'COMMENTARY',
         'COMPLETE'
       ];
-
+  
       for (const stage of stages) {
         if (abortControllerRef.current?.signal.aborted) {
           throw new Error('Request cancelled');
@@ -272,7 +299,7 @@ function App() {
         updateProgress(stage);
         await new Promise(resolve => setTimeout(resolve, 500));
       }
-
+  
       setResult(data);
     } catch (error) {
       if (error instanceof Error) {
