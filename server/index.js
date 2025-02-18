@@ -12,11 +12,10 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // Configure CORS before other middleware
+// 配置CORS策略
 app.use(cors({
   origin: [
-    'http://localhost:5173',
-    'http://127.0.0.1:5173',
-    'https://ai-fashion-stylist-web.onrender.com'
+    'https://ai-fashion-stylist-web.onrender.com' // 仅允许生产环境的请求
   ],
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
