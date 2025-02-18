@@ -51,8 +51,8 @@ const PROGRESS_STAGES = {
   TRYON_CUSTOM: { percent: 60, en: 'Processing custom outfit', zh: '处理自选服装中...' },
   TRYON_GENERATED: { percent: 80, en: 'Processing generated outfit', zh: '处理生成服装中...' },
   COMMENTARY: { percent: 90, en: 'Getting style commentary', zh: '获取穿搭点评中...' },
-  COMPLETE: { percent: 100, en: 'Completed', zh: '完成' }
-  GENERATE_HAIRSTYLE: { percent: 70, en: 'Generating hairstyle', zh: '生成发型中...' },
+  COMPLETE: { percent: 100, en: 'Completed', zh: '完成' },
+  GENERATE_HAIRSTYLE: { percent: 70, en: 'Generating hairstyle', zh: '生成发型中...' } // Added missing comma before this line
 } as const;
 
 type ProgressStage = keyof typeof PROGRESS_STAGES;
