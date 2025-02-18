@@ -196,12 +196,13 @@ function App() {
 
   const handleInputChange = useCallback((event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = event.target;
-    setFormData(prev => ({
+    setFormData((prev: FormData) => ({
       ...prev,
       [name]: value
     }));
   }, []);
 
+  // 在 handleSubmit 函数中添加 AbortController 支持
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!personPhoto?.file || !topGarment?.file || !bottomGarment?.file) {
@@ -255,32 +256,6 @@ function App() {
       const data = await response.json();
       console.log('Received response:', data);
   
-      // 调用虚拟换发API，使用用户上传的个人照片
-      const hairstyleResponseUserPhoto = await axios.post('https://api.coze.cn/v1/workflow/run', {
-        workflow_id: '7472218638747467817',
-        parameters: {
-          input_image: personPhoto.preview
-        }
-      }, {
-        headers: {
-          Authorization: 'Bearer pat_XCdzRC2c6K7oMcc2xVJv37KYJR311nrU8uUCPbdnAPlWKaDY9TikL2W8nnkW9cbY',
-          'Content-Type': 'application/json'
-        }
-      });
-  
-      if (hairstyleResponseUserPhoto.data.code === 0) {
-        const hairstyleData = JSON.parse(hairstyleResponseUserPhoto.data.data);
-        console.log('Hairstyle recommendations:', hairstyleData.output);
-        // 将发型推荐结果存储在状态中
-        setResult({
-          ...data,
-          customHairstyleUrl: hairstyleData.output[0]?.img,
-          generatedHairstyleUrl: hairstyleData.output[1]?.img
-        });
-      } else {
-        console.error('Hairstyle API error:', hairstyleResponseUserPhoto.data.msg);
-      }
-  
       const stages: ProgressStage[] = [
         'UPLOAD',
         'ANALYSIS',
@@ -300,24 +275,80 @@ function App() {
         await new Promise(resolve => setTimeout(resolve, 500));
       }
   
-      setResult(data);
-    } catch (error) {
-      if (error instanceof Error) {
-        if (error.name === 'AbortError') {
-          console.log('Request cancelled');
-          return;
+      // 调用虚拟换发API，使用虚拟试衣后生成的两张照片URL
+      const customOutfitUrl = data.custom.tryOnUrl;
+      const generatedOutfitUrl = data.generated.tryOnUrl;
+  
+      try {
+        const customHairstyleResponse = await axios.post('https://api.coze.cn/v1/workflow/run', {
+          workflow_id: '7472218638747467817',
+          parameters: {
+            input_image: customOutfitUrl
+          }
+        }, {
+          headers: {
+            Authorization: 'Bearer pat_XCdzRC2c6K7oMcc2xVJv37KYJR311nrU8uUCPbdnAPlWKaDY9TikL2W8nnkW9cbY',
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (customHairstyleResponse.data.code !== 0) {
+          throw new Error(`Custom hairstyle API error: ${customHairstyleResponse.data.msg}`);
         }
-        console.error('Error:', error);
-        showError(error.message);
-      } else {
-        console.error('Unknown error:', error);
-        showError(t.error.general[language]);
+        
+        const generatedHairstyleResponse = await axios.post('https://api.coze.cn/v1/workflow/run', {
+          workflow_id: '7472218638747467817',
+          parameters: {
+            input_image: generatedOutfitUrl
+          }
+        }, {
+          headers: {
+            Authorization: 'Bearer pat_XCdzRC2c6K7oMcc2xVJv37KYJR311nrU8uUCPbdnAPlWKaDY9TikL2W8nnkW9cbY',
+            'Content-Type': 'application/json'
+          }
+        });
+  
+        let customHairstyleUrl = null;
+        let generatedHairstyleUrl = null;
+  
+        if (customHairstyleResponse.data.code === 0) {
+          const customHairstyleData = JSON.parse(customHairstyleResponse.data.data);
+          console.log('Custom hairstyle recommendations:', customHairstyleData.output);
+          customHairstyleUrl = customHairstyleData.output[0]?.img;
+        } else {
+          console.error('Custom hairstyle API error:', customHairstyleResponse.data.msg);
+        }
+  
+        if (generatedHairstyleResponse.data.code === 0) {
+          const generatedHairstyleData = JSON.parse(generatedHairstyleResponse.data.data);
+          console.log('Generated hairstyle recommendations:', generatedHairstyleData.output);
+          generatedHairstyleUrl = generatedHairstyleData.output[0]?.img;
+        } else {
+          console.error('Generated hairstyle API error:', generatedHairstyleResponse.data.msg);
+        }
+  
+        setResult({
+          ...data,
+          customHairstyleUrl,
+          generatedHairstyleUrl
+        });
+      } catch (error) {
+        if (error instanceof Error) {
+          if (error.name === 'AbortError') {
+            console.log('Request cancelled');
+            return;
+          }
+          console.error('Error:', error);
+          showError(error.message);
+        } else {
+          console.error('Unknown error:', error);
+          showError(t.error.general[language]);
+        }
+      } finally {
+        setLoading(false);
+        abortControllerRef.current = null;
       }
-    } finally {
-      setLoading(false);
-      abortControllerRef.current = null;
-    }
-  };
+    };
 
   const renderUploadBox = useCallback((
     preview: UploadPreview | null,
@@ -353,10 +384,11 @@ function App() {
     </div>
   ), [language, handleFileChange]);
 
+  // 在 renderOutfitResult 函数中确保发型图片能够正确显示
   const renderOutfitResult = useCallback((
     outfit: OutfitResult,
     title: { en: string; zh: string },
-    hairstyleUrl?: string // 新增参数
+    hairstyleUrl?: string
   ) => {
     const commentaryLines = outfit.commentary.split('\n').filter(line => line.trim());
     const scoreMatch = outfit.commentary.match(/综合评分[：:]\s*(\d+(\.\d+)?)\s*分/);
@@ -391,7 +423,7 @@ function App() {
               <img
                 src={hairstyleUrl}
                 alt="Hairstyle result"
-                className="hairstyle-image" // 使用之前定义的样式类
+                className="hairstyle-image" // 确保样式类存在且正确
               />
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
