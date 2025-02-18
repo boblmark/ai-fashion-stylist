@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: ai-fashion-stylist-api
+    name: ai-fashion-stylist-ap
     env: node
     region: singapore
     plan: free
@@ -39,7 +39,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: VITE_API_URL
-        value: https://cgb2025-ai-fashion.onrender.com
+        value: https://ai-fashion-cgb2025.onrender.com
     # 移除 headers 配置
     # headers:
     #   - path: /*
