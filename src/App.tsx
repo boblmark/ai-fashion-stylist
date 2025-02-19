@@ -1,5 +1,4 @@
 import React, { useState, useCallback, useRef } from 'react';
-import axios from 'axios'; // 新增
 import { Upload, Camera, Sparkles, Star, Palette, TrendingUp, ThumbsUp, Scale } from 'lucide-react';
 
 interface FormData {
@@ -33,8 +32,6 @@ interface Result {
   recommendations: string;
   custom: OutfitResult;
   generated: OutfitResult;
-  customHairstyleUrl?: string; // 新增字段
-  generatedHairstyleUrl?: string; // 新增字段
 }
 
 interface ProgressState {
@@ -51,8 +48,7 @@ const PROGRESS_STAGES = {
   TRYON_CUSTOM: { percent: 60, en: 'Processing custom outfit', zh: '处理自选服装中...' },
   TRYON_GENERATED: { percent: 80, en: 'Processing generated outfit', zh: '处理生成服装中...' },
   COMMENTARY: { percent: 90, en: 'Getting style commentary', zh: '获取穿搭点评中...' },
-  COMPLETE: { percent: 100, en: 'Completed', zh: '完成' },
-  GENERATE_HAIRSTYLE: { percent: 70, en: 'Generating hairstyle', zh: '生成发型中...' } // Added missing comma before this line
+  COMPLETE: { percent: 100, en: 'Completed', zh: '完成' }
 } as const;
 
 type ProgressStage = keyof typeof PROGRESS_STAGES;
@@ -196,13 +192,12 @@ function App() {
 
   const handleInputChange = useCallback((event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = event.target;
-    setFormData((prev: FormData) => ({
+    setFormData(prev => ({
       ...prev,
       [name]: value
     }));
   }, []);
 
-  // 在 handleSubmit 函数中添加 AbortController 支持
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!personPhoto?.file || !topGarment?.file || !bottomGarment?.file) {
@@ -217,29 +212,29 @@ function App() {
 
     // Create new AbortController for this request
     abortControllerRef.current = new AbortController();
-
+    
     setLoading(true);
     updateProgress('UPLOAD');
-
+    
     try {
       const formDataToSend = new FormData();
       formDataToSend.append('person_photo', personPhoto.file);
       formDataToSend.append('custom_top_garment', topGarment.file);
       formDataToSend.append('custom_bottom_garment', bottomGarment.file);
-  
+      
       Object.entries(formData).forEach(([key, value]) => {
         if (!value) {
           throw new Error('All measurements are required');
         }
         formDataToSend.append(key, value);
       });
-  
+
       const apiUrl = import.meta.env.VITE_API_URL || '';
       const baseUrl = apiUrl || window.location.origin;
       const fullUrl = `${baseUrl}/api/generate-clothing`;
-  
+
       console.log('Sending request to:', fullUrl);
-  
+      
       const response = await fetch(fullUrl, {
         method: 'POST',
         body: formDataToSend,
@@ -247,15 +242,15 @@ function App() {
         credentials: 'include',
         mode: 'cors'
       });
-  
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Failed to parse error response' }));
         throw new Error(errorData.error || `Server error: ${response.status}`);
       }
-  
+
       const data = await response.json();
       console.log('Received response:', data);
-  
+
       const stages: ProgressStage[] = [
         'UPLOAD',
         'ANALYSIS',
@@ -266,7 +261,7 @@ function App() {
         'COMMENTARY',
         'COMPLETE'
       ];
-  
+
       for (const stage of stages) {
         if (abortControllerRef.current?.signal.aborted) {
           throw new Error('Request cancelled');
@@ -274,80 +269,8 @@ function App() {
         updateProgress(stage);
         await new Promise(resolve => setTimeout(resolve, 500));
       }
-  
-      // 调用虚拟换发API，使用虚拟试衣后生成的两张照片URL
-      const customOutfitUrl = data.custom.tryOnUrl;
-      const generatedOutfitUrl = data.generated.tryOnUrl;
-  
-      try {
-        const customHairstyleResponse = await axios.post('https://api.coze.cn/v1/workflow/run', {
-          workflow_id: '7472218638747467817',
-          parameters: {
-            input_image: customOutfitUrl
-          }
-        }, {
-          headers: {
-            Authorization: 'Bearer pat_XCdzRC2c6K7oMcc2xVJv37KYJR311nrU8uUCPbdnAPlWKaDY9TikL2W8nnkW9cbY',
-            'Content-Type': 'application/json'
-          }
-        });
-  
-        if (customHairstyleResponse.data.code !== 0) {
-          throw new Error(`Custom hairstyle API error: ${customHairstyleResponse.data.msg}`);
-        }
-  
-        const generatedHairstyleResponse = await axios.post('https://api.coze.cn/v1/workflow/run', {
-          workflow_id: '7472218638747467817',
-          parameters: {
-            input_image: generatedOutfitUrl
-          }
-        }, {
-          headers: {
-            Authorization: 'Bearer pat_XCdzRC2c6K7oMcc2xVJv37KYJR311nrU8uUCPbdnAPlWKaDY9TikL2W8nnkW9cbY',
-            'Content-Type': 'application/json'
-          }
-        });
-  
-        let customHairstyleUrl = null;
-        let generatedHairstyleUrl = null;
-  
-        if (customHairstyleResponse.data.code === 0) {
-          const customHairstyleData = JSON.parse(customHairstyleResponse.data.data);
-          console.log('Custom hairstyle recommendations:', customHairstyleData.output);
-          customHairstyleUrl = customHairstyleData.output[0]?.img;
-        } else {
-          console.error('Custom hairstyle API error:', customHairstyleResponse.data.msg);
-        }
-  
-        if (generatedHairstyleResponse.data.code === 0) {
-          const generatedHairstyleData = JSON.parse(generatedHairstyleResponse.data.data);
-          console.log('Generated hairstyle recommendations:', generatedHairstyleData.output);
-          generatedHairstyleUrl = generatedHairstyleData.output[0]?.img;
-        } else {
-          console.error('Generated hairstyle API error:', generatedHairstyleResponse.data.msg);
-        }
-  
-        setResult({
-          ...data,
-          customHairstyleUrl,
-          generatedHairstyleUrl
-        });
-      } catch (error) {
-        if (error instanceof Error) {
-          if (error.name === 'AbortError') {
-            console.log('Request cancelled');
-            return;
-          }
-          console.error('Error:', error);
-          showError(error.message);
-        } else {
-          console.error('Unknown error:', error);
-          showError(t.error.general[language]);
-        }
-      } finally {
-        setLoading(false);
-        abortControllerRef.current = null;
-      }
+
+      setResult(data);
     } catch (error) {
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
@@ -360,9 +283,11 @@ function App() {
         console.error('Unknown error:', error);
         showError(t.error.general[language]);
       }
+    } finally {
       setLoading(false);
       abortControllerRef.current = null;
     }
+  };
 
   const renderUploadBox = useCallback((
     preview: UploadPreview | null,
@@ -398,11 +323,9 @@ function App() {
     </div>
   ), [language, handleFileChange]);
 
-  // 在 renderOutfitResult 函数中确保发型图片能够正确显示
   const renderOutfitResult = useCallback((
     outfit: OutfitResult,
-    title: { en: string; zh: string },
-    hairstyleUrl?: string
+    title: { en: string; zh: string }
   ) => {
     const commentaryLines = outfit.commentary.split('\n').filter(line => line.trim());
     const scoreMatch = outfit.commentary.match(/综合评分[：:]\s*(\d+(\.\d+)?)\s*分/);
@@ -433,13 +356,6 @@ function App() {
               alt="Try-on result"
               className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
-            {hairstyleUrl && (
-              <img
-                src={hairstyleUrl}
-                alt="Hairstyle result"
-                className="hairstyle-image" // 确保样式类存在且正确
-              />
-            )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           </div>
 
@@ -671,8 +587,8 @@ function App() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {renderOutfitResult(result.custom, t.results.custom, result.customHairstyleUrl)}
-                    {renderOutfitResult(result.generated, t.results.generated, result.generatedHairstyleUrl)}
+                    {renderOutfitResult(result.custom, t.results.custom)}
+                    {renderOutfitResult(result.generated, t.results.generated)}
                   </div>
                 </div>
               )}
@@ -684,13 +600,4 @@ function App() {
   );
 }
 
-// Make sure all previous code blocks are properly closed
-// For example, if there are functions or classes, they should have matching closing braces
-// and all statements should be properly terminated with semicolons if required
-
-// This is the end of the code block where the App component is defined
-}
-
-// Here, we are exporting the App component as the default export
-// This line should be correct if the previous code is well - formed
 export default App;
