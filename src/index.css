@@ -59,20 +59,3 @@
 .progress-bar {
   animation: progress 2s ease-out forwards;
 }
-
-/* Hairstyle image styling */
-.hairstyle-image {
-  width: 50px; /* 设置宽度 */
-  height: 50px; /* 设置高度 */
-  border-radius: 50%; /* 圆形边框 */
-  border: 2px solid white; /* 白色边框 */
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2); /* 添加阴影 */
-  position: absolute; /* 绝对定位 */
-  top: 10px; /* 距离顶部10px */
-  left: 10px; /* 距离左侧10px */
-  transition: transform 0.3s ease; /* 添加过渡效果 */
-}
-
-.hairstyle-image:hover {
-  transform: scale(1.1); /* 鼠标悬停时放大 */
-}
