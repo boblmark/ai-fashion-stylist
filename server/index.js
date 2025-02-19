@@ -15,7 +15,7 @@ const port = process.env.PORT || 3000;
 // 配置CORS策略
 app.use(cors({
   origin: [
-    'https://cgb2025-ai-fashion.onrender.com' // 仅允许生产环境的请求
+    'https://ai-fashion-stylist-web.onrender.com' // Correct origin for the frontend
   ],
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
