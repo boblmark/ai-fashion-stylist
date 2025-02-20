@@ -72,6 +72,11 @@ interface HairStyle {
   img: string;
 }
 
+interface HairStyles {
+  custom: HairStyle[];
+  generated: HairStyle[];
+}
+
 function App() {
   const [personPhoto, setPersonPhoto] = useState<UploadPreview | null>(null);
   const [topGarment, setTopGarment] = useState<UploadPreview | null>(null);
@@ -80,7 +85,7 @@ function App() {
   const [result, setResult] = useState<Result | null>(null);
   const [language, setLanguage] = useState<'en' | 'zh'>('zh');
   const [error, setError] = useState<ErrorState>({ message: '', visible: false });
-  const [hairstyles, setHairstyles] = useState<HairStyle[]>([]);
+  const [hairstyles, setHairstyles] = useState<HairStyles>({ custom: [], generated: [] });
   const [progress, setProgress] = useState<ProgressState>({ 
     stage: 'UPLOAD', 
     percent: 0, 
@@ -99,12 +104,12 @@ function App() {
 
   const t = {
     title: {
-      en: 'AI Fashion Stylist',
-      zh: 'AI时尚造型师'
+      en: 'MirrorMuse',
+      zh: '魅影衣橱'
     },
     subtitle: {
-      en: 'Virtual Try-On & Style Analysis',
-      zh: '虚拟试衣与穿搭分析'
+      en: 'Your Personal AI Fashion Stylist',
+      zh: 'AI时尚造型专家'
     },
     upload: {
       person: { en: 'Your Photo', zh: '个人照片' },
@@ -283,25 +288,39 @@ function App() {
       setResult(data);
     
     // 获取发型推荐
-    const hairstyleResponse = await fetch('https://api.coze.cn/v1/workflow/run', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer pat_XCdzRC2c6K7oMcc2xVJv37KYJR311nrU8uUCPbdnAPlWKaDY9TikL2W8nnkW9cbY',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        workflow_id: '7472218638747467817',
-        parameters: {
-          input_image: data.custom.tryOnUrl
-        }
-      })
+    const getHairstyleRecommendation = async (image: string) => {
+      const response = await fetch('https://api.coze.cn/v1/workflow/run', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer pat_XCdzRC2c6K7oMcc2xVJv37KYJR311nrU8uUCPbdnAPlWKaDY9TikL2W8nnkW9cbY',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          workflow_id: '7472218638747467817',
+          parameters: {
+            input_image: image
+          }
+        })
+      });
+    
+      const responseData = await response.json();
+      if (responseData.code === 0) {
+        const parsedData = JSON.parse(responseData.data);
+        return parsedData.output;
+      }
+      return [];
+    };
+    
+    // 并行获取两种搭配的发型推荐
+    const [customHairstyles, generatedHairstyles] = await Promise.all([
+      getHairstyleRecommendation(data.custom.tryOnUrl),
+      getHairstyleRecommendation(data.generated.tryOnUrl)
+    ]);
+    
+    setHairstyles({
+      custom: customHairstyles,
+      generated: generatedHairstyles
     });
-
-    const hairstyleData = await hairstyleResponse.json();
-    if (hairstyleData.code === 0) {
-      const parsedData = JSON.parse(hairstyleData.data);
-      setHairstyles(parsedData.output);
-    }
   } catch (error) {
     if (error instanceof Error) {
       if (error.name === 'AbortError') {
@@ -327,21 +346,22 @@ function App() {
     placeholder: { en: string; zh: string },
     icon: React.ReactNode
   ) => (
-    <div className="flex flex-col items-center">
-      <label className="block text-sm font-medium text-gray-700 mb-2">
+    <div className="group">
+      <label className="block text-sm font-medium bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent mb-2">
         {label[language]}
       </label>
-      <div className="relative flex items-center justify-center w-full h-40 px-4 transition bg-white border-2 border-gray-300 border-dashed rounded-lg appearance-none hover:border-orange-500 focus:outline-none group">
+      <div className="relative h-48 rounded-2xl overflow-hidden transition-all duration-300 group-hover:scale-[1.02]">
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/20 to-teal-500/20 group-hover:opacity-0 transition-opacity"></div>
         {preview ? (
           <img
             src={preview.preview}
             alt="Preview"
-            className="h-full object-contain rounded-lg transition-transform group-hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           />
         ) : (
-          <div className="flex flex-col items-center transition-transform group-hover:scale-110">
+          <div className="h-full flex flex-col items-center justify-center bg-gradient-to-r from-gray-50 to-gray-100 group-hover:from-orange-50 group-hover:to-teal-50 transition-all duration-300">
             {icon}
-            <span className="mt-2 text-sm text-gray-500">{placeholder[language]}</span>
+            <span className="mt-2 text-sm text-gray-500 group-hover:text-gray-700">{placeholder[language]}</span>
           </div>
         )}
         <input
@@ -469,143 +489,140 @@ function App() {
   }, [loading, progress]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-orange-100 via-gray-50 to-teal-50 animate-gradient-xy">
       {renderProgressBar()}
-      <div className="max-w-4xl mx-auto">
-        {error.visible && (
-          <div className="mb-4 p-4 rounded-lg bg-red-50 border border-red-200 animate-fade-in">
-            <p className="text-sm text-red-600">{error.message}</p>
-          </div>
-        )}
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-teal-500 opacity-10"></div>
-            <div className="relative px-6 py-8 sm:p-10">
-              <div className="flex items-center justify-center mb-8">
-                <div className="w-24 h-24 relative logo-float">
-                  <img
-                    src="/logo.svg"
-                    alt="AI Fashion Stylist Logo"
-                    className="w-full h-full object-contain"
-                  />
+      <div className="max-w-5xl mx-auto">
+        <div className="relative backdrop-blur-sm bg-white/80 rounded-3xl shadow-2xl overflow-hidden border border-white/20">
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-teal-500/10 animate-pulse"></div>
+          <div className="relative px-6 py-8 sm:p-10">
+            <div className="flex items-center justify-center mb-8">
+              <div className="w-32 h-32 relative animate-float">
+                <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-teal-500/20 rounded-full animate-pulse"></div>
+                <img
+                  src="/logo.svg"
+                  alt="MirrorMuse - AI Fashion Stylist"
+                  className="w-full h-full object-contain animate-spin-slow"
+                />
+              </div>
+            </div>
+            <div className="text-center">
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
+                {t.title[language]}
+              </h1>
+              <p className="mt-2 text-lg text-gray-600">{t.subtitle[language]}</p>
+            </div>
+            
+            <form onSubmit={handleSubmit} className="mt-8 space-y-8">
+              <div className="grid grid-cols-1 gap-8">
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                  {renderUploadBox(
+                    personPhoto,
+                    setPersonPhoto,
+                    t.upload.person,
+                    t.upload.photo,
+                    <Camera className="w-12 h-12 text-orange-400" />
+                  )}
+                  {renderUploadBox(
+                    topGarment,
+                    setTopGarment,
+                    t.upload.top,
+                    t.upload.top_text,
+                    <Upload className="w-12 h-12 text-orange-400" />
+                  )}
+                  {renderUploadBox(
+                    bottomGarment,
+                    setBottomGarment,
+                    t.upload.bottom,
+                    t.upload.bottom_text,
+                    <Upload className="w-12 h-12 text-orange-400" />
+                  )}
                 </div>
-              </div>
-              <div className="text-center">
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
-                  {t.title[language]}
-                </h1>
-                <p className="mt-2 text-lg text-gray-600">{t.subtitle[language]}</p>
-              </div>
-              
-              <form onSubmit={handleSubmit} className="mt-8 space-y-8">
-                <div className="grid grid-cols-1 gap-8">
-                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-                    {renderUploadBox(
-                      personPhoto,
-                      setPersonPhoto,
-                      t.upload.person,
-                      t.upload.photo,
-                      <Camera className="w-12 h-12 text-orange-400" />
-                    )}
-                    {renderUploadBox(
-                      topGarment,
-                      setTopGarment,
-                      t.upload.top,
-                      t.upload.top_text,
-                      <Upload className="w-12 h-12 text-orange-400" />
-                    )}
-                    {renderUploadBox(
-                      bottomGarment,
-                      setBottomGarment,
-                      t.upload.bottom,
-                      t.upload.bottom_text,
-                      <Upload className="w-12 h-12 text-orange-400" />
-                    )}
-                  </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      {Object.entries(t.measurements).slice(0, 3).map(([key, label]) => (
-                        <div key={key} className="group">
-                          <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
-                            {label[language]}
-                          </label>
-                          <input
-                            type="number"
-                            name={key}
-                            value={formData[key as keyof FormData]}
-                            onChange={handleInputChange}
-                            className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
-                            required
-                            min="1"
-                            step="0.1"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                    <div className="space-y-4">
-                      {Object.entries(t.measurements).slice(3).map(([key, label]) => (
-                        <div key={key} className="group">
-                          <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
-                            {label[language]}
-                          </label>
-                          <input
-                            type="number"
-                            name={key}
-                            value={formData[key as keyof FormData]}
-                            onChange={handleInputChange}
-                            className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
-                            required
-                            min="1"
-                            step="0.1"
-                          />
-                        </div>
-                      ))}
-                    </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    {Object.entries(t.measurements).slice(0, 3).map(([key, label]) => (
+                      <div key={key} className="group">
+                        <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
+                          {label[language]}
+                        </label>
+                        <input
+                          type="number"
+                          name={key}
+                          value={formData[key as keyof FormData]}
+                          onChange={handleInputChange}
+                          className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
+                          required
+                          min="1"
+                          step="0.1"
+                        />
+                      </div>
+                    ))}
                   </div>
-
-                  <div className="group">
-                    <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
-                      {t.style[language]}
-                    </label>
-                    <select
-                      name="style_preference"
-                      value={formData.style_preference}
-                      onChange={handleInputChange}
-                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
-                    >
-                      {STYLE_PREFERENCES.map((style) => (
-                        <option key={style.zh} value={style.zh}>
-                          {language === 'en' ? style.en : style.zh}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className={`w-full flex items-center justify-center py-3 px-4 rounded-lg text-sm font-semibold text-white transition-all duration-200 ${
-                        loading
-                          ? 'bg-gray-400 cursor-not-allowed'
-                          : 'bg-gradient-to-r from-orange-600 to-teal-600 hover:from-orange-500 hover:to-teal-500 transform hover:scale-[1.02]'
-                      }`}
-                    >
-                      <Sparkles className={`w-5 h-5 mr-2 ${loading ? 'animate-spin' : 'animate-pulse'}`} />
-                      {loading ? t.button.generating[language] : t.button.generate[language]}
-                    </button>
+                  <div className="space-y-4">
+                    {Object.entries(t.measurements).slice(3).map(([key, label]) => (
+                      <div key={key} className="group">
+                        <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
+                          {label[language]}
+                        </label>
+                        <input
+                          type="number"
+                          name={key}
+                          value={formData[key as keyof FormData]}
+                          onChange={handleInputChange}
+                          className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
+                          required
+                          min="1"
+                          step="0.1"
+                        />
+                      </div>
+                    ))}
                   </div>
                 </div>
-              </form>
 
-              {result && (
-                <div className="mt-12 space-y-8 animate-fade-in">
-                  <h2 className="text-2xl font-bold text-center bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
-                    {t.results.title[language]}
-                  </h2>
-                  
-                  <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+                <div className="group">
+                  <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
+                    {t.style[language]}
+                  </label>
+                  <select
+                    name="style_preference"
+                    value={formData.style_preference}
+                    onChange={handleInputChange}
+                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
+                  >
+                    {STYLE_PREFERENCES.map((style) => (
+                      <option key={style.zh} value={style.zh}>
+                        {language === 'en' ? style.en : style.zh}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className={`w-full flex items-center justify-center py-3 px-4 rounded-lg text-sm font-semibold text-white transition-all duration-200 ${
+                      loading
+                        ? 'bg-gray-400 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-orange-600 to-teal-600 hover:from-orange-500 hover:to-teal-500 transform hover:scale-[1.02]'
+                    }`}
+                  >
+                    <Sparkles className={`w-5 h-5 mr-2 ${loading ? 'animate-spin' : 'animate-pulse'}`} />
+                    {loading ? t.button.generating[language] : t.button.generate[language]}
+                  </button>
+                </div>
+              </div>
+            </form>
+
+            {result && (
+              <div className="mt-12 space-y-8 animate-fade-in">
+                <h2 className="text-3xl font-bold text-center bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent animate-pulse">
+                  {t.results.title[language]}
+                </h2>
+                
+                <div className="relative group">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-orange-600 to-teal-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+                  <div className="relative bg-white rounded-xl shadow-xl p-6 mb-8">
                     <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900">
                       <Sparkles className="w-5 h-5 text-orange-500" />
                       {t.results.analysis[language]}
@@ -616,30 +633,63 @@ function App() {
                       </p>
                     </div>
                   </div>
+                </div>
 
-                  {hairstyles.length > 0 && (
-                    <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-                      <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900">
-                        <Scissors className="w-5 h-5 text-orange-500" />
-                        {language === 'en' ? 'Recommended Hairstyles' : '推荐发型'}
-                      </h3>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                        {hairstyles.map((style, index) => (
-                          <div key={index} className="space-y-3">
-                            <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-50 to-teal-50">
-                              <img
-                                src={style.img}
-                                alt={style.hairstyle}
-                                className="w-full h-full object-cover"
-                              />
+                {/* 发型推荐部分 */}
+                {(hairstyles.custom.length > 0 || hairstyles.generated.length > 0) && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* 自选搭配的发型推荐 */}
+                    {hairstyles.custom.length > 0 && (
+                      <div className="bg-white rounded-xl shadow-lg p-6">
+                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900">
+                          <Scissors className="w-5 h-5 text-orange-500" />
+                          {language === 'en' ? 'Hairstyles for Your Choice' : '自选搭配发型推荐'}
+                        </h3>
+                        <div className="grid grid-cols-2 gap-4">
+                          {hairstyles.custom.map((style, index) => (
+                            <div key={index} className="space-y-3">
+                              <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-50 to-teal-50">
+                                <img
+                                  src={style.img}
+                                  alt={style.hairstyle}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <h4 className="font-medium text-gray-900">{style.hairstyle}</h4>
+                                <p className="text-sm text-gray-600">{style.reasons}</p>
+                              </div>
                             </div>
-                            <div className="space-y-2">
-                              <h4 className="font-medium text-gray-900">{style.hairstyle}</h4>
-                              <p className="text-sm text-gray-600">{style.reasons}</p>
-                            </div>
+                          ))}
+                        </div>
+                      )}
+                  
+                      {/* AI 推荐搭配的发型推荐 */}
+                      {hairstyles.generated.length > 0 && (
+                        <div className="bg-white rounded-xl shadow-lg p-6">
+                          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900">
+                            <Scissors className="w-5 h-5 text-orange-500" />
+                            {language === 'en' ? 'Hairstyles for AI Recommendation' : 'AI推荐搭配发型推荐'}
+                          </h3>
+                          <div className="grid grid-cols-2 gap-4">
+                            {hairstyles.generated.map((style, index) => (
+                              <div key={index} className="space-y-3">
+                                <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-50 to-teal-50">
+                                  <img
+                                    src={style.img}
+                                    alt={style.hairstyle}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <h4 className="font-medium text-gray-900">{style.hairstyle}</h4>
+                                  <p className="text-sm text-gray-600">{style.reasons}</p>
+                                </div>
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
+                        </div>
+                      )}
                     </div>
                   )}
 
