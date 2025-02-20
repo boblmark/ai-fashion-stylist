@@ -601,8 +601,32 @@ function App() {
                                 {t.title[language]}
                             </h1>
                             <p className="mt-2 text-lg text-gray-600">{t.subtitle[language]}</p>
+                        
+                        {/* 添加特性介绍 */}
+                        <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 px-4">
+                            {FEATURES.map((feature, index) => (
+                                <div
+                                    key={index}
+                                    className="relative group bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300"
+                                >
+                                    <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-teal-500/5 rounded-xl group-hover:from-orange-500/10 group-hover:to-teal-500/10 transition-all duration-300"></div>
+                                    <div className="relative">
+                                        <div className="w-12 h-12 mx-auto mb-4 bg-gradient-to-r from-orange-500 to-teal-500 rounded-full flex items-center justify-center text-white">
+                                            <span className="w-6 h-6">
+                                                {React.createElement(lucideIcons[feature.icon as keyof typeof lucideIcons])}
+                                            </span>
+                                        </div>
+                                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                                            {feature.title[language]}
+                                        </h3>
+                                        <p className="text-sm text-gray-600 leading-relaxed">
+                                            {feature.description[language]}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
-
+                    </div>
                         <form onSubmit={handleSubmit} className="mt-8 space-y-8">
                             <div className="grid grid-cols-1 gap-8">
                                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
