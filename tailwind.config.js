@@ -1,44 +1,39 @@
 /** @type {import('tailwindcss').Config} */
-export default {
-  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+module.exports = {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
   theme: {
     extend: {
       animation: {
-        'fade-in': 'fade-in 0.5s ease-out forwards',
-        'float': 'float 3s ease-in-out infinite',
-        'progress': 'progress 2s ease-out forwards',
+        'gradient-xy': 'gradient-xy 15s ease infinite',
+        'float': 'float 6s ease-in-out infinite',
+        'spin-slow': 'spin 20s linear infinite',
       },
       keyframes: {
-        'fade-in': {
-          '0%': {
-            opacity: '0',
-            transform: 'translateY(10px)',
-          },
-          '100%': {
-            opacity: '1',
-            transform: 'translateY(0)',
-          },
-        },
-        'float': {
+        'gradient-xy': {
           '0%, 100%': {
-            transform: 'translateY(0px)',
+            'background-size': '400% 400%',
+            'background-position': 'left center'
           },
           '50%': {
-            transform: 'translateY(-10px)',
-          },
+            'background-size': '200% 200%',
+            'background-position': 'right center'
+          }
         },
-        'progress': {
-          '0%': {
-            width: '0%',
-          },
-          '100%': {
-            width: '100%',
-          },
+        'fade-in': {
+          '0%': { opacity: '0', transform: 'translateY(-10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' }
         },
-      },
-    },
+        'float': {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-20px)' }
+        }
+      }
+    }
   },
   plugins: [
     require('@tailwindcss/forms'),
   ],
-};
+}
