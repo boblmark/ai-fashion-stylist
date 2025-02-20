@@ -353,6 +353,7 @@ function App() {
             const getHairstyleRecommendation = async (image: string) => {
                 try {
                     // 先获取发型推荐
+                    console.log('开始获取发型推荐，输入图片:', image);
                     const response = await fetch('https://api.coze.cn/v1/workflow/run', {
                         method: 'POST',
                         headers: {
@@ -368,13 +369,17 @@ function App() {
                     });
                 
                     const responseData = await response.json();
-                    console.log('发型推荐 API 响应:', responseData);
+                    console.log('发型推荐原始响应:', responseData);
                     
                     if (responseData.code === 0 && responseData.data) {
                         try {
-                            const parsedData = typeof responseData.data === 'string' 
-                                ? JSON.parse(responseData.data) 
-                                : responseData.data;
+                            // 尝试解析返回的数据
+                            let parsedData;
+                            if (typeof responseData.data === 'string') {
+                                parsedData = JSON.parse(responseData.data);
+                            } else {
+                                parsedData = responseData.data;
+                            }
                             
                             console.log('解析后的发型数据:', parsedData);
                             
@@ -384,45 +389,51 @@ function App() {
                                 hairstyles = parsedData;
                             } else if (parsedData.output && Array.isArray(parsedData.output)) {
                                 hairstyles = parsedData.output;
+                            } else if (parsedData.hairstyles && Array.isArray(parsedData.hairstyles)) {
+                                hairstyles = parsedData.hairstyles;
                             }
 
-                            // 使用 for...of 循环串行处理每个发型
-                            const virtualHairstyles = [];
-                            for (const style of hairstyles) {
-                                try {
-                                    // 调用虚拟换发 API
-                                    const tryOnResponse = await fetch('https://api.coze.cn/v1/workflow/run', {
-                                        method: 'POST',
-                                        headers: {
-                                            'Authorization': 'Bearer pat_XCdzRC2c6K7oMcc2xVJv37KYJR311nrU8uUCPbdnAPlWKaDY9TikL2W8nnkW9cbY',
-                                            'Content-Type': 'application/json'
-                                        },
-                                        body: JSON.stringify({
-                                            workflow_id: '7472218638747467818',
-                                            parameters: {
-                                                input_image: image,
-                                                hairstyle: style.hairstyle
-                                            }
-                                        })
-                                    });
+                            console.log('提取的发型列表:', hairstyles);
 
-                                    const tryOnData = await tryOnResponse.json();
-                                    console.log(`发型 ${style.hairstyle} 换发响应:`, tryOnData);
-
-                                    if (tryOnData.code === 0 && tryOnData.data && tryOnData.data.output_image) {
-                                        virtualHairstyles.push({
-                                            ...style,
-                                            img: tryOnData.data.output_image
+                            // 使用 Promise.all 并行处理每个发型的虚拟换发
+                            const virtualHairstyles = await Promise.all(
+                                hairstyles.map(async (style) => {
+                                    try {
+                                        console.log(`开始处理发型: ${style.hairstyle}`);
+                                        const tryOnResponse = await fetch('https://api.coze.cn/v1/workflow/run', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Authorization': 'Bearer pat_XCdzRC2c6K7oMcc2xVJv37KYJR311nrU8uUCPbdnAPlWKaDY9TikL2W8nnkW9cbY',
+                                                'Content-Type': 'application/json'
+                                            },
+                                            body: JSON.stringify({
+                                                workflow_id: '7472218638747467818',
+                                                parameters: {
+                                                    input_image: image,
+                                                    hairstyle: style.hairstyle
+                                                }
+                                            })
                                         });
-                                        // 添加延迟，避免频繁调用
-                                        await new Promise(resolve => setTimeout(resolve, 1000));
-                                    }
-                                } catch (e) {
-                                    console.error(`处理发型 ${style.hairstyle} 失败:`, e);
-                                }
-                            }
 
-                            return virtualHairstyles;
+                                        const tryOnData = await tryOnResponse.json();
+                                        console.log(`发型 ${style.hairstyle} 换发响应:`, tryOnData);
+
+                                        if (tryOnData.code === 0 && tryOnData.data && tryOnData.data.output_image) {
+                                            return {
+                                                ...style,
+                                                img: tryOnData.data.output_image
+                                            };
+                                        }
+                                        return null;
+                                    } catch (e) {
+                                        console.error(`处理发型 ${style.hairstyle} 失败:`, e);
+                                        return null;
+                                    }
+                                })
+                            );
+
+                            // 过滤掉失败的结果
+                            return virtualHairstyles.filter(style => style !== null);
                         } catch (e) {
                             console.error('解析发型数据失败:', e);
                             return [];
