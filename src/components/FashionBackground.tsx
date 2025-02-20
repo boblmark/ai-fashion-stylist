@@ -14,7 +14,7 @@ const FashionBackground = () => {
             <div className="absolute inset-0 bg-gradient-to-br from-orange-100/40 via-purple-100/40 to-teal-100/40"></div>
             <svg className="absolute inset-0 w-full h-full">
                 {Array.from({ length: 20 }).map((_, i) => (
-                    <g key={i} className={`fashion-element fashion-element-${i % 5}`}>
+                    <g key={i} className={`fashion-element fashion-element-${i % 5} fashion-delay-${i % 10}`}>
                         <path
                             d={fashionElements[i % 5]}
                             fill="currentColor"
