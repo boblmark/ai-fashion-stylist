@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { Upload, Camera, Sparkles, Star, Palette, TrendingUp, ThumbsUp, Scale, Scissors } from 'lucide-react';
+import { Upload, Camera, Sparkles, Star, Palette, TrendingUp, ThumbsUp, Scale, Scissors, Brain, Wand, Crown } from 'lucide-react';
 
 interface FormData {
     height: string;
@@ -77,6 +77,112 @@ interface HairStyles {
     generated: HairStyle[];
 }
 
+// 定义 feature 类型
+interface Feature {
+    icon: 'Brain' | 'Wand' | 'Scissors' | 'Crown';
+    title: { en: string; zh: string };
+    desc: { en: string; zh: string };
+}
+
+const t = {
+    title: {
+        en: 'MirrorMuse',
+        zh: '魅影衣橱'  // 保持原有名称
+    },
+    subtitle: {
+        en: 'AI Fashion Stylist',
+        zh: 'AI时尚造型专家'
+    },
+    upload: {
+        person: { en: 'Your Photo', zh: '个人照片' },
+        top: { en: 'Top Garment', zh: '上衣' },
+        bottom: { en: 'Bottom Garment', zh: '下装' },
+        photo: { en: 'Upload photo', zh: '上传照片' },
+        top_text: { en: 'Upload top', zh: '上传上衣' },
+        bottom_text: { en: 'Upload bottom', zh: '上传下装' }
+    },
+    measurements: {
+        height: { en: 'Height (cm)', zh: '身高 (cm)' },
+        weight: { en: 'Weight (kg)', zh: '体重 (kg)' },
+        bust: { en: 'Bust (cm)', zh: '胸围 (cm)' },
+        waist: { en: 'Waist (cm)', zh: '腰围 (cm)' },
+        hips: { en: 'Hips (cm)', zh: '臀围 (cm)' }
+    },
+    style: { en: 'Style Preference', zh: '风格偏好' },
+    button: {
+        generate: { en: 'Create Your Style', zh: '创建专属造型' },
+        generating: { en: 'Creating...', zh: '创建中...' }
+    },
+    results: {
+        title: { en: 'Your Style Analysis', zh: '你的造型分析' },
+        custom: { en: 'Your Selected Outfit', zh: '你的选择' },
+        generated: { en: 'AI Recommended Outfit', zh: 'AI推荐' },
+        analysis: { en: 'Style Analysis', zh: '造型分析' },
+        commentary: { en: 'Expert Commentary', zh: '专业点评' },
+        score: { en: 'Style Score', zh: '时尚指数' }
+    },
+    error: {
+        upload: { en: 'Please upload all required images', zh: '请上传所有必要的图片' },
+        general: { en: 'An error occurred', zh: '发生错误' },
+        fileSize: { en: 'File size must be less than 5MB', zh: '文件大小必须小于5MB' },
+        fileType: { en: 'Only JPG, PNG and WebP images are allowed', zh: '仅支持JPG、PNG和WebP格式的图片' }
+    },
+     features: {
+        title: { en: 'Why Choose MirrorMuse?', zh: '为什么选择魅影衣橱？' },
+        items: [
+            {
+                icon: 'Brain',
+                title: { en: 'AI-Powered Style Analysis', zh: 'AI智能风格分析' },
+                desc: { 
+                    en: 'Advanced algorithms analyze your body features and personal style',
+                    zh: '先进算法分析身材特征与个人风格'
+                }
+            },
+            {
+                icon: 'Wand',
+                title: { en: 'Virtual Try-On Magic', zh: '虚拟试穿体验' },
+                desc: {
+                    en: 'See how outfits look on you instantly',
+                    zh: '即刻预览完美搭配效果'
+                }
+            },
+            {
+                icon: 'Scissors',
+                title: { en: 'Complete Style Solution', zh: '全方位造型方案' },
+                desc: {
+                    en: 'Get personalized outfit and hairstyle recommendations',
+                    zh: '获取个性化服装搭配与发型推荐'
+                }
+            },
+            {
+                icon: 'Crown',
+                title: { en: 'Expert Commentary', zh: '专业点评建议' },
+                desc: {
+                    en: 'Receive detailed style analysis and fashion advice',
+                    zh: '获得详细的风格分析和时尚建议'
+                }
+            }
+        ]
+    }
+};
+
+const FEATURES: Feature[] = t.features.items;
+
+const lucideIcons = {
+  Upload,
+  Camera,
+  Sparkles,
+  Star,
+  Palette,
+  TrendingUp,
+  ThumbsUp,
+  Scale,
+  Scissors,
+  Brain,
+  Wand,
+  Crown
+};
+
 function App() {
     const [personPhoto, setPersonPhoto] = useState<UploadPreview | null>(null);
     const [topGarment, setTopGarment] = useState<UploadPreview | null>(null);
@@ -101,51 +207,6 @@ function App() {
         hips: '',
         style_preference: STYLE_PREFERENCES[0].zh
     });
-
-    const t = {
-        title: {
-            en: 'MirrorMuse',
-            zh: '魅影衣橱'  // 保持原有名称
-        },
-        subtitle: {
-            en: 'AI Fashion Stylist',
-            zh: 'AI时尚造型专家'
-        },
-        upload: {
-            person: { en: 'Your Photo', zh: '个人照片' },
-            top: { en: 'Top Garment', zh: '上衣' },
-            bottom: { en: 'Bottom Garment', zh: '下装' },
-            photo: { en: 'Upload photo', zh: '上传照片' },
-            top_text: { en: 'Upload top', zh: '上传上衣' },
-            bottom_text: { en: 'Upload bottom', zh: '上传下装' }
-        },
-        measurements: {
-            height: { en: 'Height (cm)', zh: '身高 (cm)' },
-            weight: { en: 'Weight (kg)', zh: '体重 (kg)' },
-            bust: { en: 'Bust (cm)', zh: '胸围 (cm)' },
-            waist: { en: 'Waist (cm)', zh: '腰围 (cm)' },
-            hips: { en: 'Hips (cm)', zh: '臀围 (cm)' }
-        },
-        style: { en: 'Style Preference', zh: '风格偏好' },
-        button: {
-            generate: { en: 'Create Your Style', zh: '创建专属造型' },
-            generating: { en: 'Creating...', zh: '创建中...' }
-        },
-        results: {
-            title: { en: 'Your Style Analysis', zh: '你的造型分析' },
-            custom: { en: 'Your Selected Outfit', zh: '你的选择' },
-            generated: { en: 'AI Recommended Outfit', zh: 'AI推荐' },
-            analysis: { en: 'Style Analysis', zh: '造型分析' },
-            commentary: { en: 'Expert Commentary', zh: '专业点评' },
-            score: { en: 'Style Score', zh: '时尚指数' }
-        },
-        error: {
-            upload: { en: 'Please upload all required images', zh: '请上传所有必要的图片' },
-            general: { en: 'An error occurred', zh: '发生错误' },
-            fileSize: { en: 'File size must be less than 5MB', zh: '文件大小必须小于5MB' },
-            fileType: { en: 'Only JPG, PNG and WebP images are allowed', zh: '仅支持JPG、PNG和WebP格式的图片' }
-        }
-    };
 
     const updateProgress = useCallback((stage: ProgressStage) => {
         setProgress({
@@ -620,7 +681,7 @@ function App() {
                                             {feature.title[language]}
                                         </h3>
                                         <p className="text-sm text-gray-600 leading-relaxed">
-                                            {feature.description[language]}
+                                            {feature.desc[language]}
                                         </p>
                                     </div>
                                 </div>
@@ -704,90 +765,90 @@ function App() {
                                         onChange={handleInputChange}
                                         className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
                                     >
-                                        {STYLE_PREFERENCES.map((style) => (
+                                        {STYLE_PREFERENCES.map((style) =>
                                             <option key={style.zh} value={style.zh}>
-                                                {language === 'en' ? style.en : style.zh}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
+                                            {language === 'en' ? style.en : style.zh}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
 
-                                <div>
-                                    <button
-                                        type="submit"
-                                        disabled={loading}
-                                        className={`w-full flex items-center justify-center py-3 px-4 rounded-lg text-sm font-semibold text-white transition-all duration-200 ${
-                                            loading
-                                                ? 'bg-gray-400 cursor-not-allowed'
-                                                : 'bg-gradient-to-r from-orange-600 to-teal-600 hover:from-orange-500 hover:to-teal-500 transform hover:scale-[1.02]'
-                                        }`}
-                                    >
-                                        <Sparkles className={`w-5 h-5 mr-2 ${loading ? 'animate-spin' : 'animate-pulse'}`} />
-                                        {loading ? t.button.generating[language] : t.button.generate[language]}
-                                    </button>
+                            <div>
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className={`w-full flex items-center justify-center py-3 px-4 rounded-lg text-sm font-semibold text-white transition-all duration-200 ${
+                                        loading
+                                            ? 'bg-gray-400 cursor-not-allowed'
+                                            : 'bg-gradient-to-r from-orange-600 to-teal-600 hover:from-orange-500 hover:to-teal-500 transform hover:scale-[1.02]'
+                                    }`}
+                                >
+                                    <Sparkles className={`w-5 h-5 mr-2 ${loading ? 'animate-spin' : 'animate-pulse'}`} />
+                                    {loading ? t.button.generating[language] : t.button.generate[language]}
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    {result && (
+                        <div className="mt-12 space-y-8 animate-fade-in">
+                            <h2 className="text-3xl font-bold text-center bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent animate-pulse">
+                                {t.results.title[language]}
+                            </h2>
+
+                            <div className="relative group">
+                                <div className="absolute -inset-1 bg-gradient-to-r from-orange-600 to-teal-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+                                <div className="relative bg-white rounded-xl shadow-xl p-6 mb-8">
+                                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900">
+                                        <Sparkles className="w-5 h-5 text-orange-500" />
+                                        {t.results.analysis[language]}
+                                    </h3>
+                                    <div className="bg-gradient-to-r from-orange-50 to-teal-50 rounded-lg p-6">
+                                        <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                                            {result.recommendations}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
-                        </form>
 
-                        {result && (
-                            <div className="mt-12 space-y-8 animate-fade-in">
-                                <h2 className="text-3xl font-bold text-center bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent animate-pulse">
-                                    {t.results.title[language]}
-                                </h2>
-
-                                <div className="relative group">
-                                    <div className="absolute -inset-1 bg-gradient-to-r from-orange-600 to-teal-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
-                                    <div className="relative bg-white rounded-xl shadow-xl p-6 mb-8">
-                                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900">
-                                            <Sparkles className="w-5 h-5 text-orange-500" />
-                                            {t.results.analysis[language]}
-                                        </h3>
-                                        <div className="bg-gradient-to-r from-orange-50 to-teal-50 rounded-lg p-6">
-                                            <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                                                {result.recommendations}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* 发型推荐部分 */}
-                                {(hairstyles.custom.length > 0 || hairstyles.generated.length > 0) && (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        {/* 自选搭配的发型推荐 */}
-                                        {hairstyles.custom.length > 0 && (
-                                            <div className="bg-white rounded-xl shadow-lg p-6">
-                                                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900">
-                                                    <Scissors className="w-5 h-5 text-orange-500" />
-                                                    {language === 'en' ? 'Hairstyles for Your Choice' : '自选搭配发型推荐'}
-                                                </h3>
-                                                {renderCustomHairstyles()}
-                                            </div>
-                                        )}
-
-                                        {/* AI 推荐搭配的发型推荐 */}
-                                        {hairstyles.generated.length > 0 && (
-                                            <div className="bg-white rounded-xl shadow-lg p-6">
-                                                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900">
-                                                    <Scissors className="w-5 h-5 text-orange-500" />
-                                                    {language === 'en' ? 'Hairstyles for AI Recommendation' : 'AI推荐搭配发型推荐'}
-                                                </h3>
-                                                {renderGeneratedHairstyles()}
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-
+                            {/* 发型推荐部分 */}
+                            {(hairstyles.custom.length > 0 || hairstyles.generated.length > 0) && (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    {renderOutfitResult(result.custom, t.results.custom)}
-                                    {renderOutfitResult(result.generated, t.results.generated)}
+                                    {/* 自选搭配的发型推荐 */}
+                                    {hairstyles.custom.length > 0 && (
+                                        <div className="bg-white rounded-xl shadow-lg p-6">
+                                            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900">
+                                                <Scissors className="w-5 h-5 text-orange-500" />
+                                                {language === 'en' ? 'Hairstyles for Your Choice' : '自选搭配发型推荐'}
+                                            </h3>
+                                            {renderCustomHairstyles()}
+                                        </div>
+                                    )}
+
+                                    {/* AI 推荐搭配的发型推荐 */}
+                                    {hairstyles.generated.length > 0 && (
+                                        <div className="bg-white rounded-xl shadow-lg p-6">
+                                            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900">
+                                                <Scissors className="w-5 h-5 text-orange-500" />
+                                                {language === 'en' ? 'Hairstyles for AI Recommendation' : 'AI推荐搭配发型推荐'}
+                                            </h3>
+                                            {renderGeneratedHairstyles()}
+                                        </div>
+                                    )}
                                 </div>
+                            )}
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                {renderOutfitResult(result.custom, t.results.custom)}
+                                {renderOutfitResult(result.generated, t.results.generated)}
                             </div>
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
-    );
+    </div>
+);
 }
 
-export default App;
+export default App;                                       
