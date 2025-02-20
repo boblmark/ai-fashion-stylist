@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { Upload, Camera, Sparkles, Star, Palette, TrendingUp, ThumbsUp, Scale, Scissors, Brain, Wand, Crown } from 'lucide-react';
+import FashionBackground from './components/FashionBackground';
 
 interface FormData {
     height: string;
@@ -183,7 +184,8 @@ const lucideIcons = {
   Crown
 };
 
-import FashionBackground from './components/FashionBackground';
+// 删除这行
+// import FashionBackground from './components/FashionBackground';
 
 function App() {
     const [personPhoto, setPersonPhoto] = useState<UploadPreview | null>(null);
