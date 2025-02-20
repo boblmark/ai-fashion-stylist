@@ -734,8 +734,6 @@ function App() {
                                 <div className="absolute inset-0 bg-[url('/pattern.svg')] bg-repeat opacity-10 animate-slide"></div>
                             </div>
                         </div>
-                        </div>
-                        </div>
 
                         {/* 添加功能卡片部分 */}
                         <div className="mt-12 mb-8">
