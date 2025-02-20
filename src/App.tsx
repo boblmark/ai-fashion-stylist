@@ -479,7 +479,7 @@ function App() {
             <div className="grid grid-cols-2 gap-4">
                 {hairstyles.custom.map((style, index) => (
                     <div key={index} className="space-y-3">
-                        <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-50 to-teal-50">
+                        <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-500 to-teal-500">
                             <img
                                 src={style.img}
                                 alt={style.hairstyle}
@@ -507,7 +507,7 @@ function App() {
             <div className="grid grid-cols-2 gap-4">
                 {hairstyles.generated.map((style, index) => (
                     <div key={index} className="space-y-3">
-                        <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-50 to-teal-50">
+                        <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-500 to-teal-500">
                             <img
                                 src={style.img}
                                 alt={style.hairstyle}
@@ -703,7 +703,7 @@ function App() {
                             <div className="w-32 h-32 relative animate-float">
                                 <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-teal-500/20 rounded-full animate-pulse"></div>
                                 <img
-                                    src="/mirrormuse-logo.jpg"  // 修改为正确的文件扩展名
+                                    src="/mirrormuse-logo.jpg"
                                     alt="MirrorMuse - AI Fashion Stylist"
                                     className="w-full h-full object-contain"
                                 />
