@@ -133,3 +133,46 @@
 .progress-bar {
   animation: progress 2s ease-out forwards;
 }
+
+/* 时尚元素动画 */
+@keyframes float-element-0 {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    25% { transform: translate(100px, 50px) rotate(90deg); }
+    50% { transform: translate(50px, 100px) rotate(180deg); }
+    75% { transform: translate(-50px, 50px) rotate(270deg); }
+}
+
+@keyframes float-element-1 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(150px, -50px) scale(1.5); }
+}
+
+@keyframes float-element-2 {
+    0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+    33% { transform: translate(-100px, 100px) rotate(120deg) scale(1.2); }
+    66% { transform: translate(100px, -100px) rotate(240deg) scale(0.8); }
+}
+
+@keyframes float-element-3 {
+    0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
+    50% { transform: translate(-120px, 80px) scale(1.3) rotate(180deg); }
+}
+
+@keyframes float-element-4 {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    25% { transform: translate(80px, -80px) rotate(90deg); }
+    75% { transform: translate(-80px, 80px) rotate(270deg); }
+}
+
+.fashion-element-0 { animation: float-element-0 20s infinite; }
+.fashion-element-1 { animation: float-element-1 25s infinite; }
+.fashion-element-2 { animation: float-element-2 30s infinite; }
+.fashion-element-3 { animation: float-element-3 35s infinite; }
+.fashion-element-4 { animation: float-element-4 40s infinite; }
+
+/* 添加随机延迟 */
+@for $i from 0 through 19 {
+    .fashion-element-#{$i} {
+        animation-delay: #{random(10)}s;
+    }
+}
