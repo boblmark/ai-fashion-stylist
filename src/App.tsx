@@ -183,6 +183,8 @@ const lucideIcons = {
   Crown
 };
 
+import FashionBackground from './components/FashionBackground';
+
 function App() {
     const [personPhoto, setPersonPhoto] = useState<UploadPreview | null>(null);
     const [topGarment, setTopGarment] = useState<UploadPreview | null>(null);
@@ -385,37 +387,41 @@ function App() {
                                 hairstyles = parsedData.output;
                             }
 
-                            // 对每个发型进行虚拟换发
-                            const virtualHairstyles = await Promise.all(hairstyles.map(async (style) => {
-                                // 调用虚拟换发 API
-                                const tryOnResponse = await fetch('https://api.coze.cn/v1/workflow/run', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Authorization': 'Bearer pat_XCdzRC2c6K7oMcc2xVJv37KYJR311nrU8uUCPbdnAPlWKaDY9TikL2W8nnkW9cbY',
-                                        'Content-Type': 'application/json'
-                                    },
-                                    body: JSON.stringify({
-                                        workflow_id: '7472218638747467818', // 虚拟换发的 workflow_id
-                                        parameters: {
-                                            input_image: image,
-                                            hairstyle: style.hairstyle
-                                        }
-                                    })
-                                });
+                            // 使用 for...of 循环串行处理每个发型
+                            const virtualHairstyles = [];
+                            for (const style of hairstyles) {
+                                try {
+                                    // 调用虚拟换发 API
+                                    const tryOnResponse = await fetch('https://api.coze.cn/v1/workflow/run', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Authorization': 'Bearer pat_XCdzRC2c6K7oMcc2xVJv37KYJR311nrU8uUCPbdnAPlWKaDY9TikL2W8nnkW9cbY',
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify({
+                                            workflow_id: '7472218638747467818',
+                                            parameters: {
+                                                input_image: image,
+                                                hairstyle: style.hairstyle
+                                            }
+                                        })
+                                    });
 
-                                const tryOnData = await tryOnResponse.json();
-                                console.log('虚拟换发 API 响应:', tryOnData);  // 添加这行调试代码
-                
-                                if (tryOnData.code === 0 && tryOnData.data) {
-                                    console.log('虚拟换发图片 URL:', tryOnData.data.output_image);  // 添加这行调试代码
-                                    // 将虚拟换发的结果添加到发型数据中
-                                    return {
-                                        ...style,
-                                        img: tryOnData.data.output_image || style.img
-                                    };
+                                    const tryOnData = await tryOnResponse.json();
+                                    console.log(`发型 ${style.hairstyle} 换发响应:`, tryOnData);
+
+                                    if (tryOnData.code === 0 && tryOnData.data && tryOnData.data.output_image) {
+                                        virtualHairstyles.push({
+                                            ...style,
+                                            img: tryOnData.data.output_image
+                                        });
+                                        // 添加延迟，避免频繁调用
+                                        await new Promise(resolve => setTimeout(resolve, 1000));
+                                    }
+                                } catch (e) {
+                                    console.error(`处理发型 ${style.hairstyle} 失败:`, e);
                                 }
-                                return style;
-                            }));
+                            }
 
                             return virtualHairstyles;
                         } catch (e) {
@@ -681,7 +687,7 @@ function App() {
     ), [language]);
 
     return (
-        <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-orange-100 via-gray-50 to-teal-50 animate-gradient-xy relative">
+        <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-orange-100 via-gray-50 to-teal-50 relative">
             {renderLanguageSwitch()} {/* 添加语言切换按钮 */}
             {/* 添加动态背景效果 */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -729,6 +735,34 @@ function App() {
                                 <div className="absolute inset-0 bg-[url('/pattern.svg')] bg-repeat opacity-10 animate-slide"></div>
                             </div>
                         </div>
+                        </div>
+                        </div>
+
+                        {/* 添加功能卡片部分 */}
+                        <div className="mt-12 mb-8">
+                            <h2 className="text-2xl font-semibold text-center mb-8 bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
+                                {t.features.title[language]}
+                            </h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                {FEATURES.map((feature, index) => {
+                                    const Icon = lucideIcons[feature.icon];
+                                    return (
+                                        <div key={index} className="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group">
+                                            <div className="w-12 h-12 mb-4 rounded-lg bg-gradient-to-br from-orange-500/10 to-teal-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                                <Icon className="w-6 h-6 text-orange-600" />
+                                            </div>
+                                            <h3 className="text-lg font-semibold mb-2 bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
+                                                {feature.title[language]}
+                                            </h3>
+                                            <p className="text-gray-600 text-sm">
+                                                {feature.desc[language]}
+                                            </p>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
                         <form onSubmit={handleSubmit} className="mt-8 space-y-8">
                             <div className="grid grid-cols-1 gap-8">
                                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
