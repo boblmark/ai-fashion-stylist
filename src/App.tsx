@@ -184,9 +184,6 @@ const lucideIcons = {
   Crown
 };
 
-// 删除这行
-// import FashionBackground from './components/FashionBackground';
-
 function App() {
     const [personPhoto, setPersonPhoto] = useState<UploadPreview | null>(null);
     const [topGarment, setTopGarment] = useState<UploadPreview | null>(null);
@@ -691,8 +688,7 @@ function App() {
 
     return (
         <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-orange-100 via-gray-50 to-teal-50 relative">
-            {renderLanguageSwitch()} {/* 添加语言切换按钮 */}
-            {/* 添加动态背景效果 */}
+            {renderLanguageSwitch()}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute inset-0 bg-[url('/bg-pattern.svg')] opacity-5 animate-slide"></div>
                 <div className="absolute -inset-[100%] bg-gradient-conic from-orange-500/30 via-teal-500/30 to-orange-500/30 animate-spin-slow blur-3xl"></div>
