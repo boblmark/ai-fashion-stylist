@@ -361,7 +361,7 @@ function App() {
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
-                            workflow_id: '7472218638747467817',
+                            workflow_id: '7472218638747467817',  // 使用同一个 workflow_id
                             parameters: {
                                 input_image: image
                             }
@@ -407,7 +407,7 @@ function App() {
                                                 'Content-Type': 'application/json'
                                             },
                                             body: JSON.stringify({
-                                                workflow_id: '7472218638747467818',
+                                                workflow_id: '7472218638747467817',  // 使用同一个 workflow_id
                                                 parameters: {
                                                     input_image: image,
                                                     hairstyle: style.hairstyle
