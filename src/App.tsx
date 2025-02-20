@@ -442,17 +442,17 @@ function App() {
             <div className="grid grid-cols-2 gap-4">
                 {hairstyles.custom.map((style, index) => (
                     <div key={index} className="space-y-3">
-                        <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-500/10 to-teal-500/10 mix-blend-overlay"></div>
-                        <h3 className="text-lg font-semibold p-4 bg-gradient-to-r from-orange-500 to-teal-500 text-white flex items-center justify-between">
-                            <span className="flex items-center gap-2">
-                                <Palette className="w-5 h-5" />
-                                {title[language]}
-                            </span>
-                            <div className="flex items-center gap-1 bg-white/20 px-3 py-1 rounded-full">
-                                <Star className="w-4 h-4" />
-                                <span className="font-bold">{outfit.score}</span>
-                            </div>
-                        </h3>
+                        <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-50 to-teal-50">
+                            <img
+                                src={style.img}
+                                alt={style.hairstyle}
+                                className="w-full h-full object-cover"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <h4 className="font-medium text-gray-900">{style.hairstyle}</h4>
+                            <p className="text-sm text-gray-600">{style.reasons}</p>
+                        </div>
                     </div>
                 ))}
             </div>
@@ -460,6 +460,8 @@ function App() {
     }, [hairstyles.custom, language]);
 
     const renderGeneratedHairstyles = useCallback(() => {
+        console.log('Generated hairstyles:', hairstyles.generated);
+        
         if (hairstyles.generated.length === 0) {
             return <p>{language === 'en' ? 'No hairstyle recommendations found for AI-generated outfit.' : '没有找到适合 AI 搭配的发型推荐。'}</p>;
         }
@@ -468,17 +470,17 @@ function App() {
             <div className="grid grid-cols-2 gap-4">
                 {hairstyles.generated.map((style, index) => (
                     <div key={index} className="space-y-3">
-                        <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-500/10 to-teal-500/10 mix-blend-overlay"></div>
-                        <h3 className="text-lg font-semibold p-4 bg-gradient-to-r from-orange-500 to-teal-500 text-white flex items-center justify-between">
-                            <span className="flex items-center gap-2">
-                                <Palette className="w-5 h-5" />
-                                {title[language]}
-                            </span>
-                            <div className="flex items-center gap-1 bg-white/20 px-3 py-1 rounded-full">
-                                <Star className="w-4 h-4" />
-                                <span className="font-bold">{outfit.score}</span>
-                            </div>
-                        </h3>
+                        <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-50 to-teal-50">
+                            <img
+                                src={style.img}
+                                alt={style.hairstyle}
+                                className="w-full h-full object-cover"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <h4 className="font-medium text-gray-900">{style.hairstyle}</h4>
+                            <p className="text-sm text-gray-600">{style.reasons}</p>
+                        </div>
                     </div>
                 ))}
             </div>
