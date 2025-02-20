@@ -48,38 +48,70 @@ export default {
   theme: {
     extend: {
       animation: {
-        'gradient-x': 'gradient-x 3s ease infinite',
-        'gradient-xy': 'gradient-xy 5s ease infinite',
+        'gradient-x': 'gradient-x 15s ease infinite',
+        'gradient-xy': 'gradient-xy 15s ease infinite',
         'slide': 'slide 20s linear infinite',
-        'pulse': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'float': 'float 6s ease-in-out infinite',
+        'spin-slow': 'spin 30s linear infinite',
+        'fade-in': 'fade-in 0.5s ease-out forwards',
+        'progress': 'progress 2s ease-out forwards'
       },
       keyframes: {
         'gradient-x': {
           '0%, 100%': {
-            'background-size': '200% 200%',
-            'background-position': 'left center'
+            'background-position': '0% 50%'
           },
           '50%': {
-            'background-size': '200% 200%',
-            'background-position': 'right center'
+            'background-position': '100% 50%'
           }
         },
         'gradient-xy': {
           '0%, 100%': {
-            'background-size': '400% 400%',
-            'background-position': 'left center'
+            'background-position': '0% 0%'
           },
           '50%': {
-            'background-size': '200% 200%',
-            'background-position': 'right center'
+            'background-position': '100% 100%'
           }
         },
         'slide': {
-          '0%': { transform: 'translateX(0)' },
-          '100%': { transform: 'translateX(100%)' }
+          'from': {
+            transform: 'translateX(0)'
+          },
+          'to': {
+            transform: 'translateX(100%)'
+          }
+        },
+        'float': {
+          '0%, 100%': {
+            transform: 'translateY(0)'
+          },
+          '50%': {
+            transform: 'translateY(-10px)'
+          }
+        },
+        'fade-in': {
+          'from': {
+            opacity: '0',
+            transform: 'translateY(10px)'
+          },
+          'to': {
+            opacity: '1',
+            transform: 'translateY(0)'
+          }
+        },
+        'progress': {
+          'from': {
+            width: '0%'
+          },
+          'to': {
+            width: '100%'
+          }
         }
+      },
+      backgroundImage: {
+        'gradient-conic': 'conic-gradient(var(--tw-gradient-stops))',
       }
-    }
+    },
   },
   plugins: [],
 }
