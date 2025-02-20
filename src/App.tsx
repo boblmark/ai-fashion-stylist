@@ -565,10 +565,10 @@ function App() {
         title: { en: string; zh: string }
     ) => {
         const commentaryLines = outfit.commentary.split('\n').filter(line => line.trim());
-        // 修复正则表达式语法
-        const scoreMatch = outfit.commentary.match(/综合评分[：:]\s*(\d+(?:\.\d+)?)\s*分/);
+        // Fixed regular expression pattern
+        const scorePattern = /综合评分[：:]\s*(\d+(?:\.\d+)?)\s*分/;
         const commentaryWithoutScore = commentaryLines
-            .filter(line => !line.includes('综合评分'))
+            .filter(line => !scorePattern.test(line))
             .join('\n');
     
         return (
