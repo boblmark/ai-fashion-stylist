@@ -404,7 +404,10 @@ function App() {
                                 });
 
                                 const tryOnData = await tryOnResponse.json();
+                                console.log('虚拟换发 API 响应:', tryOnData);  // 添加这行调试代码
+                
                                 if (tryOnData.code === 0 && tryOnData.data) {
+                                    console.log('虚拟换发图片 URL:', tryOnData.data.output_image);  // 添加这行调试代码
                                     // 将虚拟换发的结果添加到发型数据中
                                     return {
                                         ...style,
@@ -701,37 +704,31 @@ function App() {
                                 />
                             </div>
                         </div>
-                        <div className="text-center">
-                            <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
+                        <div className="text-center space-y-6">
+                            <h1 className="text-5xl font-bold bg-gradient-to-r from-orange-600 via-purple-500 to-teal-600 bg-clip-text text-transparent animate-gradient-x">
                                 {t.title[language]}
                             </h1>
-                            <p className="mt-2 text-lg text-gray-600">{t.subtitle[language]}</p>
-                        
-                        {/* 添加特性介绍 */}
-                        <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 px-4">
-                            {FEATURES.map((feature, index) => (
-                                <div
-                                    key={index}
-                                    className="relative group bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300"
-                                >
-                                    <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-teal-500/5 rounded-xl group-hover:from-orange-500/10 group-hover:to-teal-500/10 transition-all duration-300"></div>
-                                    <div className="relative">
-                                        <div className="w-12 h-12 mx-auto mb-4 bg-gradient-to-r from-orange-500 to-teal-500 rounded-full flex items-center justify-center text-white">
-                                            <span className="w-6 h-6">
-                                                {React.createElement(lucideIcons[feature.icon as keyof typeof lucideIcons])}
-                                            </span>
-                                        </div>
-                                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                                            {feature.title[language]}
-                                        </h3>
-                                        <p className="text-sm text-gray-600 leading-relaxed">
-                                            {feature.desc[language]}
-                                        </p>
-                                    </div>
-                                </div>
-                            ))}
+                            <p className="mt-2 text-xl text-gray-600">{t.subtitle[language]}</p>
+                            <div className="relative group">
+                                <div className="absolute -inset-1 bg-gradient-to-r from-orange-600 via-purple-500 to-teal-600 rounded-lg blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200 animate-gradient-xy"></div>
+                                <p className="relative px-7 py-4 bg-black bg-opacity-80 rounded-lg leading-none">
+                                    <span className="text-lg bg-gradient-to-r from-orange-400 via-pink-500 to-teal-400 bg-clip-text text-transparent font-medium animate-pulse">
+                                        {language === 'en' 
+                                            ? 'Where Style Meets Innovation'
+                                            : '魅影随行，演绎时尚'}
+                                    </span>
+                                </p>
+                            </div>
                         </div>
-                    </div>
+
+                        {/* 添加动态背景效果 */}
+                        <div className="absolute inset-0 -z-10">
+                            <div className="absolute inset-0 bg-gradient-to-br from-orange-100/40 via-purple-100/40 to-teal-100/40 animate-gradient-xy"></div>
+                            <div className="absolute inset-0 opacity-30">
+                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,140,50,0.1),rgba(100,220,200,0.1))] animate-pulse"></div>
+                                <div className="absolute inset-0 bg-[url('/pattern.svg')] bg-repeat opacity-10 animate-slide"></div>
+                            </div>
+                        </div>
                         <form onSubmit={handleSubmit} className="mt-8 space-y-8">
                             <div className="grid grid-cols-1 gap-8">
                                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
@@ -835,59 +832,36 @@ function App() {
                     </form>
 
                     {result && (
-                        <div className="mt-12 space-y-8 animate-fade-in">
-                            <h2 className="text-3xl font-bold text-center bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent animate-pulse">
-                                {t.results.title[language]}
-                            </h2>
-
-                            <div className="relative group">
-                                <div className="absolute -inset-1 bg-gradient-to-r from-orange-600 to-teal-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
-                                <div className="relative bg-white rounded-xl shadow-xl p-6 mb-8">
-                                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900">
-                                        <Sparkles className="w-5 h-5 text-orange-500" />
-                                        {t.results.analysis[language]}
-                                    </h3>
-                                    <div className="bg-gradient-to-r from-orange-50 to-teal-50 rounded-lg p-6">
-                                        <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                                            {result.recommendations}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* 发型推荐部分 */}
-                            {(hairstyles.custom.length > 0 || hairstyles.generated.length > 0) && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    {/* 自选搭配的发型推荐 */}
-                                    {hairstyles.custom.length > 0 && (
-                                        <div className="bg-white rounded-xl shadow-lg p-6">
-                                            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900">
-                                                <Scissors className="w-5 h-5 text-orange-500" />
-                                                {language === 'en' ? 'Hairstyles for Your Choice' : '自选搭配发型推荐'}
-                                            </h3>
-                                            {renderCustomHairstyles()}
-                                        </div>
-                                    )}
-
-                                    {/* AI 推荐搭配的发型推荐 */}
-                                    {hairstyles.generated.length > 0 && (
-                                        <div className="bg-white rounded-xl shadow-lg p-6">
-                                            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900">
-                                                <Scissors className="w-5 h-5 text-orange-500" />
-                                                {language === 'en' ? 'Hairstyles for AI Recommendation' : 'AI推荐搭配发型推荐'}
-                                            </h3>
-                                            {renderGeneratedHairstyles()}
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
+                        <div className="mt-12 space-y-12">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                {/* 自选搭配结果 */}
                                 {renderOutfitResult(result.custom, t.results.custom)}
+                                {/* AI推荐搭配结果 */}
                                 {renderOutfitResult(result.generated, t.results.generated)}
                             </div>
+                        
+                        {/* 发型推荐部分 */}
+                        <div className="space-y-8">
+                            {/* 自选搭配发型推荐 */}
+                            <div className="bg-white rounded-xl shadow-lg p-6">
+                                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900">
+                                    <Scissors className="w-5 h-5 text-orange-500" />
+                                    {language === 'en' ? 'Hairstyles for Your Choice' : '自选搭配发型推荐'}
+                                </h3>
+                                {renderCustomHairstyles()}
+                            </div>
+                        
+                            {/* AI推荐搭配发型推荐 */}
+                            <div className="bg-white rounded-xl shadow-lg p-6">
+                                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900">
+                                    <Scissors className="w-5 h-5 text-orange-500" />
+                                    {language === 'en' ? 'Hairstyles for AI Recommendation' : 'AI推荐搭配发型推荐'}
+                                </h3>
+                                {renderGeneratedHairstyles()}
+                            </div>
                         </div>
-                    )}
+                    </div>
+                )}
                 </div>
             </div>
         </div>
