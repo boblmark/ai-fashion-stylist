@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { Upload, Camera, Sparkles, Star, Palette, TrendingUp, ThumbsUp, Scale } from 'lucide-react';
+import { Upload, Camera, Sparkles, Star, Palette, TrendingUp, ThumbsUp, Scale, Scissors } from 'lucide-react';
 
 interface FormData {
   height: string;
@@ -47,7 +47,8 @@ const PROGRESS_STAGES = {
   GENERATE_BOTTOM: { percent: 50, en: 'Generating bottom garment', zh: '生成下装中...' },
   TRYON_CUSTOM: { percent: 60, en: 'Processing custom outfit', zh: '处理自选服装中...' },
   TRYON_GENERATED: { percent: 80, en: 'Processing generated outfit', zh: '处理生成服装中...' },
-  COMMENTARY: { percent: 90, en: 'Getting style commentary', zh: '获取穿搭点评中...' },
+  COMMENTARY: { percent: 85, en: 'Getting style commentary', zh: '获取穿搭点评中...' },
+  HAIRSTYLE: { percent: 95, en: 'Generating hairstyle recommendations', zh: '生成发型推荐中...' },
   COMPLETE: { percent: 100, en: 'Completed', zh: '完成' }
 } as const;
 
@@ -64,6 +65,13 @@ const STYLE_PREFERENCES = [
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
+// 在现有的 interface 定义中添加
+interface HairStyle {
+  hairstyle: string;
+  reasons: string;
+  img: string;
+}
+
 function App() {
   const [personPhoto, setPersonPhoto] = useState<UploadPreview | null>(null);
   const [topGarment, setTopGarment] = useState<UploadPreview | null>(null);
@@ -72,6 +80,7 @@ function App() {
   const [result, setResult] = useState<Result | null>(null);
   const [language, setLanguage] = useState<'en' | 'zh'>('zh');
   const [error, setError] = useState<ErrorState>({ message: '', visible: false });
+  const [hairstyles, setHairstyles] = useState<HairStyle[]>([]);
   const [progress, setProgress] = useState<ProgressState>({ 
     stage: 'UPLOAD', 
     percent: 0, 
@@ -259,6 +268,7 @@ function App() {
         'TRYON_CUSTOM',
         'TRYON_GENERATED',
         'COMMENTARY',
+        'HAIRSTYLE',
         'COMPLETE'
       ];
 
@@ -271,22 +281,43 @@ function App() {
       }
 
       setResult(data);
-    } catch (error) {
-      if (error instanceof Error) {
-        if (error.name === 'AbortError') {
-          console.log('Request cancelled');
-          return;
+    
+    // 获取发型推荐
+    const hairstyleResponse = await fetch('https://api.coze.cn/v1/workflow/run', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer pat_XCdzRC2c6K7oMcc2xVJv37KYJR311nrU8uUCPbdnAPlWKaDY9TikL2W8nnkW9cbY',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        workflow_id: '7472218638747467817',
+        parameters: {
+          input_image: data.custom.tryOnUrl
         }
-        console.error('Error:', error);
-        showError(error.message);
-      } else {
-        console.error('Unknown error:', error);
-        showError(t.error.general[language]);
-      }
-    } finally {
-      setLoading(false);
-      abortControllerRef.current = null;
+      })
+    });
+
+    const hairstyleData = await hairstyleResponse.json();
+    if (hairstyleData.code === 0) {
+      const parsedData = JSON.parse(hairstyleData.data);
+      setHairstyles(parsedData.output);
     }
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        console.log('Request cancelled');
+        return;
+      }
+      console.error('Error:', error);
+      showError(error.message);
+    } else {
+      console.error('Unknown error:', error);
+      showError(t.error.general[language]);
+    }
+  } finally {
+    setLoading(false);
+    abortControllerRef.current = null;
+  }
   };
 
   const renderUploadBox = useCallback((
@@ -585,6 +616,32 @@ function App() {
                       </p>
                     </div>
                   </div>
+
+                  {hairstyles.length > 0 && (
+                    <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+                      <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900">
+                        <Scissors className="w-5 h-5 text-orange-500" />
+                        {language === 'en' ? 'Recommended Hairstyles' : '推荐发型'}
+                      </h3>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                        {hairstyles.map((style, index) => (
+                          <div key={index} className="space-y-3">
+                            <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-50 to-teal-50">
+                              <img
+                                src={style.img}
+                                alt={style.hairstyle}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <h4 className="font-medium text-gray-900">{style.hairstyle}</h4>
+                              <p className="text-sm text-gray-600">{style.reasons}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {renderOutfitResult(result.custom, t.results.custom)}
