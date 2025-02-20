@@ -391,10 +391,27 @@ function App() {
                                 hairstyles = parsedData.output;
                             } else if (parsedData.hairstyles && Array.isArray(parsedData.hairstyles)) {
                                 hairstyles = parsedData.hairstyles;
+                            } else if (typeof parsedData === 'string') {
+                                // 尝试从字符串中提取发型信息
+                                try {
+                                    const extractedData = JSON.parse(parsedData);
+                                    hairstyles = Array.isArray(extractedData) ? extractedData : 
+                                    (extractedData.output && Array.isArray(extractedData.output)) ? extractedData.output :
+                                    (extractedData.hairstyles && Array.isArray(extractedData.hairstyles)) ? extractedData.hairstyles : [];
+                                } catch (e) {
+                                    console.error('解析字符串数据失败:', e);
+                                }
                             }
-
-                            console.log('提取的发型列表:', hairstyles);
-
+                            
+                            // 确保每个发型对象都有必要的字段
+                            hairstyles = hairstyles.map(style => ({
+                                hairstyle: typeof style === 'string' ? style : style.hairstyle || '推荐发型',
+                                reasons: style.reasons || '根据您的风格特点推荐此发型',
+                                img: style.img || ''  // 这个字段会在虚拟换发后更新
+                            }));
+                            
+                            console.log('标准化后的发型列表:', hairstyles);
+                            
                             // 使用 Promise.all 并行处理每个发型的虚拟换发
                             const virtualHairstyles = await Promise.all(
                                 hairstyles.map(async (style) => {
@@ -421,7 +438,7 @@ function App() {
                                         if (tryOnData.code === 0 && tryOnData.data && tryOnData.data.output_image) {
                                             return {
                                                 ...style,
-                                                img: tryOnData.data.output_image
+                                                img: outputImage
                                             };
                                         }
                                         return null;
