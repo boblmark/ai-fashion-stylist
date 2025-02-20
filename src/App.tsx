@@ -351,6 +351,7 @@ function App() {
             // 获取发型推荐
             const getHairstyleRecommendation = async (image: string) => {
                 try {
+                    // 先获取发型推荐
                     const response = await fetch('https://api.coze.cn/v1/workflow/run', {
                         method: 'POST',
                         headers: {
@@ -370,22 +371,50 @@ function App() {
                     
                     if (responseData.code === 0 && responseData.data) {
                         try {
-                            // 修改这里的解析逻辑
                             const parsedData = typeof responseData.data === 'string' 
                                 ? JSON.parse(responseData.data) 
                                 : responseData.data;
                             
                             console.log('解析后的发型数据:', parsedData);
                             
-                            // 确保返回的是数组格式
+                            // 获取推荐的发型列表
+                            let hairstyles = [];
                             if (Array.isArray(parsedData)) {
-                                return parsedData;
+                                hairstyles = parsedData;
                             } else if (parsedData.output && Array.isArray(parsedData.output)) {
-                                return parsedData.output;
-                            } else {
-                                console.error('发型数据格式不正确:', parsedData);
-                                return [];
+                                hairstyles = parsedData.output;
                             }
+
+                            // 对每个发型进行虚拟换发
+                            const virtualHairstyles = await Promise.all(hairstyles.map(async (style) => {
+                                // 调用虚拟换发 API
+                                const tryOnResponse = await fetch('https://api.coze.cn/v1/workflow/run', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Authorization': 'Bearer pat_XCdzRC2c6K7oMcc2xVJv37KYJR311nrU8uUCPbdnAPlWKaDY9TikL2W8nnkW9cbY',
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        workflow_id: '7472218638747467818', // 虚拟换发的 workflow_id
+                                        parameters: {
+                                            input_image: image,
+                                            hairstyle: style.hairstyle
+                                        }
+                                    })
+                                });
+
+                                const tryOnData = await tryOnResponse.json();
+                                if (tryOnData.code === 0 && tryOnData.data) {
+                                    // 将虚拟换发的结果添加到发型数据中
+                                    return {
+                                        ...style,
+                                        img: tryOnData.data.output_image || style.img
+                                    };
+                                }
+                                return style;
+                            }));
+
+                            return virtualHairstyles;
                         } catch (e) {
                             console.error('解析发型数据失败:', e);
                             return [];
