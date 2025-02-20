@@ -565,12 +565,12 @@ function App() {
         title: { en: string; zh: string }
     ) => {
         const commentaryLines = outfit.commentary.split('\n').filter(line => line.trim());
-        // Fix the regular expression pattern
+        // 修复正则表达式格式
         const scorePattern = /综合评分[：:]\s*(\d+(?:\.\d+)?)\s*分/;
         const commentaryWithoutScore = commentaryLines
             .filter(line => !scorePattern.test(line))
             .join('\n');
-    
+
         return (
             <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
                 <div className="relative">
