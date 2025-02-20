@@ -860,41 +860,19 @@ function App() {
                                         <Sparkles className={`w-5 h-5 mr-2 ${loading ? 'animate-spin' : 'animate-pulse'}`} />
                                         {loading ? t.button.generating[language] : t.button.generate[language]}
                                     </button>
+                                </div>
                             </div>
-                        </div>
-                    </form>
+                        </form>
 
-                    {result && (
-                        <div className="mt-12 space-y-12">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {result && (
+                            <div className="mt-12 space-y-12">
                                 {/* 自选搭配结果 */}
                                 {renderOutfitResult(result.custom, t.results.custom)}
                                 {/* AI推荐搭配结果 */}
                                 {renderOutfitResult(result.generated, t.results.generated)}
                             </div>
-                        
-                            {/* 发型推荐部分 */}
-                            <div className="space-y-8">
-                                {/* 自选搭配发型推荐 */}
-                                <div className="bg-white rounded-xl shadow-lg p-6">
-                                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900">
-                                        <Scissors className="w-5 h-5 text-orange-500" />
-                                        {language === 'en' ? 'Hairstyles for Your Choice' : '自选搭配发型推荐'}
-                                    </h3>
-                                    {renderCustomHairstyles()}
-                                </div>
-                            
-                                {/* AI推荐搭配发型推荐 */}
-                                <div className="bg-white rounded-xl shadow-lg p-6">
-                                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900">
-                                        <Scissors className="w-5 h-5 text-orange-500" />
-                                        {language === 'en' ? 'Hairstyles for AI Recommendation' : 'AI推荐搭配发型推荐'}
-                                    </h3>
-                                    {renderGeneratedHairstyles()}
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
