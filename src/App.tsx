@@ -105,10 +105,10 @@ function App() {
     const t = {
         title: {
             en: 'MirrorMuse',
-            zh: '魅影衣橱'
+            zh: '魅影衣橱'  // 保持原有名称
         },
         subtitle: {
-            en: 'Your Personal AI Fashion Stylist',
+            en: 'AI Fashion Stylist',
             zh: 'AI时尚造型专家'
         },
         upload: {
@@ -289,37 +289,53 @@ function App() {
 
             // 获取发型推荐
             const getHairstyleRecommendation = async (image: string) => {
-                const response = await fetch('https://api.coze.cn/v1/workflow/run', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': 'Bearer pat_XCdzRC2c6K7oMcc2xVJv37KYJR311nrU8uUCPbdnAPlWKaDY9TikL2W8nnkW9cbY',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        workflow_id: '7472218638747467817',
-                        parameters: {
-                            input_image: image
+                try {
+                    const response = await fetch('https://api.coze.cn/v1/workflow/run', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer pat_XCdzRC2c6K7oMcc2xVJv37KYJR311nrU8uUCPbdnAPlWKaDY9TikL2W8nnkW9cbY',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            workflow_id: '7472218638747467817',
+                            parameters: {
+                                input_image: image
+                            }
+                        })
+                    });
+                
+                    const responseData = await response.json();
+                    console.log('发型推荐 API 响应:', responseData); // 添加日志
+                    
+                    if (responseData.code === 0 && responseData.data) {
+                        try {
+                            const parsedData = JSON.parse(responseData.data);
+                            console.log('解析后的发型数据:', parsedData); // 添加日志
+                            return Array.isArray(parsedData.output) ? parsedData.output : [];
+                        } catch (e) {
+                            console.error('解析发型数据失败:', e);
+                            return [];
                         }
-                    })
-                });
-
-                const responseData = await response.json();
-                if (responseData.code === 0) {
-                    const parsedData = JSON.parse(responseData.data);
-                    return parsedData.output;
+                    }
+                    return [];
+                } catch (e) {
+                    console.error('获取发型推荐失败:', e);
+                    return [];
                 }
-                return [];
             };
-
+            
             // 并行获取两种搭配的发型推荐
             const [customHairstyles, generatedHairstyles] = await Promise.all([
                 getHairstyleRecommendation(data.custom.tryOnUrl),
                 getHairstyleRecommendation(data.generated.tryOnUrl)
             ]);
 
+            console.log('自选搭配发型:', customHairstyles); // 添加日志
+            console.log('AI推荐搭配发型:', generatedHairstyles); // 添加日志
+
             setHairstyles({
-                custom: customHairstyles,
-                generated: generatedHairstyles
+                custom: Array.isArray(customHairstyles) ? customHairstyles : [],
+                generated: Array.isArray(generatedHairstyles) ? generatedHairstyles : []
             });
 
 
@@ -545,9 +561,15 @@ function App() {
     }, [loading, progress]);
 
     return (
-        <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-orange-100 via-gray-50 to-teal-50 animate-gradient-xy">
+        <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-orange-100 via-gray-50 to-teal-50 animate-gradient-xy relative">
+            {/* 添加动态背景效果 */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute inset-0 bg-[url('/bg-pattern.svg')] opacity-5 animate-slide"></div>
+                <div className="absolute -inset-[100%] bg-gradient-conic from-orange-500/30 via-teal-500/30 to-orange-500/30 animate-spin-slow blur-3xl"></div>
+            </div>
+
             {renderProgressBar()}
-            <div className="max-w-5xl mx-auto">
+            <div className="max-w-5xl mx-auto relative z-10">
                 <div className="relative backdrop-blur-sm bg-white/80 rounded-3xl shadow-2xl overflow-hidden border border-white/20">
                     <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-teal-500/10 animate-pulse"></div>
                     <div className="relative px-6 py-8 sm:p-10">
@@ -555,9 +577,9 @@ function App() {
                             <div className="w-32 h-32 relative animate-float">
                                 <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-teal-500/20 rounded-full animate-pulse"></div>
                                 <img
-                                    src="/logo.svg"
+                                    src="/mirrormuse-logo.png"  // 更新为你的 logo 文件名
                                     alt="MirrorMuse - AI Fashion Stylist"
-                                    className="w-full h-full object-contain animate-spin-slow"
+                                    className="w-full h-full object-contain"  // 移除了 animate-spin-slow
                                 />
                             </div>
                         </div>
