@@ -435,7 +435,7 @@ function App() {
 
     const renderCustomHairstyles = useCallback(() => {
         if (hairstyles.custom.length === 0) {
-            return <p>没有找到适合自选搭配的发型推荐。</p>;
+            return <p>{language === 'en' ? 'No hairstyle recommendations found for your selected outfit.' : '没有找到适合自选搭配的发型推荐。'}</p>;
         }
 
         return (
@@ -457,13 +457,11 @@ function App() {
                 ))}
             </div>
         );
-    }, [hairstyles.custom]);
+    }, [hairstyles.custom, language]);
 
     const renderGeneratedHairstyles = useCallback(() => {
-        console.log('Generated hairstyles:', hairstyles.generated); // 添加这行调试代码
-        
         if (hairstyles.generated.length === 0) {
-            return <p>没有找到适合 AI 搭配的发型推荐。</p>;
+            return <p>{language === 'en' ? 'No hairstyle recommendations found for AI-generated outfit.' : '没有找到适合 AI 搭配的发型推荐。'}</p>;
         }
 
         return (
@@ -485,7 +483,7 @@ function App() {
                 ))}
             </div>
         );
-    }, [hairstyles.generated]);
+    }, [hairstyles.generated, language]);
 
     const renderUploadBox = useCallback((
         preview: UploadPreview | null,
