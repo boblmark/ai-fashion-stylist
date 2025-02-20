@@ -765,12 +765,12 @@ function App() {
                                         onChange={handleInputChange}
                                         className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
                                     >
-                                        {STYLE_PREFERENCES.map((style) =>
+                                        {STYLE_PREFERENCES.map((style) => (
                                             <option key={style.zh} value={style.zh}>
-                                            {language === 'en' ? style.en : style.zh}
-                                        </option>
-                                    ))}
-                                </select>
+                                                {language === 'en' ? style.en : style.zh}
+                                            </option>
+                                        ))}
+                                    </select>
                             </div>
 
                             <div>
@@ -851,4 +851,4 @@ function App() {
 );
 }
 
-export default App;                                       
+export default App;
