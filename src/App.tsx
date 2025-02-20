@@ -565,7 +565,7 @@ function App() {
         title: { en: string; zh: string }
     ) => {
         const commentaryLines = outfit.commentary.split('\n').filter(line => line.trim());
-        // Fixed regular expression pattern
+        // Fix the regular expression pattern
         const scorePattern = /综合评分[：:]\s*(\d+(?:\.\d+)?)\s*分/;
         const commentaryWithoutScore = commentaryLines
             .filter(line => !scorePattern.test(line))
