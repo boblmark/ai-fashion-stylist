@@ -560,14 +560,27 @@ function App() {
         );
     }, [loading, progress]);
 
+    // 添加语言切换按钮
+    const renderLanguageSwitch = useCallback(() => (
+        <button
+            onClick={() => setLanguage(prev => prev === 'zh' ? 'en' : 'zh')}
+            className="fixed top-4 right-4 z-50 px-4 py-2 rounded-full bg-white/80 backdrop-blur-sm border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300 group"
+        >
+            <span className="text-sm font-medium bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
+                {language === 'zh' ? 'English' : '中文'}
+            </span>
+        </button>
+    ), [language]);
+
     return (
         <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-orange-100 via-gray-50 to-teal-50 animate-gradient-xy relative">
+            {renderLanguageSwitch()} {/* 添加语言切换按钮 */}
             {/* 添加动态背景效果 */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute inset-0 bg-[url('/bg-pattern.svg')] opacity-5 animate-slide"></div>
                 <div className="absolute -inset-[100%] bg-gradient-conic from-orange-500/30 via-teal-500/30 to-orange-500/30 animate-spin-slow blur-3xl"></div>
             </div>
-
+            
             {renderProgressBar()}
             <div className="max-w-5xl mx-auto relative z-10">
                 <div className="relative backdrop-blur-sm bg-white/80 rounded-3xl shadow-2xl overflow-hidden border border-white/20">
