@@ -38,3 +38,26 @@ module.exports = {
   ],
 }
 ```
+```
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {
+      animation: {
+        'gradient-xy': 'gradient-xy 15s ease infinite',
+        'float': 'float 6s ease-in-out infinite',
+        'slide': 'slide 20s linear infinite',
+        'spin-slow': 'spin 30s linear infinite',
+        'fade-in': 'fadeIn 0.5s ease-out',
+      },
+      backgroundImage: {
+        'gradient-conic': 'conic-gradient(var(--tw-gradient-stops))',
+      },
+    },
+  },
+  plugins: [],
+}
