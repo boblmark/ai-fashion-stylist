@@ -164,11 +164,17 @@
     75% { transform: translate(-80px, 80px) rotate(270deg); }
 }
 
-.fashion-element-0 { animation: float-element-0 20s infinite; }
-.fashion-element-1 { animation: float-element-1 25s infinite; }
-.fashion-element-2 { animation: float-element-2 30s infinite; }
-.fashion-element-3 { animation: float-element-3 35s infinite; }
-.fashion-element-4 { animation: float-element-4 40s infinite; }
+/* 时尚元素动画 */
+.fashion-element {
+    opacity: 0.2;
+    transition: all 0.3s ease;
+}
+
+.fashion-element-0 { animation: float-element-0 20s infinite; animation-delay: 0s; }
+.fashion-element-1 { animation: float-element-1 25s infinite; animation-delay: 2s; }
+.fashion-element-2 { animation: float-element-2 30s infinite; animation-delay: 4s; }
+.fashion-element-3 { animation: float-element-3 35s infinite; animation-delay: 6s; }
+.fashion-element-4 { animation: float-element-4 40s infinite; animation-delay: 8s; }
 
 /* 添加随机延迟 */
 @for $i from 0 through 19 {
