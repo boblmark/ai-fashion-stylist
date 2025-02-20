@@ -849,21 +849,21 @@ function App() {
                                             </option>
                                         ))}
                                     </select>
-                            </div>
+                                </div>  {/* 修复这里的闭合标签 */}
 
-                            <div>
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className={`w-full flex items-center justify-center py-3 px-4 rounded-lg text-sm font-semibold text-white transition-all duration-200 ${
-                                        loading
-                                            ? 'bg-gray-400 cursor-not-allowed'
-                                            : 'bg-gradient-to-r from-orange-600 to-teal-600 hover:from-orange-500 hover:to-teal-500 transform hover:scale-[1.02]'
-                                    }`}
-                                >
-                                    <Sparkles className={`w-5 h-5 mr-2 ${loading ? 'animate-spin' : 'animate-pulse'}`} />
-                                    {loading ? t.button.generating[language] : t.button.generate[language]}
-                                </button>
+                                <div>
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className={`w-full flex items-center justify-center py-3 px-4 rounded-lg text-sm font-semibold text-white transition-all duration-200 ${
+                                            loading
+                                                ? 'bg-gray-400 cursor-not-allowed'
+                                                : 'bg-gradient-to-r from-orange-600 to-teal-600 hover:from-orange-500 hover:to-teal-500 transform hover:scale-[1.02]'
+                                        }`}
+                                    >
+                                        <Sparkles className={`w-5 h-5 mr-2 ${loading ? 'animate-spin' : 'animate-pulse'}`} />
+                                        {loading ? t.button.generating[language] : t.button.generate[language]}
+                                    </button>
                             </div>
                         </div>
                     </form>
