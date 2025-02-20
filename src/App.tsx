@@ -455,9 +455,25 @@ function App() {
             console.log('自选搭配发型:', customHairstyles); // 添加日志
             console.log('AI推荐搭配发型:', generatedHairstyles); // 添加日志
 
+            // 修改这里的数据设置逻辑
+            const processedCustomHairstyles = Array.isArray(customHairstyles) ? customHairstyles.map(style => ({
+                hairstyle: style.hairstyle,
+                reasons: style.reasons || '适合您的个人风格',
+                img: style.img
+            })) : [];
+
+            const processedGeneratedHairstyles = Array.isArray(generatedHairstyles) ? generatedHairstyles.map(style => ({
+                hairstyle: style.hairstyle,
+                reasons: style.reasons || '符合AI推荐的整体造型',
+                img: style.img
+            })) : [];
+
+            console.log('处理后的自选搭配发型:', processedCustomHairstyles);
+            console.log('处理后的AI推荐发型:', processedGeneratedHairstyles);
+
             setHairstyles({
-                custom: Array.isArray(customHairstyles) ? customHairstyles : [],
-                generated: Array.isArray(generatedHairstyles) ? generatedHairstyles : []
+                custom: processedCustomHairstyles,
+                generated: processedGeneratedHairstyles
             });
 
 
