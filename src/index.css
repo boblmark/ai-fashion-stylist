@@ -176,9 +176,14 @@
 .fashion-element-3 { animation: float-element-3 35s infinite; animation-delay: 6s; }
 .fashion-element-4 { animation: float-element-4 40s infinite; animation-delay: 8s; }
 
-/* 添加随机延迟 */
-@for $i from 0 through 19 {
-    .fashion-element-#{$i} {
-        animation-delay: #{random(10)}s;
-    }
-}
+/* 删除 @for 循环部分，改用固定的延迟类 */
+.fashion-delay-0 { animation-delay: 0s; }
+.fashion-delay-1 { animation-delay: 1s; }
+.fashion-delay-2 { animation-delay: 2s; }
+.fashion-delay-3 { animation-delay: 3s; }
+.fashion-delay-4 { animation-delay: 4s; }
+.fashion-delay-5 { animation-delay: 5s; }
+.fashion-delay-6 { animation-delay: 6s; }
+.fashion-delay-7 { animation-delay: 7s; }
+.fashion-delay-8 { animation-delay: 8s; }
+.fashion-delay-9 { animation-delay: 9s; }
