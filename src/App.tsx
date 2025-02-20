@@ -366,13 +366,26 @@ function App() {
                     });
                 
                     const responseData = await response.json();
-                    console.log('发型推荐 API 响应:', responseData); // 添加日志
+                    console.log('发型推荐 API 响应:', responseData);
                     
                     if (responseData.code === 0 && responseData.data) {
                         try {
-                            const parsedData = JSON.parse(responseData.data);
-                            console.log('解析后的发型数据:', parsedData); // 添加日志
-                            return Array.isArray(parsedData.output) ? parsedData.output : [];
+                            // 修改这里的解析逻辑
+                            const parsedData = typeof responseData.data === 'string' 
+                                ? JSON.parse(responseData.data) 
+                                : responseData.data;
+                            
+                            console.log('解析后的发型数据:', parsedData);
+                            
+                            // 确保返回的是数组格式
+                            if (Array.isArray(parsedData)) {
+                                return parsedData;
+                            } else if (parsedData.output && Array.isArray(parsedData.output)) {
+                                return parsedData.output;
+                            } else {
+                                console.error('发型数据格式不正确:', parsedData);
+                                return [];
+                            }
                         } catch (e) {
                             console.error('解析发型数据失败:', e);
                             return [];
@@ -429,17 +442,17 @@ function App() {
             <div className="grid grid-cols-2 gap-4">
                 {hairstyles.custom.map((style, index) => (
                     <div key={index} className="space-y-3">
-                        <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-50 to-teal-50">
-                            <img
-                                src={style.img}
-                                alt={style.hairstyle}
-                                className="w-full h-full object-cover"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <h4 className="font-medium text-gray-900">{style.hairstyle}</h4>
-                            <p className="text-sm text-gray-600">{style.reasons}</p>
-                        </div>
+                        <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-500/10 to-teal-500/10 mix-blend-overlay"></div>
+                        <h3 className="text-lg font-semibold p-4 bg-gradient-to-r from-orange-500 to-teal-500 text-white flex items-center justify-between">
+                            <span className="flex items-center gap-2">
+                                <Palette className="w-5 h-5" />
+                                {title[language]}
+                            </span>
+                            <div className="flex items-center gap-1 bg-white/20 px-3 py-1 rounded-full">
+                                <Star className="w-4 h-4" />
+                                <span className="font-bold">{outfit.score}</span>
+                            </div>
+                        </h3>
                     </div>
                 ))}
             </div>
@@ -447,6 +460,8 @@ function App() {
     }, [hairstyles.custom]);
 
     const renderGeneratedHairstyles = useCallback(() => {
+        console.log('Generated hairstyles:', hairstyles.generated); // 添加这行调试代码
+        
         if (hairstyles.generated.length === 0) {
             return <p>没有找到适合 AI 搭配的发型推荐。</p>;
         }
@@ -455,17 +470,17 @@ function App() {
             <div className="grid grid-cols-2 gap-4">
                 {hairstyles.generated.map((style, index) => (
                     <div key={index} className="space-y-3">
-                        <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-50 to-teal-50">
-                            <img
-                                src={style.img}
-                                alt={style.hairstyle}
-                                className="w-full h-full object-cover"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <h4 className="font-medium text-gray-900">{style.hairstyle}</h4>
-                            <p className="text-sm text-gray-600">{style.reasons}</p>
-                        </div>
+                        <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-500/10 to-teal-500/10 mix-blend-overlay"></div>
+                        <h3 className="text-lg font-semibold p-4 bg-gradient-to-r from-orange-500 to-teal-500 text-white flex items-center justify-between">
+                            <span className="flex items-center gap-2">
+                                <Palette className="w-5 h-5" />
+                                {title[language]}
+                            </span>
+                            <div className="flex items-center gap-1 bg-white/20 px-3 py-1 rounded-full">
+                                <Star className="w-4 h-4" />
+                                <span className="font-bold">{outfit.score}</span>
+                            </div>
+                        </h3>
                     </div>
                 ))}
             </div>
@@ -651,9 +666,9 @@ function App() {
                             <div className="w-32 h-32 relative animate-float">
                                 <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-teal-500/20 rounded-full animate-pulse"></div>
                                 <img
-                                    src="/mirrormuse-logo.png"  // 更新为你的 logo 文件名
+                                    src="/mirrormuse-logo.jpg"  // 修改为正确的文件扩展名
                                     alt="MirrorMuse - AI Fashion Stylist"
-                                    className="w-full h-full object-contain"  // 移除了 animate-spin-slow
+                                    className="w-full h-full object-contain"
                                 />
                             </div>
                         </div>
