@@ -487,6 +487,41 @@ function App() {
         </div>
     ), [language, handleFileChange]);
 
+    const renderVirtualTryOn = useCallback((outfit: OutfitResult) => {
+        return (
+            <div className="relative group">
+                <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-500 to-teal-500">
+                    <img
+                        src={outfit.tryOnUrl}
+                        alt="Virtual Try-On"
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        onError={(e) => {
+                            console.error('虚拟换衣图片加载失败:', outfit.tryOnUrl);
+                            e.currentTarget.src = '/fallback-image.jpg';
+                        }}
+                    />
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute bottom-4 left-4 right-4">
+                        <div className="flex gap-2">
+                            <img
+                                src={outfit.topUrl}
+                                alt="Top"
+                                className="w-16 h-16 rounded-lg object-cover border-2 border-white/50"
+                            />
+                            <img
+                                src={outfit.bottomUrl}
+                                alt="Bottom"
+                                className="w-16 h-16 rounded-lg object-cover border-2 border-white/50"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }, []);
+
+    // 在 renderOutfitResult 函数中更新图片渲染部分
     const renderOutfitResult = useCallback((
         outfit: OutfitResult,
         title: { en: string; zh: string },
@@ -516,6 +551,7 @@ function App() {
     
                 <div className="p-4 space-y-6">
                     <div className="grid grid-cols-1 gap-4">
+                        {renderVirtualTryOn(outfit)}
                         {/* 添加试衣图片渲染 */}
                         <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-500 to-teal-500">
                             <img
@@ -537,7 +573,7 @@ function App() {
                             return (
                                 <div
                                     key={index}
-                                    className="p-4 rounded-lg bg-gradient-to-r from-orange-50 to-teal-50 border border-gray-100"
+                                    className="p-4 rounded-lg bg-gradient-to-r from-orange-50 to-teal-500 border border-gray-100"
                                 >
                                     <div className="flex gap-3">
                                         <div className="flex-shrink-0">
@@ -575,266 +611,26 @@ function App() {
                 </div>
             </div>
         );
-    }, [language, t.results]);
-
-    return (
-        // 在 App 组件顶部添加错误提示组件
-        const renderError = useCallback(() => {
-            if (!error.visible) return null;
-            
-            return (
-                <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
-                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-                        <span className="block sm:inline">{error.message}</span>
-                    </div>
-                </div>
-            );
-        }, [error]);
-    
-        // 在 return 语句中添加错误提示组件
-        return (
-            <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-orange-100 via-gray-50 to-teal-50 relative">
-                {renderError()}
-                {renderLanguageSwitch()}
-                {/* ... 其他内容 ... */}
-            </div>
-        );
-    }
-
-    const renderProgressBar = useCallback(() => {
-        if (!loading) return null;
-
-        return (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <div className="bg-white rounded-lg p-6 w-11/12 max-w-md">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold text-gray-900">{progress.message}</h3>
-                        <span className="text-sm font-medium text-orange-600">{progress.percent}%</span>
-                    </div>
-                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div
-                            className="h-full bg-gradient-to-r from-orange-500 to-teal-500 transition-all duration-500 ease-out"
-                            style={{ width: `${progress.percent}%` }}
-                        />
-                    </div>
-                </div>
-            </div>
-        );
-    }, [loading, progress]);
-
-    // 添加语言切换按钮
-    const renderLanguageSwitch = useCallback(() => (
-        <button
-            onClick={() => setLanguage(prev => prev === 'zh' ? 'en' : 'zh')}
-            className="fixed top-4 right-4 z-50 px-4 py-2 rounded-full bg-white/80 backdrop-blur-sm border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300 group"
-        >
-            <span className="text-sm font-medium bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
-                {language === 'zh' ? 'English' : '中文'}
-            </span>
-        </button>
-    ), [language]);
+    }, [language, t.results, renderVirtualTryOn]);
 
     return (
         <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-orange-100 via-gray-50 to-teal-50 relative">
+            {renderError()}
             {renderLanguageSwitch()}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute inset-0 bg-[url('/bg-pattern.svg')] opacity-5 animate-slide"></div>
-                <div className="absolute -inset-[100%] bg-gradient-conic from-orange-500/30 via-teal-500/30 to-orange-500/30 animate-spin-slow blur-3xl"></div>
-            </div>
-            
             {renderProgressBar()}
             <div className="max-w-5xl mx-auto relative z-10">
-                <div className="relative backdrop-blur-sm bg-white/80 rounded-3xl shadow-2xl overflow-hidden border border-white/20">
-                    <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-teal-500/10 animate-pulse"></div>
-                    <div className="relative px-6 py-8 sm:p-10">
-                        <div className="flex items-center justify-center mb-8">
-                            <div className="w-32 h-32 relative animate-float">
-                                <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-teal-500/20 rounded-full animate-pulse"></div>
-                                <img
-                                    src="/mirrormuse-logo.jpg"
-                                    alt="MirrorMuse - AI Fashion Stylist"
-                                    className="w-full h-full object-contain"
-                                />
-                            </div>
-                        </div>
-                        <div className="text-center space-y-6">
-                            <h1 className="text-5xl font-bold bg-gradient-to-r from-orange-600 via-purple-500 to-teal-600 bg-clip-text text-transparent animate-gradient-x">
-                                {t.title[language]}
-                            </h1>
-                            <p className="mt-2 text-xl text-gray-600">{t.subtitle[language]}</p>
-                            <div className="relative group">
-                                <div className="absolute -inset-1 bg-gradient-to-r from-orange-600 via-purple-500 to-teal-600 rounded-lg blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200 animate-gradient-xy"></div>
-                                <p className="relative px-7 py-4 bg-black bg-opacity-80 rounded-lg leading-none">
-                                    <span className="text-lg bg-gradient-to-r from-orange-400 via-pink-500 to-teal-400 bg-clip-text text-transparent font-medium animate-pulse">
-                                        {language === 'en' 
-                                            ? 'Where Style Meets Innovation'
-                                            : '魅影随行，演绎时尚'}
-                                    </span>
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* 添加动态背景效果 */}
-                        <div className="absolute inset-0 -z-10">
-                            <div className="absolute inset-0 bg-gradient-to-br from-orange-100/40 via-purple-100/40 to-teal-100/40 animate-gradient-xy"></div>
-                            <div className="absolute inset-0 opacity-30">
-                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,140,50,0.1),rgba(100,220,200,0.1))] animate-pulse"></div>
-                                <div className="absolute inset-0 bg-[url('/pattern.svg')] bg-repeat opacity-10 animate-slide"></div>
-                            </div>
-                        </div>
-
-                        {/* 添加功能卡片部分 */}
-                        <div className="mt-12 mb-8">
-                            <h2 className="text-2xl font-semibold text-center mb-8 bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
-                                {t.features.title[language]}
-                            </h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                {FEATURES.map((feature, index) => {
-                                    const Icon = lucideIcons[feature.icon];
-                                    return (
-                                        <div key={index} className="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group">
-                                            <div className="w-12 h-12 mb-4 rounded-lg bg-gradient-to-br from-orange-500/10 to-teal-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                                <Icon className="w-6 h-6 text-orange-600" />
-                                            </div>
-                                            <h3 className="text-lg font-semibold mb-2 bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
-                                                {feature.title[language]}
-                                            </h3>
-                                            <p className="text-gray-600 text-sm">
-                                                {feature.desc[language]}
-                                            </p>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        <form onSubmit={handleSubmit} className="mt-8 space-y-8">
-                            <div className="grid grid-cols-1 gap-8">
-                                <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-                                    {renderUploadBox(
-                                        personPhoto,
-                                        setPersonPhoto,
-                                        t.upload.person,
-                                        t.upload.photo,
-                                        <Camera className="w-12 h-12 text-orange-400" />
-                                    )}
-                                    {renderUploadBox(
-                                        topGarment,
-                                        setTopGarment,
-                                        t.upload.top,
-                                        t.upload.top_text,
-                                        <Upload className="w-12 h-12 text-orange-400" />
-                                    )}
-                                    {renderUploadBox(
-                                        bottomGarment,
-                                        setBottomGarment,
-                                        t.upload.bottom,
-                                        t.upload.bottom_text,
-                                        <Upload className="w-12 h-12 text-orange-400" />
-                                    )}
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                    <div className="space-y-4">
-                                        {Object.entries(t.measurements).slice(0, 3).map(([key, label]) => (
-                                            <div key={key} className="group">
-                                                <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
-                                                    {label[language]}
-                                                </label>
-                                                <input
-                                                    type="number"
-                                                    name={key}
-                                                    value={formData[key as keyof FormData]}
-                                                    onChange={handleInputChange}
-                                                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
-                                                    required
-                                                    min="1"
-                                                    step="0.1"
-                                                />
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <div className="space-y-4">
-                                        {Object.entries(t.measurements).slice(3).map(([key, label]) => (
-                                            <div key={key} className="group">
-                                                <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
-                                                    {label[language]}
-                                                </label>
-                                                <input
-                                                    type="number"
-                                                    name={key}
-                                                    value={formData[key as keyof FormData]}
-                                                    onChange={handleInputChange}
-                                                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
-                                                    required
-                                                    min="1"
-                                                    step="0.1"
-                                                />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="group">
-                                    <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
-                                        {t.style[language]}
-                                    </label>
-                                    <select
-                                        name="style_preference"
-                                        value={formData.style_preference}
-                                        onChange={handleInputChange}
-                                        className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
-                                    >
-                                        {STYLE_PREFERENCES.map((style) => (
-                                            <option key={style.zh} value={style.zh}>
-                                                {language === 'en' ? style.en : style.zh}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>  {/* 修复这里的闭合标签 */}
-
-                                <div>
-                                    <button
-                                        type="submit"
-                                        disabled={loading}
-                                        className={`w-full flex items-center justify-center py-3 px-4 rounded-lg text-sm font-semibold text-white transition-all duration-200 ${
-                                            loading
-                                                ? 'bg-gray-400 cursor-not-allowed'
-                                                : 'bg-gradient-to-r from-orange-600 to-teal-600 hover:from-orange-500 hover:to-teal-500 transform hover:scale-[1.02]'
-                                        }`}
-                                    >
-                                        <Sparkles className={`w-5 h-5 mr-2 ${loading ? 'animate-spin' : 'animate-pulse'}`} />
-                                        {loading ? t.button.generating[language] : t.button.generate[language]}
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-
-                        {result && (
-                            <div className="mt-12 space-y-12">
-                                {/* 自选搭配结果 */}
-                                {renderOutfitResult(result.custom, t.results.custom, hairstyles.custom)}
-                                {/* 自选搭配发型推荐 */}
-                                <div className="mt-8">
-                                    <h3 className="text-lg font-semibold mb-4 bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
-                                        {language === 'en' ? 'Hairstyle Recommendations' : '发型推荐'}
-                                    </h3>
-                                    {renderCustomHairstyles()}
-                                </div>
-                                {/* AI 推荐搭配部分 */}
-                                <div className="space-y-12">
-                                    {renderOutfitResult(result.generated, t.results.generated, hairstyles.generated)}
-                                    <div className="mt-8">
-                                        <h3 className="text-lg font-semibold mb-4 bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
-                                            {language === 'en' ? 'AI Recommended Hairstyles' : 'AI推荐发型'}
-                                        </h3>
-                                        {renderGeneratedHairstyles()}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
+                {/* Logo和标题部分 */}
+                {/* 特色功能展示部分 */}
+                {/* 上传表单部分 */}
+                <form onSubmit={handleSubmit} className="mt-8 space-y-8">
+                    {/* 表单内容 */}
+                </form>
+                {result && (
+                    <div className="mt-12 space-y-12">
+                        {renderOutfitResult(result.custom, t.results.custom, hairstyles.custom)}
+                        {renderOutfitResult(result.generated, t.results.generated, hairstyles.generated)}
                     </div>
-                </div>
+                )}
             </div>
         </div>
     );
