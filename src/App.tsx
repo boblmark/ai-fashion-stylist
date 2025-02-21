@@ -707,10 +707,30 @@ function App() {
 
                 <form onSubmit={handleSubmit} className="mt-8 space-y-8">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {/* 现有的上传框 */}
+                        {renderUploadBox(
+                            personPhoto,
+                            setPersonPhoto,
+                            t.upload.person,
+                            t.upload.photo,
+                            <Camera className="w-8 h-8 text-gray-400" />
+                        )}
+                        {renderUploadBox(
+                            topGarment,
+                            setTopGarment,
+                            t.upload.top,
+                            t.upload.top_text,
+                            <Upload className="w-8 h-8 text-gray-400" />
+                        )}
+                        {renderUploadBox(
+                            bottomGarment,
+                            setBottomGarment,
+                            t.upload.bottom,
+                            t.upload.bottom_text,
+                            <Upload className="w-8 h-8 text-gray-400" />
+                        )}
                     </div>
                     
-                    {/* 添加身材数据和风格偏好卡片 */}
+                    {/* 其他表单内容 */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="bg-white rounded-xl p-6 shadow-lg">
                             <h3 className="text-lg font-medium mb-4 bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
