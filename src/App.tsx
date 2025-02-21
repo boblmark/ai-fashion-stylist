@@ -372,7 +372,7 @@ function App() {
                         body: JSON.stringify({
                             workflow_id: '7472218638747467817',
                             parameters: {
-                                input_image: image.replace('http:', 'https:') // 确保使用 HTTPS
+                                input_image: image.replace('http:', 'https:')
                             }
                         })
                     });
@@ -382,7 +382,6 @@ function App() {
                     
                     if (responseData.code === 0 && responseData.data) {
                         try {
-                            // 处理返回的数据结构
                             let parsedData;
                             if (typeof responseData.data === 'string') {
                                 parsedData = JSON.parse(responseData.data);
@@ -395,17 +394,29 @@ function App() {
                             
                             console.log('解析后的发型列表:', hairstyles);
                             
-                            return hairstyles.map(style => ({
-                                hairstyle: {
-                                    en: style.hairstyle_en || '',
-                                    zh: style.hairstyle_zh || ''
-                                },
-                                reasons: {
-                                    en: style.reasons_en || '',
-                                    zh: style.reasons_zh || ''
-                                },
-                                img: (style.img || '').replace('http:', 'https:')
-                            }));
+                            // 添加数据验证和默认值
+                            return hairstyles.map(style => {
+                                // 确保每个字段都有默认值
+                                const defaultStyle = {
+                                    hairstyle_en: 'Default Hairstyle',
+                                    hairstyle_zh: '默认发型',
+                                    reasons_en: 'No reason provided',
+                                    reasons_zh: '暂无推荐理由',
+                                    img: '/fallback-image.jpg'
+                                };
+                            
+                                return {
+                                    hairstyle: {
+                                        en: style.hairstyle_en || defaultStyle.hairstyle_en,
+                                        zh: style.hairstyle_zh || defaultStyle.hairstyle_zh
+                                    },
+                                    reasons: {
+                                        en: style.reasons_en || defaultStyle.reasons_en,
+                                        zh: style.reasons_zh || defaultStyle.reasons_zh
+                                    },
+                                    img: (style.img || defaultStyle.img).replace('http:', 'https:')
+                                };
+                            });
                         } catch (e) {
                             console.error('解析发型数据失败:', e);
                             return [];
@@ -497,13 +508,17 @@ function App() {
                         <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-500 to-teal-500">
                             <img
                                 src={style.img}
-                                alt={style.hairstyle}
+                                alt={style.hairstyle[language]} // 修改这里
                                 className="w-full h-full object-cover"
+                                onError={(e) => {  // 添加错误处理
+                                    console.error('发型图片加载失败:', style.img);
+                                    e.currentTarget.src = '/fallback-image.jpg';
+                                }}
                             />
                         </div>
                         <div className="space-y-2">
-                            <h4 className="font-medium text-gray-900">{style.hairstyle}</h4>
-                            <p className="text-sm text-gray-600">{style.reasons}</p>
+                            <h4 className="font-medium text-gray-900">{style.hairstyle[language]}</h4>
+                            <p className="text-sm text-gray-600">{style.reasons[language]}</p>
                         </div>
                     </div>
                 ))}
