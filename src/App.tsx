@@ -497,87 +497,8 @@ function App() {
         );
     }, [hairstyles.custom, language]);
 
-    const renderOutfitResult = useCallback((
-        outfit: OutfitResult,
-        title: { en: string; zh: string },
-        hairstyles: HairStyle[]
-    ) => {
-        if (!outfit || !outfit.commentary) {
-            return null;
-        }
-
-        const commentary = outfit.commentary[language] || '';
-        const commentaryLines = commentary.split('\n').filter(line => line.trim());
-        const scorePattern = /(\d+(?:\.\d+)?)\s*分/;
-        const score = outfit.score || 8;
-        
-        return (
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
-                <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-teal-500/10 mix-blend-overlay"></div>
-                    <h3 className="text-lg font-semibold p-4 bg-gradient-to-r from-orange-500 to-teal-500 text-white flex items-center justify-between">
-                        <span className="flex items-center gap-2">
-                            <Palette className="w-5 h-5" />
-                            {title[language]}
-                        </span>
-                        <div className="flex items-center gap-1 bg-white/20 px-3 py-1 rounded-full">
-                            <Star className="w-4 h-4" />
-                            <span className="font-bold">{score}</span>
-                        </div>
-                    </h3>
-                </div>
-
-                <div className="p-4 space-y-6">
-                    <div className="grid grid-cols-1 gap-4">
-                        {commentaryLines.map((line, index) => {
-                            if (scorePattern.test(line)) return null;
-
-                            const icons = [ThumbsUp, Star, Scale, Palette];
-                            const Icon = icons[index % icons.length];
-
-                            return (
-                                <div
-                                    key={index}
-                                    className="p-4 rounded-lg bg-gradient-to-r from-orange-50 to-teal-50 border border-gray-100"
-                                >
-                                    <div className="flex gap-3">
-                                        <div className="flex-shrink-0">
-                                            <Icon className="w-5 h-5 text-orange-500" />
-                                        </div>
-                                        <p className="text-sm text-gray-700 leading-relaxed">
-                                            {line}
-                                        </p>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-
-                    <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-orange-500 to-teal-500 text-white">
-                        <div className="flex items-center justify-between">
-                            <span className="font-medium">{t.results.score[language]}</span>
-                            <div className="flex items-center gap-2">
-                                <div className="flex">
-                                    {[1, 2, 3, 4, 5].map((star) => (
-                                        <Star
-                                            key={star}
-                                            className={`w-4 h-4 ${
-                                                star <= score / 2
-                                                    ? 'fill-white'
-                                                    : 'fill-white/30'
-                                            }`}
-                                        />
-                                    ))}
-                                </div>
-                                <span className="font-bold text-xl">{score}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-    }, [language, t.results]);
-
+    // 删除第一个 renderOutfitResult 函数定义
+    
     const renderGeneratedHairstyles = useCallback(() => {
         console.log('Generated hairstyles:', hairstyles.generated);
         
