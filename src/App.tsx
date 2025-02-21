@@ -432,7 +432,7 @@ function App() {
     };
 
     const renderCustomHairstyles = useCallback(() => {
-        if (hairstyles.custom.length === 0) {
+        if (!hairstyles.custom || hairstyles.custom.length === 0) {
             return <p>{language === 'en' ? 'No hairstyle recommendations found for your selected outfit.' : '没有找到适合自选搭配的发型推荐。'}</p>;
         }
 
@@ -445,6 +445,10 @@ function App() {
                                 src={style.img}
                                 alt={style.hairstyle}
                                 className="w-full h-full object-cover"
+                                onError={(e) => {
+                                    console.error('发型图片加载失败:', style.img);
+                                    e.currentTarget.src = '/fallback-image.jpg'; // 添加一个默认图片
+                                }}
                             />
                         </div>
                         <div className="space-y-2">
