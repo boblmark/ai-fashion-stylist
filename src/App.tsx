@@ -325,7 +325,10 @@ function App() {
                 body: formDataToSend,
                 signal: abortControllerRef.current.signal,
                 credentials: 'include',
-                mode: 'cors'
+                mode: 'cors',
+                headers: {
+                    'Access-Control-Allow-Origin': '*'
+                }
             });
 
             if (!response.ok) {
@@ -566,7 +569,9 @@ function App() {
         title: { en: string; zh: string },
         hairstyles: HairStyle[]
     ) => {
-        const commentaryLines = outfit.commentary[language].split('\n').filter(line => line.trim());
+        // 添加空值检查
+        const commentary = outfit.commentary?.[language] || '';
+        const commentaryLines = commentary.split('\n').filter(line => line.trim());
         const scorePattern = /(\d+(?:\.\d+)?)\s*分/;
         const score = outfit.score || 8; // 默认分数为8
         
