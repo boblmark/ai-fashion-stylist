@@ -326,9 +326,7 @@ function App() {
                 signal: abortControllerRef.current.signal,
                 credentials: 'include',
                 mode: 'cors',
-                headers: {
-                    'Access-Control-Allow-Origin': '*'
-                }
+                // 删除 Access-Control-Allow-Origin 头部，这个应该由后端设置
             });
 
             if (!response.ok) {
