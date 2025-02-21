@@ -537,11 +537,9 @@ function App() {
         hairstyles: HairStyle[]
     ) => {
         const commentaryLines = outfit.commentary.split('\n').filter(line => line.trim());
-        const scorePattern = /综合评分[：:]\s*(\d+(?:\.\d+)?)\s*分/;
-        const commentaryWithoutScore = commentaryLines
-            .filter(line => !scorePattern.test(line))
-            .join('\n');
-    
+        const scorePattern = /(\d+(?:\.\d+)?)\s*分/;
+        const score = outfit.score || 8; // 默认分数为8
+        
         return (
             <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
                 <div className="relative">
@@ -553,70 +551,54 @@ function App() {
                         </span>
                         <div className="flex items-center gap-1 bg-white/20 px-3 py-1 rounded-full">
                             <Star className="w-4 h-4" />
-                            <span className="font-bold">{outfit.score}</span>
+                            <span className="font-bold">{score}</span>
                         </div>
                     </h3>
                 </div>
 
                 <div className="p-4 space-y-6">
-                    <div className="relative aspect-[3/4] rounded-xl overflow-hidden group">
-                        <img
-                            src={outfit.tryOnUrl}
-                            alt="Try-on result"
-                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="grid grid-cols-1 gap-4">
+                        {commentaryLines.map((line, index) => {
+                            if (scorePattern.test(line)) return null;
+
+                            const icons = [ThumbsUp, Star, Scale, Palette];
+                            const Icon = icons[index % icons.length];
+
+                            return (
+                                <div
+                                    key={index}
+                                    className="p-4 rounded-lg bg-gradient-to-r from-orange-50 to-teal-50 border border-gray-100"
+                                >
+                                    <div className="flex gap-3">
+                                        <div className="flex-shrink-0">
+                                            <Icon className="w-5 h-5 text-orange-500" />
+                                        </div>
+                                        <p className="text-sm text-gray-700 leading-relaxed">
+                                            {line}
+                                        </p>
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
 
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-2 text-lg font-semibold text-gray-900">
-                            <TrendingUp className="w-5 h-5 text-orange-500" />
-                            {t.results.commentary[language]}
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-4">
-                            {commentaryLines.map((line, index) => {
-                                if (line.includes('综合评分')) return null;
-
-                                const icons = [ThumbsUp, Star, Scale, Palette];
-                                const Icon = icons[index % icons.length];
-
-                                return (
-                                    <div
-                                        key={index}
-                                        className="p-4 rounded-lg bg-gradient-to-r from-orange-50 to-teal-50 border border-gray-100"
-                                    >
-                                        <div className="flex gap-3">
-                                            <div className="flex-shrink-0">
-                                                <Icon className="w-5 h-5 text-orange-500" />
-                                            </div>
-                                            <p className="text-sm text-gray-700 leading-relaxed">
-                                                {line}
-                                            </p>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-
-                        <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-orange-500 to-teal-500 text-white">
-                            <div className="flex items-center justify-between">
-                                <span className="font-medium">{t.results.score[language]}</span>
-                                <div className="flex items-center gap-2">
-                                    <div className="flex">
-                                        {[1, 2, 3, 4, 5].map((star) => (
-                                            <Star
-                                                key={star}
-                                                className={`w-4 h-4 ${
-                                                    star <= outfit.score / 2
-                                                        ? 'fill-white'
-                                                        : 'fill-white/30'
-                                                }`}
-                                            />
-                                        ))}
-                                    </div>
-                                    <span className="font-bold text-xl">{outfit.score}</span>
+                    <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-orange-500 to-teal-500 text-white">
+                        <div className="flex items-center justify-between">
+                            <span className="font-medium">{t.results.score[language]}</span>
+                            <div className="flex items-center gap-2">
+                                <div className="flex">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                        <Star
+                                            key={star}
+                                            className={`w-4 h-4 ${
+                                                star <= score / 2
+                                                    ? 'fill-white'
+                                                    : 'fill-white/30'
+                                            }`}
+                                        />
+                                    ))}
                                 </div>
+                                <span className="font-bold text-xl">{score}</span>
                             </div>
                         </div>
                     </div>
