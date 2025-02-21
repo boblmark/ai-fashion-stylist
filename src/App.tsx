@@ -447,7 +447,7 @@ function App() {
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
                                     console.error('发型图片加载失败:', style.img);
-                                    e.currentTarget.src = '/fallback-image.jpg'; // 添加一个默认图片
+                                    e.currentTarget.src = '/fallback-image.jpg';
                                 }}
                             />
                         </div>
@@ -526,15 +526,15 @@ function App() {
 
     const renderOutfitResult = useCallback((
         outfit: OutfitResult,
-        title: { en: string; zh: string }
+        title: { en: string; zh: string },
+        hairstyles: HairStyle[]
     ) => {
         const commentaryLines = outfit.commentary.split('\n').filter(line => line.trim());
-        // 修复正则表达式格式
         const scorePattern = /综合评分[：:]\s*(\d+(?:\.\d+)?)\s*分/;
         const commentaryWithoutScore = commentaryLines
             .filter(line => !scorePattern.test(line))
             .join('\n');
-
+    
         return (
             <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
                 <div className="relative">
@@ -830,9 +830,24 @@ function App() {
                         {result && (
                             <div className="mt-12 space-y-12">
                                 {/* 自选搭配结果 */}
-                                {renderOutfitResult(result.custom, t.results.custom)}
-                                {/* AI推荐搭配结果 */}
-                                {renderOutfitResult(result.generated, t.results.generated)}
+                                {renderOutfitResult(result.custom, t.results.custom, hairstyles.custom)}
+                                {/* 自选搭配发型推荐 */}
+                                <div className="mt-8">
+                                    <h3 className="text-lg font-semibold mb-4 bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
+                                        {language === 'en' ? 'Hairstyle Recommendations' : '发型推荐'}
+                                    </h3>
+                                    {renderCustomHairstyles()}
+                                </div>
+                                {/* AI 推荐搭配部分 */}
+                                <div className="space-y-12">
+                                    {renderOutfitResult(result.generated, t.results.generated, hairstyles.generated)}
+                                    <div className="mt-8">
+                                        <h3 className="text-lg font-semibold mb-4 bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
+                                            {language === 'en' ? 'AI Recommended Hairstyles' : 'AI推荐发型'}
+                                        </h3>
+                                        {renderGeneratedHairstyles()}
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>
