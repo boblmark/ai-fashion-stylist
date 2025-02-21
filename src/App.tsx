@@ -25,7 +25,10 @@ interface OutfitResult {
     topUrl: string;
     bottomUrl: string;
     tryOnUrl: string;
-    commentary: string;
+    commentary: {
+        en: string;
+        zh: string;
+    };
     score: number;
 }
 
@@ -68,8 +71,14 @@ const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 // 在现有的 interface 定义中添加
 interface HairStyle {
-    hairstyle: string;
-    reasons: string;
+    hairstyle: {
+        en: string;
+        zh: string;
+    };
+    reasons: {
+        en: string;
+        zh: string;
+    };
     img: string;
 }
 
@@ -387,9 +396,15 @@ function App() {
                             console.log('解析后的发型列表:', hairstyles);
                             
                             return hairstyles.map(style => ({
-                                hairstyle: style.hairstyle || '',
-                                reasons: style.reasons || '',
-                                img: (style.img || '').replace('http:', 'https:') // 确保图片链接使用 HTTPS
+                                hairstyle: {
+                                    en: style.hairstyle_en || '',
+                                    zh: style.hairstyle_zh || ''
+                                },
+                                reasons: {
+                                    en: style.reasons_en || '',
+                                    zh: style.reasons_zh || ''
+                                },
+                                img: (style.img || '').replace('http:', 'https:')
                             }));
                         } catch (e) {
                             console.error('解析发型数据失败:', e);
@@ -459,8 +474,8 @@ function App() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <h4 className="font-medium text-gray-900">{style.hairstyle}</h4>
-                            <p className="text-sm text-gray-600">{style.reasons}</p>
+                            <h4 className="font-medium text-gray-900">{style.hairstyle[language]}</h4>
+                            <p className="text-sm text-gray-600">{style.reasons[language]}</p>
                         </div>
                     </div>
                 ))}
@@ -536,7 +551,7 @@ function App() {
         title: { en: string; zh: string },
         hairstyles: HairStyle[]
     ) => {
-        const commentaryLines = outfit.commentary.split('\n').filter(line => line.trim());
+        const commentaryLines = outfit.commentary[language].split('\n').filter(line => line.trim());
         const scorePattern = /(\d+(?:\.\d+)?)\s*分/;
         const score = outfit.score || 8; // 默认分数为8
         
