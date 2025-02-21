@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { Upload, Camera, Sparkles, Star, Palette, TrendingUp, ThumbsUp, Scale } from 'lucide-react';
+import { Upload, Camera, Sparkles, Star, Palette, TrendingUp, ThumbsUp, Scale, Scissors } from 'lucide-react';
 
 interface FormData {
   height: string;
