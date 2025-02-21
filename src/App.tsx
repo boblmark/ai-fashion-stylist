@@ -435,11 +435,18 @@ function App() {
                                         const tryOnData = await tryOnResponse.json();
                                         console.log(`发型 ${style.hairstyle} 换发响应:`, tryOnData);
 
-                                        if (tryOnData.code === 0 && tryOnData.data && tryOnData.data.output_image) {
-                                            return {
-                                                ...style,
-                                                img: outputImage
-                                            };
+                                        if (tryOnData.code === 0 && tryOnData.data) {
+                                            const outputImage = tryOnData.data.output_image || 
+                                                 (tryOnData.data.output && tryOnData.data.output.image) ||
+                                                 (typeof tryOnData.data === 'string' && tryOnData.data) ||
+                                                 tryOnData.data.image;
+                                            
+                                            if (outputImage) {
+                                                return {
+                                                    ...style,
+                                                    img: outputImage
+                                                };
+                                            }
                                         }
                                         return null;
                                     } catch (e) {
