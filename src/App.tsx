@@ -350,6 +350,7 @@ function App() {
             setResult(data);
 
             // 获取发型推荐
+            // 修改并发处理逻辑
             const getHairstyleRecommendation = async (image: string) => {
                 try {
                     // 先获取发型推荐
@@ -479,21 +480,21 @@ function App() {
             console.log('自选搭配发型:', customHairstyles); // 添加日志
             console.log('AI推荐搭配发型:', generatedHairstyles); // 添加日志
 
-            // 修改这里的数据设置逻辑
+            // 修改数据设置逻辑
             const processedCustomHairstyles = Array.isArray(customHairstyles) ? customHairstyles.map(style => ({
-                hairstyle: style.hairstyle,
+                hairstyle: style.hairstyle || '推荐发型',
                 reasons: style.reasons || '适合您的个人风格',
-                img: style.img
-            })) : [];
+                img: style.img || ''
+            })).filter(style => style.img) : [];  // 确保只保留有图片的发型
 
             const processedGeneratedHairstyles = Array.isArray(generatedHairstyles) ? generatedHairstyles.map(style => ({
-                hairstyle: style.hairstyle,
+                hairstyle: style.hairstyle || '推荐发型',
                 reasons: style.reasons || '符合AI推荐的整体造型',
-                img: style.img
-            })) : [];
+                img: style.img || ''
+            })).filter(style => style.img) : [];  // 确保只保留有图片的发型
 
-            console.log('处理后的自选搭配发型:', processedCustomHairstyles);
-            console.log('处理后的AI推荐发型:', processedGeneratedHairstyles);
+            console.log('最终处理后的自选搭配发型:', processedCustomHairstyles);
+            console.log('最终处理后的AI推荐发型:', processedGeneratedHairstyles);
 
             setHairstyles({
                 custom: processedCustomHairstyles,
