@@ -363,7 +363,7 @@ function App() {
                         body: JSON.stringify({
                             workflow_id: '7472218638747467817',
                             parameters: {
-                                input_image: image
+                                input_image: image.replace('http:', 'https:') // 确保使用 HTTPS
                             }
                         })
                     });
@@ -373,16 +373,23 @@ function App() {
                     
                     if (responseData.code === 0 && responseData.data) {
                         try {
-                            const parsedData = JSON.parse(responseData.data);
-                            const hairstyles = parsedData.output || [];
+                            // 处理返回的数据结构
+                            let parsedData;
+                            if (typeof responseData.data === 'string') {
+                                parsedData = JSON.parse(responseData.data);
+                            } else {
+                                parsedData = responseData.data;
+                            }
+                            
+                            const hairstyles = Array.isArray(parsedData) ? parsedData : 
+                                         parsedData.output ? parsedData.output : [];
                             
                             console.log('解析后的发型列表:', hairstyles);
                             
-                            // 直接使用返回的数据，因为已经包含了所有必要信息
                             return hairstyles.map(style => ({
-                                hairstyle: style.hairstyle,
-                                reasons: style.reasons,
-                                img: style.img
+                                hairstyle: style.hairstyle || '',
+                                reasons: style.reasons || '',
+                                img: (style.img || '').replace('http:', 'https:') // 确保图片链接使用 HTTPS
                             }));
                         } catch (e) {
                             console.error('解析发型数据失败:', e);
