@@ -21,6 +21,8 @@ import FashionBackground from './components/FashionBackground';
 // 补充类型定义
 type ProgressStage = 'UPLOAD' | 'ANALYSIS' | 'GENERATE_TOP' | 'GENERATE_BOTTOM' | 'TRYON_CUSTOM' | 'TRYON_GENERATED' | 'COMMENTARY' | 'HAIRSTYLE' | 'COMPLETE';
 
+// 删除重复的类型定义
+// 删除以下重复的接口
 interface Result {
     custom: {
         topUrl: string;
@@ -51,6 +53,7 @@ interface HairStyles {
     }>;
 }
 
+// 只保留这些接口定义
 interface OutfitResult {
     topUrl: string;
     bottomUrl: string;
@@ -65,250 +68,12 @@ interface Result {
     generated: OutfitResult;
 }
 
-interface ProgressState {
-    stage: string;
-    percent: number;
-    message: string;
-}
+// 修改 handleSubmit 函数中的错误处理
+const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    console.log('表单提交开始');
 
-const PROGRESS_STAGES = {
-    UPLOAD: { percent: 0, en: 'Uploading images', zh: '上传图片中...' },
-    ANALYSIS: { percent: 20, en: 'Analyzing body features', zh: '分析身体特征中...' },
-    GENERATE_TOP: { percent: 40, en: 'Generating top garment', zh: '生成上衣中...' },
-    GENERATE_BOTTOM: { percent: 50, en: 'Generating bottom garment', zh: '生成下装中...' },
-    TRYON_CUSTOM: { percent: 60, en: 'Processing custom outfit', zh: '处理自选服装中...' },
-    TRYON_GENERATED: { percent: 80, en: 'Processing generated outfit', zh: '处理生成服装中...' },
-    COMMENTARY: { percent: 85, en: 'Getting style commentary', zh: '获取穿搭点评中...' },
-    HAIRSTYLE_ANALYSIS: { percent: 90, en: 'Analyzing hairstyle options', zh: '分析发型选项中...' },
-    HAIRSTYLE_GENERATION: { percent: 95, en: 'Generating hairstyle previews', zh: '生成发型预览中...' },
-    COMPLETE: { percent: 100, en: 'Completed', zh: '完成' }
-} as const;
-
-type ProgressStage = keyof typeof PROGRESS_STAGES;
-
-const STYLE_PREFERENCES = [
-    { en: "Casual", zh: "休闲" },
-    { en: "Fashion", zh: "时尚" },
-    { en: "Vintage", zh: "复古" },
-    { en: "Minimalist", zh: "简约" },
-    { en: "Sweet", zh: "甜美" }
-];
-
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
-const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-
-// 在现有的 interface 定义中添加
-interface HairStyle {
-    hairstyle: string;
-    reasons: string;
-    img: string;
-}
-
-interface HairStyles {
-    custom: HairStyle[];
-    generated: HairStyle[];
-}
-
-// 定义 feature 类型
-interface Feature {
-    icon: 'Brain' | 'Wand' | 'Scissors' | 'Crown';
-    title: { en: string; zh: string };
-    desc: { en: string; zh: string };
-}
-
-const t = {
-    title: {
-        en: 'MirrorMuse',
-        zh: '魅影衣橱'  // 保持原有名称
-    },
-    subtitle: {
-        en: 'AI Fashion Stylist',
-        zh: 'AI时尚造型专家'
-    },
-    upload: {
-        person: { en: 'Your Photo', zh: '个人照片' },
-        top: { en: 'Top Garment', zh: '上衣' },
-        bottom: { en: 'Bottom Garment', zh: '下装' },
-        photo: { en: 'Upload photo', zh: '上传照片' },
-        top_text: { en: 'Upload top', zh: '上传上衣' },
-        bottom_text: { en: 'Upload bottom', zh: '上传下装' }
-    },
-    measurements: {
-        height: { en: 'Height (cm)', zh: '身高 (cm)' },
-        weight: { en: 'Weight (kg)', zh: '体重 (kg)' },
-        bust: { en: 'Bust (cm)', zh: '胸围 (cm)' },
-        waist: { en: 'Waist (cm)', zh: '腰围 (cm)' },
-        hips: { en: 'Hips (cm)', zh: '臀围 (cm)' }
-    },
-    style: { en: 'Style Preference', zh: '风格偏好' },
-    button: {
-        generate: { en: 'Create Your Style', zh: '创建专属造型' },
-        generating: { en: 'Creating...', zh: '创建中...' }
-    },
-    results: {
-        title: { en: 'Your Style Analysis', zh: '你的造型分析' },
-        custom: { en: 'Your Selected Outfit', zh: '你的选择' },
-        generated: { en: 'AI Recommended Outfit', zh: 'AI推荐' },
-        analysis: { en: 'Style Analysis', zh: '造型分析' },
-        commentary: { en: 'Expert Commentary', zh: '专业点评' },
-        score: { en: 'Style Score', zh: '时尚指数' }
-    },
-    error: {
-        upload: { en: 'Please upload all required images', zh: '请上传所有必要的图片' },
-        general: { en: 'An error occurred', zh: '发生错误' },
-        fileSize: { en: 'File size must be less than 5MB', zh: '文件大小必须小于5MB' },
-        fileType: { en: 'Only JPG, PNG and WebP images are allowed', zh: '仅支持JPG、PNG和WebP格式的图片' }
-    },
-     features: {
-        title: { en: 'Why Choose MirrorMuse?', zh: '为什么选择魅影衣橱？' },
-        items: [
-            {
-                icon: 'Brain',
-                title: { en: 'AI-Powered Style Analysis', zh: 'AI智能风格分析' },
-                desc: { 
-                    en: 'Advanced algorithms analyze your body features and personal style',
-                    zh: '先进算法分析身材特征与个人风格'
-                }
-            },
-            {
-                icon: 'Wand',
-                title: { en: 'Virtual Try-On Magic', zh: '虚拟试穿体验' },
-                desc: {
-                    en: 'See how outfits look on you instantly',
-                    zh: '即刻预览完美搭配效果'
-                }
-            },
-            {
-                icon: 'Scissors',
-                title: { en: 'Complete Style Solution', zh: '全方位造型方案' },
-                desc: {
-                    en: 'Get personalized outfit and hairstyle recommendations',
-                    zh: '获取个性化服装搭配与发型推荐'
-                }
-            },
-            {
-                icon: 'Crown',
-                title: { en: 'Expert Commentary', zh: '专业点评建议' },
-                desc: {
-                    en: 'Receive detailed style analysis and fashion advice',
-                    zh: '获得详细的风格分析和时尚建议'
-                }
-            }
-        ]
-    }
-};
-
-const FEATURES: Feature[] = t.features.items;
-
-const lucideIcons = {
-  Upload,
-  Camera,
-  Sparkles,
-  Star,
-  Palette,
-  TrendingUp,
-  ThumbsUp,
-  Scale,
-  Scissors,
-  Brain,
-  Wand,
-  Crown
-};
-
-function App() {
-    const [personPhoto, setPersonPhoto] = useState<UploadPreview | null>(null);
-    const [topGarment, setTopGarment] = useState<UploadPreview | null>(null);
-    const [bottomGarment, setBottomGarment] = useState<UploadPreview | null>(null);
-    const [loading, setLoading] = useState(false);
-    const [result, setResult] = useState<Result | null>(null);
-    const [language, setLanguage] = useState<'en' | 'zh'>('zh');
-    const [error, setError] = useState<ErrorState>({ message: '', visible: false });
-    const [hairstyles, setHairstyles] = useState<HairStyles>({ custom: [], generated: [] });
-    const [progress, setProgress] = useState<ProgressState>({
-        stage: 'UPLOAD',
-        percent: 0,
-        message: PROGRESS_STAGES.UPLOAD.zh
-    });
-    const abortControllerRef = useRef<AbortController | null>(null);
-
-    const [formData, setFormData] = useState<FormData>({
-        height: '',
-        weight: '',
-        bust: '',
-        waist: '',
-        hips: '',
-        style_preference: STYLE_PREFERENCES[0].zh
-    });
-
-    const updateProgress = useCallback((stage: ProgressStage) => {
-        setProgress({
-            stage,
-            percent: PROGRESS_STAGES[stage].percent,
-            message: PROGRESS_STAGES[stage][language]
-        });
-    }, [language]);
-
-    const showError = useCallback((message: string) => {
-        setError({ message, visible: true });
-        setTimeout(() => setError({ message: '', visible: false }), 5000);
-    }, []);
-
-    const validateFile = useCallback((file: File): boolean => {
-        if (file.size > MAX_FILE_SIZE) {
-            showError(t.error.fileSize[language]);
-            return false;
-        }
-        if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-            showError(t.error.fileType[language]);
-            return false;
-        }
-        return true;
-    }, [language, showError]);
-
-    const handleFileChange = useCallback((
-        event: React.ChangeEvent<HTMLInputElement>,
-        setPreview: (preview: UploadPreview | null) => void
-    ) => {
-        try {
-            const file = event.target.files?.[0];
-            if (file) {
-                if (!validateFile(file)) {
-                    event.target.value = '';
-                    return;
-                }
-
-                setPreview(prev => {
-                    if (prev?.preview) {
-                        URL.revokeObjectURL(prev.preview);
-                    }
-                    return null;
-                });
-
-                const preview: UploadPreview = {
-                    file,
-                    preview: URL.createObjectURL(file)
-                };
-                setPreview(preview);
-            }
-        } catch (err) {
-            console.error('File upload error:', err);
-            showError(language === 'en' ? 'Failed to upload file' : '文件上传失败');
-            event.target.value = '';
-        }
-    }, [language, validateFile, showError]);
-
-    const handleInputChange = useCallback((event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        const { name, value } = event.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
-    }, []);
-
-    const handleSubmit = async (event: React.FormEvent) => {
-        event.preventDefault();
-        console.log('表单提交开始'); // 添加日志
-    
+    try {
         if (!personPhoto?.file || !topGarment?.file || !bottomGarment?.file) {
             console.log('缺少必要的图片文件:', { 
                 personPhoto: !!personPhoto, 
