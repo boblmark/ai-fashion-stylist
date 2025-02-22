@@ -29,16 +29,14 @@ interface OutfitResult {
     score: number;
 }
 
-// 修复 Result 接口，保持原有结构
 interface Result {
     recommendations: string;
     custom: OutfitResult;
     generated: OutfitResult;
 }
 
-// 修改 ProgressState 接口确保类型安全
 interface ProgressState {
-    stage: keyof typeof PROGRESS_STAGES;
+    stage: string;
     percent: number;
     message: string;
 }
@@ -481,21 +479,16 @@ function App() {
             <div className="grid grid-cols-2 gap-4">
                 {hairstyles.custom.map((style, index) => (
                     <div key={index} className="space-y-3">
-                        {/* 修复嵌套结构 */}
-                        <div className="aspect-[3/4] rounded-3xl shadow-2xl overflow-hidden border border-white/20 bg-gradient-to-r from-orange-500/80">
-                            <div className="relative h-full p-4 bg-white/80 backdrop-blur-sm">
-                                <div className="aspect-[3/4] rounded-xl overflow-hidden">
-                                    <img
-                                        src={style.img}
-                                        alt={style.hairstyle}
-                                        className="w-full h-full object-cover"
-                                    />
-                                </div>
-                                <div className="space-y-2 pt-4">
-                                    <h4 className="font-medium text-gray-900">{style.hairstyle}</h4>
-                                    <p className="text-sm text-gray-600">{style.reasons}</p>
-                                </div>
-                            </div>
+                        <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-500 to-teal-500">
+                            <img
+                                src={style.img}
+                                alt={style.hairstyle}
+                                className="w-full h-full object-cover"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <h4 className="font-medium text-gray-900">{style.hairstyle}</h4>
+                            <p className="text-sm text-gray-600">{style.reasons}</p>
                         </div>
                     </div>
                 ))}
@@ -514,21 +507,16 @@ function App() {
             <div className="grid grid-cols-2 gap-4">
                 {hairstyles.generated.map((style, index) => (
                     <div key={index} className="space-y-3">
-                        {/* 保持相同结构 */}
-                        <div className="aspect-[3/4] rounded-3xl shadow-2xl overflow-hidden border border-white/20 bg-gradient-to-r from-orange-500/80">
-                            <div className="relative h-full p-4 bg-white/80 backdrop-blur-sm">
-                                <div className="aspect-[3/4] rounded-xl overflow-hidden">
-                                    <img
-                                        src={style.img}
-                                        alt={style.hairstyle}
-                                        className="w-full h-full object-cover"
-                                    />
-                                </div>
-                                <div className="space-y-2 pt-4">
-                                    <h4 className="font-medium text-gray-900">{style.hairstyle}</h4>
-                                    <p className="text-sm text-gray-600">{style.reasons}</p>
-                                </div>
-                            </div>
+                        <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-500 to-teal-500">
+                            <img
+                                src={style.img}
+                                alt={style.hairstyle}
+                                className="w-full h-full object-cover"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <h4 className="font-medium text-gray-900">{style.hairstyle}</h4>
+                            <p className="text-sm text-gray-600">{style.reasons}</p>
                         </div>
                     </div>
                 ))}
@@ -576,8 +564,11 @@ function App() {
         title: { en: string; zh: string }
     ) => {
         const commentaryLines = outfit.commentary.split('\n').filter(line => line.trim());
-        const scoreMatch = outfit.commentary.match(/综合评分[：:]\s*(\d+(?:\.\d+)?)\s*分/);
-        const score = scoreMatch ? parseFloat(scoreMatch[1]) : outfit.score;
+        // 修复正则表达式格式
+        const scorePattern = /综合评分[：:]\s*(\d+(?:\.\d+)?)\s*分/;
+        const commentaryWithoutScore = commentaryLines
+            .filter(line => !scorePattern.test(line))
+            .join('\n');
 
         return (
             <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
@@ -605,7 +596,6 @@ function App() {
                         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     </div>
 
-                    {/* 修复嵌套结构：移除多余的 div 层级 */}
                     <div className="space-y-4">
                         <div className="flex items-center gap-2 text-lg font-semibold text-gray-900">
                             <TrendingUp className="w-5 h-5 text-orange-500" />
@@ -613,28 +603,28 @@ function App() {
                         </div>
 
                         <div className="grid grid-cols-1 gap-4">
-                            {commentaryLines
-                                .filter(line => !line.includes('综合评分'))
-                                .map((line, index) => {
-                                    const icons = [ThumbsUp, Star, Scale, Palette];
-                                    const Icon = icons[index % icons.length];
+                            {commentaryLines.map((line, index) => {
+                                if (line.includes('综合评分')) return null;
 
-                                    return (
-                                        <div
-                                            key={index}
-                                            className="p-4 rounded-lg bg-gradient-to-r from-orange-50 to-teal-50 border border-gray-100"
-                                        >
-                                            <div className="flex gap-3">
-                                                <div className="flex-shrink-0">
-                                                    <Icon className="w-5 h-5 text-orange-500" />
-                                                </div>
-                                                <p className="text-sm text-gray-700 leading-relaxed">
-                                                    {line}
-                                                </p>
+                                const icons = [ThumbsUp, Star, Scale, Palette];
+                                const Icon = icons[index % icons.length];
+
+                                return (
+                                    <div
+                                        key={index}
+                                        className="p-4 rounded-lg bg-gradient-to-r from-orange-50 to-teal-50 border border-gray-100"
+                                    >
+                                        <div className="flex gap-3">
+                                            <div className="flex-shrink-0">
+                                                <Icon className="w-5 h-5 text-orange-500" />
                                             </div>
+                                            <p className="text-sm text-gray-700 leading-relaxed">
+                                                {line}
+                                            </p>
                                         </div>
-                                    );
-                                })}
+                                    </div>
+                                );
+                            })}
                         </div>
 
                         <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-orange-500 to-teal-500 text-white">
@@ -646,7 +636,7 @@ function App() {
                                             <Star
                                                 key={star}
                                                 className={`w-4 h-4 ${
-                                                    star <= score / 2
+                                                    star <= outfit.score / 2
                                                         ? 'fill-white'
                                                         : 'fill-white/30'
                                                 }`}
@@ -700,12 +690,14 @@ function App() {
         <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-orange-100 via-gray-50 to-teal-50 relative">
             {renderLanguageSwitch()}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                {/* ... background elements ... */}
+                <div className="absolute inset-0 bg-[url('/bg-pattern.svg')] opacity-5 animate-slide"></div>
+                <div className="absolute -inset-[100%] bg-gradient-conic from-orange-500/30 via-teal-500/30 to-orange-500/30 animate-spin-slow blur-3xl"></div>
             </div>
             
             {renderProgressBar()}
             <div className="max-w-5xl mx-auto relative z-10">
                 <div className="relative backdrop-blur-sm bg-white/80 rounded-3xl shadow-2xl overflow-hidden border border-white/20">
+                    <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-teal-500/10 animate-pulse"></div>
                     <div className="relative px-6 py-8 sm:p-10">
                         <div className="flex items-center justify-center mb-8">
                             <div className="w-32 h-32 relative animate-float">
@@ -726,7 +718,9 @@ function App() {
                                 <div className="absolute -inset-1 bg-gradient-to-r from-orange-600 via-purple-500 to-teal-600 rounded-lg blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200 animate-gradient-xy"></div>
                                 <p className="relative px-7 py-4 bg-black bg-opacity-80 rounded-lg leading-none">
                                     <span className="text-lg bg-gradient-to-r from-orange-400 via-pink-500 to-teal-400 bg-clip-text text-transparent font-medium animate-pulse">
-                                        {language === 'en' ? 'Where Style Meets Innovation' : '魅影随行，演绎时尚'}
+                                        {language === 'en' 
+                                            ? 'Where Style Meets Innovation'
+                                            : '魅影随行，演绎时尚'}
                                     </span>
                                 </p>
                             </div>
@@ -744,7 +738,7 @@ function App() {
                         </div>
 
                         {/* 添加功能卡片部分 */}
-                        <div className="mt-12 mb-8 px-6 sm:px-10">
+                        <div className="mt-12 mb-8">
                             <h2 className="text-2xl font-semibold text-center mb-8 bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
                                 {t.features.title[language]}
                             </h2>
@@ -768,7 +762,7 @@ function App() {
                             </div>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="mt-8 space-y-8 px-6 sm:px-10">
+                        <form onSubmit={handleSubmit} className="mt-8 space-y-8">
                             <div className="grid grid-cols-1 gap-8">
                                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
                                     {renderUploadBox(
@@ -851,7 +845,7 @@ function App() {
                                             </option>
                                         ))}
                                     </select>
-                                </div>
+                                </div>  {/* 修复这里的闭合标签 */}
 
                                 <div>
                                     <button
@@ -866,19 +860,41 @@ function App() {
                                         <Sparkles className={`w-5 h-5 mr-2 ${loading ? 'animate-spin' : 'animate-pulse'}`} />
                                         {loading ? t.button.generating[language] : t.button.generate[language]}
                                     </button>
-                                </div>
                             </div>
-                        </form>
+                        </div>
+                    </form>
 
-                        {result && (
-                            <div className="mt-12 space-y-12">
+                    {result && (
+                        <div className="mt-12 space-y-12">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 {/* 自选搭配结果 */}
                                 {renderOutfitResult(result.custom, t.results.custom)}
                                 {/* AI推荐搭配结果 */}
                                 {renderOutfitResult(result.generated, t.results.generated)}
                             </div>
-                        )}
-                    </div>
+                        
+                            {/* 发型推荐部分 */}
+                            <div className="space-y-8">
+                                {/* 自选搭配发型推荐 */}
+                                <div className="bg-white rounded-xl shadow-lg p-6">
+                                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900">
+                                        <Scissors className="w-5 h-5 text-orange-500" />
+                                        {language === 'en' ? 'Hairstyles for Your Choice' : '自选搭配发型推荐'}
+                                    </h3>
+                                    {renderCustomHairstyles()}
+                                </div>
+                            
+                                {/* AI推荐搭配发型推荐 */}
+                                <div className="bg-white rounded-xl shadow-lg p-6">
+                                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900">
+                                        <Scissors className="w-5 h-5 text-orange-500" />
+                                        {language === 'en' ? 'Hairstyles for AI Recommendation' : 'AI推荐搭配发型推荐'}
+                                    </h3>
+                                    {renderGeneratedHairstyles()}
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
