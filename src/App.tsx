@@ -19,43 +19,7 @@ import {
 import FashionBackground from './components/FashionBackground';
 
 // 补充类型定义
-// 1. 更新 ProgressStage 类型
-type ProgressStage = 'UPLOAD' | 'ANALYSIS' | 'GENERATE_TOP' | 'GENERATE_BOTTOM' | 'TRYON_CUSTOM' | 'TRYON_GENERATED' | 'COMMENTARY' | 'HAIRSTYLE_ANALYSIS' | 'HAIRSTYLE_GENERATION' | 'COMPLETE';
-
-
-// 3. 确保 AI 推荐发型部分正确渲染
-{result && (
-    <div className="mt-12 space-y-12">
-        {/* 虚拟换衣结果 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* 自选搭配结果 */}
-            {renderOutfitResult(result.custom, t.results.custom)}
-            {/* AI推荐搭配结果 */}
-            {renderOutfitResult(result.generated, t.results.generated)}
-        </div>
-        {/* 发型推荐部分 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* 自选搭配发型 */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
-                <h3 className="text-xl font-semibold p-4 bg-gradient-to-r from-orange-600 to-teal-600 text-white">
-                    {language === 'en' ? 'Recommended Hairstyles' : '推荐发型'}
-                </h3>
-                <div className="p-4">
-                    {renderCustomHairstyles()}
-                </div>
-            </div>
-            {/* AI推荐搭配发型 */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
-                <h3 className="text-xl font-semibold p-4 bg-gradient-to-r from-orange-600 to-teal-600 text-white">
-                    {language === 'en' ? 'AI Recommended Hairstyles' : 'AI推荐发型'}
-                </h3>
-                <div className="p-4">
-                    {renderGeneratedHairstyles()}
-                </div>
-            </div>
-        </div>
-    </div>
-)}
+type ProgressStage = 'UPLOAD' | 'ANALYSIS' | 'GENERATE_TOP' | 'GENERATE_BOTTOM' | 'TRYON_CUSTOM' | 'TRYON_GENERATED' | 'COMMENTARY' | 'HAIRSTYLE' | 'COMPLETE';
 
 interface Result {
     custom: {
@@ -108,51 +72,181 @@ interface FormData {
 }
 
 interface OutfitResult {
+    topUrl: string;
+    bottomUrl: string;
     tryOnUrl: string;
-    score: number;
     commentary: string;
-    // 其他可能的字段
+    score: number;
+    grading?: {  // 添加可选的 grading 属性
+        overall: number;
+        color: number;
+        style: number;
+        fit: number;
+    };
 }
 
 interface Result {
+    recommendations: string;
     custom: OutfitResult;
     generated: OutfitResult;
-    // 其他可能的字段
 }
 
-const App = () => {
-    const [language, setLanguage] = useState<'zh' | 'en'>('zh');
+interface ProgressState {
+    stage: string;
+    percent: number;
+    message: string;
+}
+
+const PROGRESS_STAGES = {
+    UPLOAD: { percent: 10, en: 'Uploading files...', zh: '正在上传文件...' },
+    ANALYSIS: { percent: 20, en: 'Analyzing...', zh: '正在分析...' },
+    GENERATE_TOP: { percent: 35, en: 'Generating top...', zh: '正在生成上衣...' },
+    GENERATE_BOTTOM: { percent: 50, en: 'Generating bottom...', zh: '正在生成下装...' },
+    TRYON_CUSTOM: { percent: 65, en: 'Trying on custom outfit...', zh: '正在试穿自选搭配...' },
+    TRYON_GENERATED: { percent: 80, en: 'Trying on AI-generated outfit...', zh: '正在试穿AI推荐搭配...' },
+    COMMENTARY: { percent: 90, en: 'Generating commentary...', zh: '正在生成点评...' },
+    HAIRSTYLE: { percent: 95, en: 'Generating hairstyle recommendations...', zh: '正在生成发型推荐...' },
+    COMPLETE: { percent: 100, en: 'Complete!', zh: '完成！' }
+};
+
+type ProgressStage = keyof typeof PROGRESS_STAGES;
+
+const STYLE_PREFERENCES = [
+    { en: "Casual", zh: "休闲" },
+    { en: "Fashion", zh: "时尚" },
+    { en: "Vintage", zh: "复古" },
+    { en: "Minimalist", zh: "简约" },
+    { en: "Sweet", zh: "甜美" }
+];
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
+// 在现有的 interface 定义中添加
+interface HairStyle {
+    hairstyle: string;
+    reasons: string;
+    img: string;
+}
+
+interface HairStyles {
+    custom: HairStyle[];
+    generated: HairStyle[];
+}
+
+// 定义 feature 类型
+interface Feature {
+    icon: 'Brain' | 'Wand' | 'Scissors' | 'Crown';
+    title: { en: string; zh: string };
+    desc: { en: string; zh: string };
+}
+
+const t = {
+    title: {
+        en: 'MirrorMuse',
+        zh: '魅影衣橱'  // 保持原有名称
+    },
+    subtitle: {
+        en: 'AI Fashion Stylist',
+        zh: 'AI时尚造型专家'
+    },
+    upload: {
+        person: { en: 'Your Photo', zh: '个人照片' },
+        top: { en: 'Top Garment', zh: '上衣' },
+        bottom: { en: 'Bottom Garment', zh: '下装' },
+        photo: { en: 'Upload photo', zh: '上传照片' },
+        top_text: { en: 'Upload top', zh: '上传上衣' },
+        bottom_text: { en: 'Upload bottom', zh: '上传下装' }
+    },
+    measurements: {
+        height: { en: 'Height (cm)', zh: '身高 (cm)' },
+        weight: { en: 'Weight (kg)', zh: '体重 (kg)' },
+        bust: { en: 'Bust (cm)', zh: '胸围 (cm)' },
+        waist: { en: 'Waist (cm)', zh: '腰围 (cm)' },
+        hips: { en: 'Hips (cm)', zh: '臀围 (cm)' }
+    },
+    style: { en: 'Style Preference', zh: '风格偏好' },
+    button: {
+        generate: { en: 'Create Your Style', zh: '创建专属造型' },
+        generating: { en: 'Creating...', zh: '创建中...' }
+    },
+    results: {
+        title: { en: 'Your Style Analysis', zh: '你的造型分析' },
+        custom: { en: 'Your Selected Outfit', zh: '你的选择' },
+        generated: { en: 'AI Recommended Outfit', zh: 'AI推荐' },
+        analysis: { en: 'Style Analysis', zh: '造型分析' },
+        commentary: { en: 'Expert Commentary', zh: '专业点评' },
+        score: { en: 'Style Score', zh: '时尚指数' }
+    },
+    error: {
+        upload: { en: 'Please upload all required images', zh: '请上传所有必要的图片' },
+        general: { en: 'An error occurred', zh: '发生错误' },
+        fileSize: { en: 'File size must be less than 5MB', zh: '文件大小必须小于5MB' },
+        fileType: { en: 'Only JPG, PNG and WebP images are allowed', zh: '仅支持JPG、PNG和WebP格式的图片' }
+    },
+     features: {
+        title: { en: 'Why Choose MirrorMuse?', zh: '为什么选择魅影衣橱？' },
+        items: [
+            {
+                icon: 'Brain',
+                title: { en: 'AI-Powered Style Analysis', zh: 'AI智能风格分析' },
+                desc: { 
+                    en: 'Advanced algorithms analyze your body features and personal style',
+                    zh: '先进算法分析身材特征与个人风格'
+                }
+            },
+            {
+                icon: 'Wand',
+                title: { en: 'Virtual Try-On Magic', zh: '虚拟试穿体验' },
+                desc: {
+                    en: 'See how outfits look on you instantly',
+                    zh: '即刻预览完美搭配效果'
+                }
+            },
+            {
+                icon: 'Scissors',
+                title: { en: 'Complete Style Solution', zh: '全方位造型方案' },
+                desc: {
+                    en: 'Get personalized outfit and hairstyle recommendations',
+                    zh: '获取个性化服装搭配与发型推荐'
+                }
+            },
+            {
+                icon: 'Crown',
+                title: { en: 'Expert Commentary', zh: '专业点评建议' },
+                desc: {
+                    en: 'Receive detailed style analysis and fashion advice',
+                    zh: '获得详细的风格分析和时尚建议'
+                }
+            }
+        ]
+    }
+};
+
+const FEATURES: Feature[] = t.features.items;
+
+const lucideIcons = {
+  Upload,
+  Camera,
+  Sparkles,
+  Star,
+  Palette,
+  TrendingUp,
+  ThumbsUp,
+  Scale,
+  Scissors,
+  Brain,
+  Wand,
+  Crown
+};
+
+function App() {
     const [personPhoto, setPersonPhoto] = useState<UploadPreview | null>(null);
     const [topGarment, setTopGarment] = useState<UploadPreview | null>(null);
     const [bottomGarment, setBottomGarment] = useState<UploadPreview | null>(null);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<ErrorState>({ message: '', visible: false });
-    const [hairstyles, setHairstyles] = useState<HairStyles>({ custom: [], generated: [] });
-    const [progress, setProgress] = useState<ProgressState>({
-        stage: 'UPLOAD',
-        percent: 0,
-        message: PROGRESS_STAGES.UPLOAD.zh
-    });
-    const abortControllerRef = useRef<AbortController | null>(null);
-
-    const [formData, setFormData] = useState<FormData>({
-        height: '',
-        weight: '',
-        bust: '',
-        waist: '',
-        hips: '',
-        style_preference: STYLE_PREFERENCES[0].zh
-    });
-
-    const [result, setResult] = useState<OutfitResult | null>(null); // Add this line
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState({ message: '', visible: false });
-    const [progress, setProgress] = useState({ stage: 'UPLOAD', percent: 0, message: '' });
-
-    const [personPhoto, setPersonPhoto] = useState<UploadPreview | null>(null);
-    const [topGarment, setTopGarment] = useState<UploadPreview | null>(null);
-    const [bottomGarment, setBottomGarment] = useState<UploadPreview | null>(null);
-    const [loading, setLoading] = useState(false);
+    const [result, setResult] = useState<Result | null>(null);
+    const [language, setLanguage] = useState<'en' | 'zh'>('zh');
     const [error, setError] = useState<ErrorState>({ message: '', visible: false });
     const [hairstyles, setHairstyles] = useState<HairStyles>({ custom: [], generated: [] });
     const [progress, setProgress] = useState<ProgressState>({
@@ -339,20 +433,10 @@ const App = () => {
             setResult(data);
 
             // 直接使用生成的换衣效果图片URL进行虚拟换发
-            // ... 修改 handleHairstyleRecommendation 调用方式，改为串行执行
-            const customHairstyles = await handleHairstyleRecommendation(data.custom.tryOnUrl);
-            const generatedHairstyles = await handleHairstyleRecommendation(data.generated.tryOnUrl);
-            
-            // 添加请求间隔
-            const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-            
             const handleHairstyleRecommendation = async (image: string) => {
                 updateProgress('HAIRSTYLE_ANALYSIS');
                 
                 try {
-                    // 添加 1 秒延迟
-                    await delay(1000);
-                    
                     // 发送发型分析请求
                     const response = await fetch('https://api.coze.cn/v1/workflow/run', {
                         method: 'POST',
@@ -367,27 +451,54 @@ const App = () => {
                             }
                         })
                     });
-            
+    
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
-            
+    
                     const responseData = await response.json();
                     console.log('发型推荐原始响应:', responseData);
-            
-                    // 检查 API 错误
-                    if (responseData.code !== 0) {
-                        throw new Error(responseData.msg || 'API request failed');
+    
+                    // 更新到发型生成阶段
+                    updateProgress('HAIRSTYLE_GENERATION');
+    
+                    // 处理响应数据
+                    let hairstyles = [];
+                    if (responseData.code === 0 && responseData.data) {
+                        const parsedData = typeof responseData.data === 'string' 
+                            ? JSON.parse(responseData.data) 
+                            : responseData.data;
+                    
+                        if (Array.isArray(parsedData)) {
+                            hairstyles = parsedData;
+                        } else if (parsedData.output && Array.isArray(parsedData.output)) {
+                            hairstyles = parsedData.output;
+                        } else if (parsedData.hairstyles && Array.isArray(parsedData.hairstyles)) {
+                            hairstyles = parsedData.hairstyles;
+                        }
                     }
+                    
+                    // 格式化发型数据
+                    const formattedHairstyles = hairstyles.map(style => ({
+                        hairstyle: typeof style === 'string' ? style : style.hairstyle || '推荐发型',
+                        reasons: style.reasons || '根据您的风格特点推荐此发型',
+                        img: style.img || ''
+                    }));
+                    
+                    return formattedHairstyles;
+                } catch (error) {
+                    console.error('获取发型推荐失败:', error);
+                    throw error;
+                } finally {
+                    setLoading(false);
+                }
+            };
             
-                    // ... rest of the code ...
-    } catch (error) {
-        console.error('获取发型推荐失败:', error);
-        throw error;
-    } finally {
-        setLoading(false);
-    }
-};
+            // 并行获取两种搭配的发型推荐
+            const [customHairstyles, generatedHairstyles] = await Promise.all([
+                handleHairstyleRecommendation(data.custom.tryOnUrl),
+                handleHairstyleRecommendation(data.generated.tryOnUrl)
+            ]);
 
             console.log('自选搭配发型:', customHairstyles); // 添加日志
             console.log('AI推荐搭配发型:', generatedHairstyles); // 添加日志
@@ -443,7 +554,7 @@ const App = () => {
             <div className="grid grid-cols-2 gap-4">
                 {hairstyles.custom.map((style, index) => (
                     <div key={index} className="space-y-3">
-                        <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-500/10 to-teal-500/10 rounded-lg">
+                        <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-500 to-teal-500">
                             <img
                                 src={style.img}
                                 alt={style.hairstyle}
@@ -471,7 +582,7 @@ const App = () => {
             <div className="grid grid-cols-2 gap-4">
                 {hairstyles.generated.map((style, index) => (
                     <div key={index} className="space-y-3">
-                        <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-500/10 to-teal-500/10 rounded-lg">
+                        <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-500 to-teal-500">
                             <img
                                 src={style.img}
                                 alt={style.hairstyle}
@@ -840,7 +951,8 @@ const App = () => {
                                     {/* AI推荐搭配结果 */}
                                     {renderOutfitResult(result.generated, t.results.generated)}
                                 </div>
-                                {/* 发型推荐部分 */}
+                                {/* 发型推荐部分保持不变 */}
+
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     {/* 自选搭配发型 */}
                                     <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
