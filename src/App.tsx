@@ -333,13 +333,6 @@ function App() {
                 throw new Error('Failed to generate outfit');
             }
 
-            // 使用重试机制
-            const response = await fetchWithRetry('/api/generate', {
-                method: 'POST',
-                body: formDataToSend,
-                signal
-            });
-
             // 添加 JSON 解析错误处理
             let data;
             try {
