@@ -139,6 +139,7 @@ interface ProgressState {
     message: string;
 }
 
+// 删除重复的 PROGRESS_STAGES 定义，保留一个完整的定义
 const PROGRESS_STAGES = {
     UPLOAD: { percent: 10, en: 'Uploading files...', zh: '正在上传文件...' },
     ANALYSIS: { percent: 20, en: 'Analyzing...', zh: '正在分析...' },
@@ -147,7 +148,8 @@ const PROGRESS_STAGES = {
     TRYON_CUSTOM: { percent: 65, en: 'Trying on custom outfit...', zh: '正在试穿自选搭配...' },
     TRYON_GENERATED: { percent: 80, en: 'Trying on AI-generated outfit...', zh: '正在试穿AI推荐搭配...' },
     COMMENTARY: { percent: 90, en: 'Generating commentary...', zh: '正在生成点评...' },
-    HAIRSTYLE: { percent: 95, en: 'Generating hairstyle recommendations...', zh: '正在生成发型推荐...' },
+    HAIRSTYLE_ANALYSIS: { percent: 85, en: 'Analyzing hairstyle...', zh: '正在分析发型...' },
+    HAIRSTYLE_GENERATION: { percent: 95, en: 'Generating hairstyle recommendations...', zh: '正在生成发型推荐...' },
     COMPLETE: { percent: 100, en: 'Complete!', zh: '完成！' }
 };
 
