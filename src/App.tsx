@@ -45,6 +45,12 @@ interface ProgressState {
     message: string;
 }
 
+interface ProgressStage {
+    stage: keyof typeof PROGRESS_STAGES;
+    percent: number;
+    message: string;
+}
+
 const PROGRESS_STAGES = {
     UPLOAD: { percent: 0, en: 'Uploading images', zh: '上传图片中...' },
     ANALYSIS: { percent: 20, en: 'Analyzing body features', zh: '分析身体特征中...' },
@@ -279,7 +285,7 @@ function App() {
     }, []);
 
     // 添加重试函数
-    const fetchWithRetry = async (url: string, options: RequestInit, retries = 3) => {
+    const fetchWithRetry = async (url: string, options: RequestInit, retries = 3): Promise<Response | undefined> => {
         for (let i = 0; i < retries; i++) {
             try {
                 const response = await fetch(url, options);
@@ -306,13 +312,14 @@ function App() {
 
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
-        setLoading(true);
-        setResult(null);
-        setError({ message: '', visible: false });
-        abortControllerRef.current = new AbortController();
-        const signal = abortControllerRef.current.signal;
-
+        
         try {
+            setLoading(true);
+            setResult(null);
+            setError({ message: '', visible: false });
+            abortControllerRef.current = new AbortController();
+            const signal = abortControllerRef.current.signal;
+
             // Validate if all required images are uploaded
             if (!personPhoto || !topGarment || !bottomGarment) {
                 showError(t.error.upload[language]);
@@ -359,7 +366,7 @@ function App() {
             setLoading(false);
             abortControllerRef.current = null;
         }
-    };  // 修复：添加闭合括号
+    };
 
         const renderCustomHairstyles = useCallback(() => {
             if (hairstyles.custom.length === 0) {
