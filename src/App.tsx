@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useRef } from 'react';
 import { Upload, Camera, Sparkles, Star, Palette, TrendingUp, ThumbsUp, Scale, Scissors, Brain, Wand, Crown } from 'lucide-react';
 import FashionBackground from './components/FashionBackground';
@@ -918,8 +919,21 @@ function App() {
                             <div className="mt-12 space-y-12">
                                 {/* 自选搭配结果 */}
                                 {renderOutfitResult(result.custom, t.results.custom)}
+                                <div className="mt-8">
+                                    <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
+                                        {language === 'en' ? 'Recommended Hairstyles' : '推荐发型'}
+                                    </h3>
+                                    {renderCustomHairstyles()}
+                                </div>
+                            </div>
                                 {/* AI推荐搭配结果 */}
                                 {renderOutfitResult(result.generated, t.results.generated)}
+                                <div className="mt-8">
+                                    <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
+                                        {language === 'en' ? 'AI Recommended Hairstyles' : 'AI推荐发型'}
+                                    </h3>
+                                    {renderGeneratedHairstyles()}
+                                </div>
                             </div>
                         )}
                     </div>
