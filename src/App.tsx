@@ -122,7 +122,20 @@ interface Result {
 
 const App = () => {
     const [language, setLanguage] = useState<'zh' | 'en'>('zh');
-    const [formData, setFormData] = useState({
+    const [personPhoto, setPersonPhoto] = useState<UploadPreview | null>(null);
+    const [topGarment, setTopGarment] = useState<UploadPreview | null>(null);
+    const [bottomGarment, setBottomGarment] = useState<UploadPreview | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<ErrorState>({ message: '', visible: false });
+    const [hairstyles, setHairstyles] = useState<HairStyles>({ custom: [], generated: [] });
+    const [progress, setProgress] = useState<ProgressState>({
+        stage: 'UPLOAD',
+        percent: 0,
+        message: PROGRESS_STAGES.UPLOAD.zh
+    });
+    const abortControllerRef = useRef<AbortController | null>(null);
+
+    const [formData, setFormData] = useState<FormData>({
         height: '',
         weight: '',
         bust: '',
@@ -130,6 +143,7 @@ const App = () => {
         hips: '',
         style_preference: STYLE_PREFERENCES[0].zh
     });
+
     const [result, setResult] = useState<OutfitResult | null>(null); // Add this line
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState({ message: '', visible: false });
