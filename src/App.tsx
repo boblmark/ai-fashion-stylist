@@ -529,19 +529,23 @@ function App() {
         }
 
         return (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-6">
                 {hairstyles.custom.map((style, index) => (
-                    <div key={index} className="space-y-3">
-                        <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-500 to-teal-500">
+                    <div key={index} className="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
+                        <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-500/20 to-teal-500/20">
                             <img
                                 src={style.img}
                                 alt={style.hairstyle}
                                 className="w-full h-full object-cover"
+                                onError={(e) => {
+                                    console.error('发型图片加载失败:', e);
+                                    e.currentTarget.src = '/fallback-hairstyle.jpg';
+                                }}
                             />
                         </div>
-                        <div className="space-y-2">
-                            <h4 className="font-medium text-gray-900">{style.hairstyle}</h4>
-                            <p className="text-sm text-gray-600">{style.reasons}</p>
+                        <div className="mt-4 space-y-2">
+                            <h4 className="text-lg font-semibold text-gray-900">{style.hairstyle}</h4>
+                            <p className="text-sm text-gray-600 leading-relaxed">{style.reasons}</p>
                         </div>
                     </div>
                 ))}
@@ -557,19 +561,23 @@ function App() {
         }
 
         return (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-6">
                 {hairstyles.generated.map((style, index) => (
-                    <div key={index} className="space-y-3">
-                        <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-500 to-teal-500">
+                    <div key={index} className="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
+                        <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-500/20 to-teal-500/20">
                             <img
                                 src={style.img}
                                 alt={style.hairstyle}
                                 className="w-full h-full object-cover"
+                                onError={(e) => {
+                                    console.error('发型图片加载失败:', e);
+                                    e.currentTarget.src = '/fallback-hairstyle.jpg';
+                                }}
                             />
                         </div>
-                        <div className="space-y-2">
-                            <h4 className="font-medium text-gray-900">{style.hairstyle}</h4>
-                            <p className="text-sm text-gray-600">{style.reasons}</p>
+                        <div className="mt-4 space-y-2">
+                            <h4 className="text-lg font-semibold text-gray-900">{style.hairstyle}</h4>
+                            <p className="text-sm text-gray-600 leading-relaxed">{style.reasons}</p>
                         </div>
                     </div>
                 ))}
