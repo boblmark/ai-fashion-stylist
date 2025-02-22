@@ -153,7 +153,7 @@ const PROGRESS_STAGES = {
     COMPLETE: { percent: 100, en: 'Complete!', zh: '完成！' }
 } as const;
 
-// 更新 ProgressStage 类型定义
+// 更新 ProgressStage 类型
 type ProgressStage = keyof typeof PROGRESS_STAGES;
 
 const STYLE_PREFERENCES = [
