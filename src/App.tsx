@@ -1,8 +1,55 @@
 
 import React, { useState, useCallback, useRef } from 'react';
-import { Upload, Camera, Sparkles, Star, Palette, TrendingUp, ThumbsUp, Scale, Scissors, Brain, Wand, Crown } from 'lucide-react';
+import { 
+    Upload, 
+    Camera, 
+    Sparkles, 
+    Star, 
+    Palette, 
+    TrendingUp, 
+    ThumbsUp, 
+    Scale, 
+    Scissors, 
+    Brain, 
+    Wand, 
+    Crown,
+    Check,
+    Info 
+} from 'lucide-react';
 import FashionBackground from './components/FashionBackground';
-import { Sparkles, Palette, Scale, ThumbsUp, Check, Info } from 'lucide-react';
+
+// 补充类型定义
+type ProgressStage = 'UPLOAD' | 'ANALYSIS' | 'GENERATE_TOP' | 'GENERATE_BOTTOM' | 'TRYON_CUSTOM' | 'TRYON_GENERATED' | 'COMMENTARY' | 'HAIRSTYLE' | 'COMPLETE';
+
+interface Result {
+    custom: {
+        topUrl: string;
+        bottomUrl: string;
+        tryOnUrl: string;
+        commentary: string;
+        score: number;
+    };
+    generated: {
+        topUrl: string;
+        bottomUrl: string;
+        tryOnUrl: string;
+        commentary: string;
+        score: number;
+    };
+}
+
+interface HairStyles {
+    custom: Array<{
+        hairstyle: string;
+        reasons: string;
+        img: string;
+    }>;
+    generated: Array<{
+        hairstyle: string;
+        reasons: string;
+        img: string;
+    }>;
+}
 
 interface FormData {
     height: string;
@@ -51,7 +98,8 @@ const PROGRESS_STAGES = {
     TRYON_CUSTOM: { percent: 60, en: 'Processing custom outfit', zh: '处理自选服装中...' },
     TRYON_GENERATED: { percent: 80, en: 'Processing generated outfit', zh: '处理生成服装中...' },
     COMMENTARY: { percent: 85, en: 'Getting style commentary', zh: '获取穿搭点评中...' },
-    HAIRSTYLE: { percent: 95, en: 'Generating hairstyle recommendations', zh: '生成发型推荐中...' },
+    HAIRSTYLE_ANALYSIS: { percent: 90, en: 'Analyzing hairstyle options', zh: '分析发型选项中...' },
+    HAIRSTYLE_GENERATION: { percent: 95, en: 'Generating hairstyle previews', zh: '生成发型预览中...' },
     COMPLETE: { percent: 100, en: 'Completed', zh: '完成' }
 } as const;
 
@@ -353,10 +401,10 @@ function App() {
 
             // 直接使用生成的换衣效果图片URL进行虚拟换发
             const handleHairstyleRecommendation = async (image: string) => {
-                setLoading(true);
-                updateProgress('HAIRSTYLE');
-
+                updateProgress('HAIRSTYLE_ANALYSIS');
+                
                 try {
+                    // 发送发型分析请求
                     const response = await fetch('https://api.coze.cn/v1/workflow/run', {
                         method: 'POST',
                         headers: {
@@ -370,14 +418,17 @@ function App() {
                             }
                         })
                     });
-
+    
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
-
+    
                     const responseData = await response.json();
                     console.log('发型推荐原始响应:', responseData);
-
+    
+                    // 更新到发型生成阶段
+                    updateProgress('HAIRSTYLE_GENERATION');
+    
                     // 处理响应数据
                     let hairstyles = [];
                     if (responseData.code === 0 && responseData.data) {
@@ -412,8 +463,8 @@ function App() {
             
             // 并行获取两种搭配的发型推荐
             const [customHairstyles, generatedHairstyles] = await Promise.all([
-                getHairstyleRecommendation(data.custom.tryOnUrl),
-                getHairstyleRecommendation(data.generated.tryOnUrl)
+                handleHairstyleRecommendation(data.custom.tryOnUrl),
+                handleHairstyleRecommendation(data.generated.tryOnUrl)
             ]);
 
             console.log('自选搭配发型:', customHairstyles); // 添加日志
