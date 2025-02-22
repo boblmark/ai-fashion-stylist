@@ -481,16 +481,63 @@ function App() {
             <div className="grid grid-cols-2 gap-4">
                 {hairstyles.custom.map((style, index) => (
                     <div key={index} className="space-y-3">
-                        <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-500 to-teal-500">
-                            <img
-                                src={style.img}
-                                alt={style.hairstyle}
-                                className="w-full h-full object-cover"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <h4 className="font-medium text-gray-900">{style.hairstyle}</h4>
-                            <p className="text-sm text-gray-600">{style.reasons}</p>
+                        <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-500/80 rounded-3xl shadow-2xl overflow-hidden border border-white/20">
+                            <div className="relative px-6 py-8 sm:p-10">
+                                <div className="relative backdrop-blur-sm bg-white/80 rounded-3xl shadow-2xl overflow-hidden border border-white/20">
+                                    <div className="relative px-6 py-8 sm:p-10">
+                                        <div className="flex items-center gap-2 text-lg font-semibold text-gray-900">
+                                            <TrendingUp className="w-5 h-5 text-orange-500" />
+                                            {t.results.commentary[language]}
+                                        </div>
+
+                                        <div className="grid grid-cols-1 gap-4">
+                                            {commentaryLines.map((line, index) => {
+                                                if (line.includes('综合评分')) return null;
+
+                                                const icons = [ThumbsUp, Star, Scale, Palette];
+                                                const Icon = icons[index % icons.length];
+
+                                                return (
+                                                    <div
+                                                        key={index}
+                                                        className="p-4 rounded-lg bg-gradient-to-r from-orange-50 to-teal-50 border border-gray-100"
+                                                    >
+                                                        <div className="flex gap-3">
+                                                            <div className="flex-shrink-0">
+                                                                <Icon className="w-5 h-5 text-orange-500" />
+                                                            </div>
+                                                            <p className="text-sm text-gray-700 leading-relaxed">
+                                                                {line}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+
+                                        <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-orange-500 to-teal-500 text-white">
+                                            <div className="flex items-center justify-between">
+                                                <span className="font-medium">{t.results.score[language]}</span>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="flex">
+                                                        {[1, 2, 3, 4, 5].map((star) => (
+                                                            <Star
+                                                                key={star}
+                                                                className={`w-4 h-4 ${
+                                                                    star <= outfit.score / 2
+                                                                        ? 'fill-white'
+                                                                        : 'fill-white/30'
+                                                                }`}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                    <span className="font-bold text-xl">{outfit.score}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 ))}
@@ -509,16 +556,63 @@ function App() {
             <div className="grid grid-cols-2 gap-4">
                 {hairstyles.generated.map((style, index) => (
                     <div key={index} className="space-y-3">
-                        <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-500 to-teal-500">
-                            <img
-                                src={style.img}
-                                alt={style.hairstyle}
-                                className="w-full h-full object-cover"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <h4 className="font-medium text-gray-900">{style.hairstyle}</h4>
-                            <p className="text-sm text-gray-600">{style.reasons}</p>
+                        <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-500/80 rounded-3xl shadow-2xl overflow-hidden border border-white/20">
+                            <div className="relative px-6 py-8 sm:p-10">
+                                <div className="relative backdrop-blur-sm bg-white/80 rounded-3xl shadow-2xl overflow-hidden border border-white/20">
+                                    <div className="relative px-6 py-8 sm:p-10">
+                                        <div className="flex items-center gap-2 text-lg font-semibold text-gray-900">
+                                            <TrendingUp className="w-5 h-5 text-orange-500" />
+                                            {t.results.commentary[language]}
+                                        </div>
+
+                                        <div className="grid grid-cols-1 gap-4">
+                                            {commentaryLines.map((line, index) => {
+                                                if (line.includes('综合评分')) return null;
+
+                                                const icons = [ThumbsUp, Star, Scale, Palette];
+                                                const Icon = icons[index % icons.length];
+
+                                                return (
+                                                    <div
+                                                        key={index}
+                                                        className="p-4 rounded-lg bg-gradient-to-r from-orange-50 to-teal-50 border border-gray-100"
+                                                    >
+                                                        <div className="flex gap-3">
+                                                            <div className="flex-shrink-0">
+                                                                <Icon className="w-5 h-5 text-orange-500" />
+                                                            </div>
+                                                            <p className="text-sm text-gray-700 leading-relaxed">
+                                                                {line}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+
+                                        <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-orange-500 to-teal-500 text-white">
+                                            <div className="flex items-center justify-between">
+                                                <span className="font-medium">{t.results.score[language]}</span>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="flex">
+                                                        {[1, 2, 3, 4, 5].map((star) => (
+                                                            <Star
+                                                                key={star}
+                                                                className={`w-4 h-4 ${
+                                                                    star <= outfit.score / 2
+                                                                        ? 'fill-white'
+                                                                        : 'fill-white/30'
+                                                                }`}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                    <span className="font-bold text-xl">{outfit.score}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 ))}
@@ -693,14 +787,12 @@ function App() {
         <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-orange-100 via-gray-50 to-teal-50 relative">
             {renderLanguageSwitch()}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute inset-0 bg-[url('/bg-pattern.svg')] opacity-5 animate-slide"></div>
-                <div className="absolute -inset-[100%] bg-gradient-conic from-orange-500/30 via-teal-500/30 to-orange-500/30 animate-spin-slow blur-3xl"></div>
+                {/* ... background elements ... */}
             </div>
             
             {renderProgressBar()}
             <div className="max-w-5xl mx-auto relative z-10">
                 <div className="relative backdrop-blur-sm bg-white/80 rounded-3xl shadow-2xl overflow-hidden border border-white/20">
-                    <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-teal-500/10 animate-pulse"></div>
                     <div className="relative px-6 py-8 sm:p-10">
                         <div className="flex items-center justify-center mb-8">
                             <div className="w-32 h-32 relative animate-float">
@@ -739,7 +831,7 @@ function App() {
                         </div>
 
                         {/* 添加功能卡片部分 */}
-                        <div className="mt-12 mb-8">
+                        <div className="mt-12 mb-8 px-6 sm:px-10">
                             <h2 className="text-2xl font-semibold text-center mb-8 bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
                                 {t.features.title[language]}
                             </h2>
@@ -763,7 +855,7 @@ function App() {
                             </div>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="mt-8 space-y-8">
+                        <form onSubmit={handleSubmit} className="mt-8 space-y-8 px-6 sm:px-10">
                             <div className="grid grid-cols-1 gap-8">
                                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
                                     {renderUploadBox(
