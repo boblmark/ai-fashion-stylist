@@ -435,7 +435,7 @@ function App() {
         label: { en: string; zh: string },
         placeholder: { en: string; zh: string },
         icon: React.ReactNode
-    ) => (
+    ): JSX.Element => (
         <div className="group">
             <label className="block text-sm font-medium bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent mb-2">
                 {label[language]}
