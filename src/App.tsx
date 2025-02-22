@@ -139,7 +139,7 @@ interface ProgressState {
     message: string;
 }
 
-// 删除重复的 PROGRESS_STAGES 定义，保留一个完整的定义
+// 删除文件开头的重复定义，保留以下完整的定义
 const PROGRESS_STAGES = {
     UPLOAD: { percent: 10, en: 'Uploading files...', zh: '正在上传文件...' },
     ANALYSIS: { percent: 20, en: 'Analyzing...', zh: '正在分析...' },
@@ -151,8 +151,9 @@ const PROGRESS_STAGES = {
     HAIRSTYLE_ANALYSIS: { percent: 85, en: 'Analyzing hairstyle...', zh: '正在分析发型...' },
     HAIRSTYLE_GENERATION: { percent: 95, en: 'Generating hairstyle recommendations...', zh: '正在生成发型推荐...' },
     COMPLETE: { percent: 100, en: 'Complete!', zh: '完成！' }
-};
+} as const;
 
+// 更新 ProgressStage 类型定义
 type ProgressStage = keyof typeof PROGRESS_STAGES;
 
 const STYLE_PREFERENCES = [
