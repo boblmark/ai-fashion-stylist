@@ -617,12 +617,11 @@ function App() {
         title: { en: string; zh: string }
     ) => {
         const commentaryLines = outfit.commentary.split('\n').filter(line => line.trim());
-        // 修复正则表达式格式
         const scorePattern = /综合评分[：:]\s*(\d+(?:\.\d+)?)\s*分/;
         const commentaryWithoutScore = commentaryLines
             .filter(line => !scorePattern.test(line))
             .join('\n');
-
+    
         return (
             <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
                 <div className="relative">
@@ -658,22 +657,42 @@ function App() {
                         <div className="grid grid-cols-1 gap-4">
                             {commentaryLines.map((line, index) => {
                                 if (line.includes('综合评分')) return null;
-
+    
                                 const icons = [ThumbsUp, Star, Scale, Palette];
                                 const Icon = icons[index % icons.length];
-
+                                const bgColors = [
+                                    'from-orange-50 to-amber-50',
+                                    'from-teal-50 to-emerald-50',
+                                    'from-purple-50 to-pink-50',
+                                    'from-blue-50 to-cyan-50'
+                                ];
+                                const borderColors = [
+                                    'border-orange-100',
+                                    'border-teal-100',
+                                    'border-purple-100',
+                                    'border-blue-100'
+                                ];
+    
                                 return (
                                     <div
                                         key={index}
-                                        className="p-4 rounded-lg bg-gradient-to-r from-orange-50 to-teal-50 border border-gray-100"
+                                        className={`p-4 rounded-lg bg-gradient-to-r ${bgColors[index % bgColors.length]} border ${borderColors[index % borderColors.length]} hover:shadow-md transition-all duration-300`}
                                     >
                                         <div className="flex gap-3">
                                             <div className="flex-shrink-0">
                                                 <Icon className="w-5 h-5 text-orange-500" />
                                             </div>
-                                            <p className="text-sm text-gray-700 leading-relaxed">
-                                                {line}
-                                            </p>
+                                            <div className="space-y-2">
+                                                <p className="text-sm text-gray-700 leading-relaxed">
+                                                    {line}
+                                                </p>
+                                                {index === 0 && (
+                                                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                                                        <ThumbsUp className="w-3 h-3" />
+                                                        <span>{language === 'en' ? 'AI Verified' : 'AI验证'}</span>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 );
@@ -993,27 +1012,23 @@ function App() {
                                     </div>
                                 </div>
                                 {/* 发型推荐部分 */}
-                                <div className="mt-12 space-y-12">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     {/* 自选搭配发型 */}
-                                    <div className="space-y-8">
-                                        <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
-                                            <h3 className="text-xl font-semibold p-4 bg-gradient-to-r from-orange-600 to-teal-600 text-white">
-                                                {language === 'en' ? 'Recommended Hairstyles' : '推荐发型'}
-                                            </h3>
-                                            <div className="p-4">
-                                                {renderCustomHairstyles()}
-                                            </div>
+                                    <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
+                                        <h3 className="text-xl font-semibold p-4 bg-gradient-to-r from-orange-600 to-teal-600 text-white">
+                                            {language === 'en' ? 'Recommended Hairstyles' : '推荐发型'}
+                                        </h3>
+                                        <div className="p-4">
+                                            {renderCustomHairstyles()}
                                         </div>
                                     </div>
                                     {/* AI推荐搭配发型 */}
-                                    <div className="space-y-8">
-                                        <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
-                                            <h3 className="text-xl font-semibold p-4 bg-gradient-to-r from-orange-600 to-teal-600 text-white">
-                                                {language === 'en' ? 'AI Recommended Hairstyles' : 'AI推荐发型'}
-                                            </h3>
-                                            <div className="p-4">
-                                                {renderGeneratedHairstyles()}
-                                            </div>
+                                    <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
+                                        <h3 className="text-xl font-semibold p-4 bg-gradient-to-r from-orange-600 to-teal-600 text-white">
+                                            {language === 'en' ? 'AI Recommended Hairstyles' : 'AI推荐发型'}
+                                        </h3>
+                                        <div className="p-4">
+                                            {renderGeneratedHairstyles()}
                                         </div>
                                     </div>
                                 </div>
