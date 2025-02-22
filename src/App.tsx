@@ -397,7 +397,7 @@ function App() {
                                 // 尝试从字符串中提取发型信息
                                 try {
                                     const extractedData = JSON.parse(parsedData);
-                                    hairstyles = Array.isArray(extractedData) ? extractedData : 
+                                    hairstyles = Array.isArray(extractedData) ? extractedData :
                                     (extractedData.output && Array.isArray(extractedData.output)) ? extractedData.output :
                                     (extractedData.hairstyles && Array.isArray(extractedData.hairstyles)) ? extractedData.hairstyles : [];
                                 } catch (e) {
@@ -904,6 +904,1236 @@ function App() {
                                             </option>
                                         ))}
                                     </select>
+                                </div>
+
+                                <div>
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className={`w-full flex items-center justify-center py-3 px-4 rounded-lg text-sm font-semibold text-white transition-all duration-200 ${
+                                            loading
+                                                ? 'bg-gray-400 cursor-not-allowed'
+                                                : 'bg-gradient-to-r from-orange-600 to-teal-600 hover:from-orange-500 hover:to-teal-500 transform hover:scale-[1.02]'
+                                        }`}
+                                    >
+                                        <Sparkles className={`w-5 h-5 mr-2 ${loading ? 'animate-spin' : 'animate-pulse'}`} />
+                                        {loading ? t.button.generating[language] : t.button.generate[language]}
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+
+                        {result && (
+                            <div className="mt-12 space-y-12">
+                                {/* 虚拟换衣结果 */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    {/* 自选搭配结果 */}
+                                    <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
+                                        <h3 className="text-lg font-semibold p-4 bg-gradient-to-r from-orange-500 to-teal-500 text-white">
+                                            {t.results.custom[language]}
+                                        </h3>
+                                        <div className="p-4 space-y-4">
+                                            <div className="relative aspect-[3/4] rounded-xl overflow-hidden">
+                                                <img
+                                                    src={result.custom.tryOnUrl}
+                                                    alt="Custom outfit try-on"
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-gray-700">{t.results.score[language]}</span>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="flex">
+                                                        {[1, 2, 3, 4, 5].map((star) => (
+                                                            <Star
+                                                                key={star}
+                                                                className={`w-4 h-4 ${
+                                                                    star <= result.custom.score / 2
+                                                                        ? 'text-orange-500 fill-orange-500'
+                                                                        : 'text-gray-300 fill-gray-300'
+                                                                }`}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                    <span className="font-bold">{result.custom.score}</span>
+                                                </div>
+                                            </div>
+                                            <div className="text-sm text-gray-600">
+                                                {result.custom.commentary}
+                                            </div>
+                                        </div>
+                                    </div>
+                                
+                                    {/* AI推荐搭配结果 */}
+                                    <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
+                                        <h3 className="text-lg font-semibold p-4 bg-gradient-to-r from-orange-500 to-teal-500 text-white">
+                                            {t.results.generated[language]}
+                                        </h3>
+                                        <div className="p-4 space-y-4">
+                                            <div className="relative aspect-[3/4] rounded-xl overflow-hidden">
+                                                <img
+                                                    src={result.generated.tryOnUrl}
+                                                    alt="AI generated outfit try-on"
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-gray-700">{t.results.score[language]}</span>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="flex">
+                                                        {[1, 2, 3, 4, 5].map((star) => (
+                                                            <Star
+                                                                key={star}
+                                                                className={`w-4 h-4 ${
+                                                                    star <= result.generated.score / 2
+                                                                        ? 'text-orange-500 fill-orange-500'
+                                                                        : 'text-gray-300 fill-gray-300'
+                                                                }`}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                    <span className="font-bold">{result.generated.score}</span>
+                                                </div>
+                                            </div>
+                                            <div className="text-sm text-gray-600">
+                                                {result.generated.commentary}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 虚拟换发结果 */}
+                                <div className="space-y-8">
+                                    <h2 className="text-2xl font-semibold bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent text-center">
+                                        {language === 'en' ? 'Hairstyle Recommendations' : '发型推荐'}
+                                    </h2>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        {/* 自选搭配发型推荐 */}
+                                        <div className="space-y-4">
+                                            <h3 className="text-lg font-semibold bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
+                                                {t.results.custom[language]}
+                                            </h3>
+                                            {renderCustomHairstyles()}
+                                        </div>
+                                        {/* AI推荐发型 */}
+                                        <div className="space-y-4">
+                                            <h3 className="text-lg font-semibold bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
+                                                {t.results.generated[language]}
+                                            </h3>
+                                            {renderGeneratedHairstyles()}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 添加动态背景效果 */}
+                        <div className="absolute inset-0 -z-10">
+                            <div className="absolute inset-0 bg-gradient-to-br from-orange-100/40 via-purple-100/40 to-teal-100/40 animate-gradient-xy"></div>
+                            <div className="absolute inset-0 opacity-30">
+                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,140,50,0.1),rgba(100,220,200,0.1))] animate-pulse"></div>
+                                <div className="absolute inset-0 bg-[url('/pattern.svg')] bg-repeat opacity-10 animate-slide"></div>
+                            </div>
+                        </div>
+
+                        {/* 添加功能卡片部分 */}
+                        <div className="mt-12 mb-8">
+                            <h2 className="text-2xl font-semibold text-center mb-8 bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
+                                {t.features.title[language]}
+                            </h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                {FEATURES.map((feature, index) => {
+                                    const Icon = lucideIcons[feature.icon];
+                                    return (
+                                        <div key={index} className="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group">
+                                            <div className="w-12 h-12 mb-4 rounded-lg bg-gradient-to-br from-orange-500/10 to-teal-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                                <Icon className="w-6 h-6 text-orange-600" />
+                                            </div>
+                                            <h3 className="text-lg font-semibold mb-2 bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
+                                                {feature.title[language]}
+                                            </h3>
+                                            <p className="text-gray-600 text-sm">
+                                                {feature.desc[language]}
+                                            </p>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="mt-8 space-y-8">
+                            <div className="grid grid-cols-1 gap-8">
+                                <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                                    {renderUploadBox(
+                                        personPhoto,
+                                        setPersonPhoto,
+                                        t.upload.person,
+                                        t.upload.photo,
+                                        <Camera className="w-12 h-12 text-orange-400" />
+                                    )}
+                                    {renderUploadBox(
+                                        topGarment,
+                                        setTopGarment,
+                                        t.upload.top,
+                                        t.upload.top_text,
+                                        <Upload className="w-12 h-12 text-orange-400" />
+                                    )}
+                                    {renderUploadBox(
+                                        bottomGarment,
+                                        setBottomGarment,
+                                        t.upload.bottom,
+                                        t.upload.bottom_text,
+                                        <Upload className="w-12 h-12 text-orange-400" />
+                                    )}
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                    <div className="space-y-4">
+                                        {Object.entries(t.measurements).slice(0, 3).map(([key, label]) => (
+                                            <div key={key} className="group">
+                                                <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
+                                                    {label[language]}
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    name={key}
+                                                    value={formData[key as keyof FormData]}
+                                                    onChange={handleInputChange}
+                                                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
+                                                    required
+                                                    min="1"
+                                                    step="0.1"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="space-y-4">
+                                        {Object.entries(t.measurements).slice(3).map(([key, label]) => (
+                                            <div key={key} className="group">
+                                                <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
+                                                    {label[language]}
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    name={key}
+                                                    value={formData[key as keyof FormData]}
+                                                    onChange={handleInputChange}
+                                                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
+                                                    required
+                                                    min="1"
+                                                    step="0.1"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="group">
+                                    <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
+                                        {t.style[language]}
+                                    </label>
+                                    <select
+                                        name="style_preference"
+                                        value={formData.style_preference}
+                                        onChange={handleInputChange}
+                                        className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
+                                    >
+                                        {STYLE_PREFERENCES.map((style) => (
+                                            <option key={style.zh} value={style.zh}>
+                                                {language === 'en' ? style.en : style.zh}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className={`w-full flex items-center justify-center py-3 px-4 rounded-lg text-sm font-semibold text-white transition-all duration-200 ${
+                                            loading
+                                                ? 'bg-gray-400 cursor-not-allowed'
+                                                : 'bg-gradient-to-r from-orange-600 to-teal-600 hover:from-orange-500 hover:to-teal-500 transform hover:scale-[1.02]'
+                                        }`}
+                                    >
+                                        <Sparkles className={`w-5 h-5 mr-2 ${loading ? 'animate-spin' : 'animate-pulse'}`} />
+                                        {loading ? t.button.generating[language] : t.button.generate[language]}
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+
+                        {result && (
+                            <div className="mt-12 space-y-12">
+                                {/* 虚拟换衣结果 */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    {/* 自选搭配结果 */}
+                                    <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
+                                        <h3 className="text-lg font-semibold p-4 bg-gradient-to-r from-orange-500 to-teal-500 text-white">
+                                            {t.results.custom[language]}
+                                        </h3>
+                                        <div className="p-4 space-y-4">
+                                            <div className="relative aspect-[3/4] rounded-xl overflow-hidden">
+                                                <img
+                                                    src={result.custom.tryOnUrl}
+                                                    alt="Custom outfit try-on"
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-gray-700">{t.results.score[language]}</span>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="flex">
+                                                        {[1, 2, 3, 4, 5].map((star) => (
+                                                            <Star
+                                                                key={star}
+                                                                className={`w-4 h-4 ${
+                                                                    star <= result.custom.score / 2
+                                                                        ? 'text-orange-500 fill-orange-500'
+                                                                        : 'text-gray-300 fill-gray-300'
+                                                                }`}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                    <span className="font-bold">{result.custom.score}</span>
+                                                </div>
+                                            </div>
+                                            <div className="text-sm text-gray-600">
+                                                {result.custom.commentary}
+                                            </div>
+                                        </div>
+                                    </div>
+                                
+                                    {/* AI推荐搭配结果 */}
+                                    <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
+                                        <h3 className="text-lg font-semibold p-4 bg-gradient-to-r from-orange-500 to-teal-500 text-white">
+                                            {t.results.generated[language]}
+                                        </h3>
+                                        <div className="p-4 space-y-4">
+                                            <div className="relative aspect-[3/4] rounded-xl overflow-hidden">
+                                                <img
+                                                    src={result.generated.tryOnUrl}
+                                                    alt="AI generated outfit try-on"
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-gray-700">{t.results.score[language]}</span>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="flex">
+                                                        {[1, 2, 3, 4, 5].map((star) => (
+                                                            <Star
+                                                                key={star}
+                                                                className={`w-4 h-4 ${
+                                                                    star <= result.generated.score / 2
+                                                                        ? 'text-orange-500 fill-orange-500'
+                                                                        : 'text-gray-300 fill-gray-300'
+                                                                }`}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                    <span className="font-bold">{result.generated.score}</span>
+                                                </div>
+                                            </div>
+                                            <div className="text-sm text-gray-600">
+                                                {result.generated.commentary}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 虚拟换发结果 */}
+                                <div className="space-y-8">
+                                    <h2 className="text-2xl font-semibold bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent text-center">
+                                        {language === 'en' ? 'Hairstyle Recommendations' : '发型推荐'}
+                                    </h2>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        {/* 自选搭配发型推荐 */}
+                                        <div className="space-y-4">
+                                            <h3 className="text-lg font-semibold bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
+                                                {t.results.custom[language]}
+                                            </h3>
+                                            {renderCustomHairstyles()}
+                                        </div>
+                                        {/* AI推荐发型 */}
+                                        <div className="space-y-4">
+                                            <h3 className="text-lg font-semibold bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
+                                                {t.results.generated[language]}
+                                            </h3>
+                                            {renderGeneratedHairstyles()}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 添加动态背景效果 */}
+                        <div className="absolute inset-0 -z-10">
+                            <div className="absolute inset-0 bg-gradient-to-br from-orange-100/40 via-purple-100/40 to-teal-100/40 animate-gradient-xy"></div>
+                            <div className="absolute inset-0 opacity-30">
+                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,140,50,0.1),rgba(100,220,200,0.1))] animate-pulse"></div>
+                                <div className="absolute inset-0 bg-[url('/pattern.svg')] bg-repeat opacity-10 animate-slide"></div>
+                            </div>
+                        </div>
+
+                        {/* 添加功能卡片部分 */}
+                        <div className="mt-12 mb-8">
+                            <h2 className="text-2xl font-semibold text-center mb-8 bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
+                                {t.features.title[language]}
+                            </h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                {FEATURES.map((feature, index) => {
+                                    const Icon = lucideIcons[feature.icon];
+                                    return (
+                                        <div key={index} className="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group">
+                                            <div className="w-12 h-12 mb-4 rounded-lg bg-gradient-to-br from-orange-500/10 to-teal-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                                <Icon className="w-6 h-6 text-orange-600" />
+                                            </div>
+                                            <h3 className="text-lg font-semibold mb-2 bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
+                                                {feature.title[language]}
+                                            </h3>
+                                            <p className="text-gray-600 text-sm">
+                                                {feature.desc[language]}
+                                            </p>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="mt-8 space-y-8">
+                            <div className="grid grid-cols-1 gap-8">
+                                <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                                    {renderUploadBox(
+                                        personPhoto,
+                                        setPersonPhoto,
+                                        t.upload.person,
+                                        t.upload.photo,
+                                        <Camera className="w-12 h-12 text-orange-400" />
+                                    )}
+                                    {renderUploadBox(
+                                        topGarment,
+                                        setTopGarment,
+                                        t.upload.top,
+                                        t.upload.top_text,
+                                        <Upload className="w-12 h-12 text-orange-400" />
+                                    )}
+                                    {renderUploadBox(
+                                        bottomGarment,
+                                        setBottomGarment,
+                                        t.upload.bottom,
+                                        t.upload.bottom_text,
+                                        <Upload className="w-12 h-12 text-orange-400" />
+                                    )}
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                    <div className="space-y-4">
+                                        {Object.entries(t.measurements).slice(0, 3).map(([key, label]) => (
+                                            <div key={key} className="group">
+                                                <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
+                                                    {label[language]}
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    name={key}
+                                                    value={formData[key as keyof FormData]}
+                                                    onChange={handleInputChange}
+                                                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
+                                                    required
+                                                    min="1"
+                                                    step="0.1"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="space-y-4">
+                                        {Object.entries(t.measurements).slice(3).map(([key, label]) => (
+                                            <div key={key} className="group">
+                                                <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
+                                                    {label[language]}
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    name={key}
+                                                    value={formData[key as keyof FormData]}
+                                                    onChange={handleInputChange}
+                                                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
+                                                    required
+                                                    min="1"
+                                                    step="0.1"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="group">
+                                    <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
+                                        {t.style[language]}
+                                    </label>
+                                    <select
+                                        name="style_preference"
+                                        value={formData.style_preference}
+                                        onChange={handleInputChange}
+                                        className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
+                                    >
+                                        {STYLE_PREFERENCES.map((style) => (
+                                            <option key={style.zh} value={style.zh}>
+                                                {language === 'en' ? style.en : style.zh}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className={`w-full flex items-center justify-center py-3 px-4 rounded-lg text-sm font-semibold text-white transition-all duration-200 ${
+                                            loading
+                                                ? 'bg-gray-400 cursor-not-allowed'
+                                                : 'bg-gradient-to-r from-orange-600 to-teal-600 hover:from-orange-500 hover:to-teal-500 transform hover:scale-[1.02]'
+                                        }`}
+                                    >
+                                        <Sparkles className={`w-5 h-5 mr-2 ${loading ? 'animate-spin' : 'animate-pulse'}`} />
+                                        {loading ? t.button.generating[language] : t.button.generate[language]}
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+
+                        {result && (
+                            <div className="mt-12 space-y-12">
+                                {/* 虚拟换衣结果 */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    {/* 自选搭配结果 */}
+                                    <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
+                                        <h3 className="text-lg font-semibold p-4 bg-gradient-to-r from-orange-500 to-teal-500 text-white">
+                                            {t.results.custom[language]}
+                                        </h3>
+                                        <div className="p-4 space-y-4">
+                                            <div className="relative aspect-[3/4] rounded-xl overflow-hidden">
+                                                <img
+                                                    src={result.custom.tryOnUrl}
+                                                    alt="Custom outfit try-on"
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-gray-700">{t.results.score[language]}</span>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="flex">
+                                                        {[1, 2, 3, 4, 5].map((star) => (
+                                                            <Star
+                                                                key={star}
+                                                                className={`w-4 h-4 ${
+                                                                    star <= result.custom.score / 2
+                                                                        ? 'text-orange-500 fill-orange-500'
+                                                                        : 'text-gray-300 fill-gray-300'
+                                                                }`}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                    <span className="font-bold">{result.custom.score}</span>
+                                                </div>
+                                            </div>
+                                            <div className="text-sm text-gray-600">
+                                                {result.custom.commentary}
+                                            </div>
+                                        </div>
+                                    </div>
+                                
+                                    {/* AI推荐搭配结果 */}
+                                    <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
+                                        <h3 className="text-lg font-semibold p-4 bg-gradient-to-r from-orange-500 to-teal-500 text-white">
+                                            {t.results.generated[language]}
+                                        </h3>
+                                        <div className="p-4 space-y-4">
+                                            <div className="relative aspect-[3/4] rounded-xl overflow-hidden">
+                                                <img
+                                                    src={result.generated.tryOnUrl}
+                                                    alt="AI generated outfit try-on"
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-gray-700">{t.results.score[language]}</span>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="flex">
+                                                        {[1, 2, 3, 4, 5].map((star) => (
+                                                            <Star
+                                                                key={star}
+                                                                className={`w-4 h-4 ${
+                                                                    star <= result.generated.score / 2
+                                                                        ? 'text-orange-500 fill-orange-500'
+                                                                        : 'text-gray-300 fill-gray-300'
+                                                                }`}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                    <span className="font-bold">{result.generated.score}</span>
+                                                </div>
+                                            </div>
+                                            <div className="text-sm text-gray-600">
+                                                {result.generated.commentary}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 虚拟换发结果 */}
+                                <div className="space-y-8">
+                                    <h2 className="text-2xl font-semibold bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent text-center">
+                                        {language === 'en' ? 'Hairstyle Recommendations' : '发型推荐'}
+                                    </h2>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        {/* 自选搭配发型推荐 */}
+                                        <div className="space-y-4">
+                                            <h3 className="text-lg font-semibold bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
+                                                {t.results.custom[language]}
+                                            </h3>
+                                            {renderCustomHairstyles()}
+                                        </div>
+                                        {/* AI推荐发型 */}
+                                        <div className="space-y-4">
+                                            <h3 className="text-lg font-semibold bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
+                                                {t.results.generated[language]}
+                                            </h3>
+                                            {renderGeneratedHairstyles()}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 添加动态背景效果 */}
+                        <div className="absolute inset-0 -z-10">
+                            <div className="absolute inset-0 bg-gradient-to-br from-orange-100/40 via-purple-100/40 to-teal-100/40 animate-gradient-xy"></div>
+                            <div className="absolute inset-0 opacity-30">
+                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,140,50,0.1),rgba(100,220,200,0.1))] animate-pulse"></div>
+                                <div className="absolute inset-0 bg-[url('/pattern.svg')] bg-repeat opacity-10 animate-slide"></div>
+                            </div>
+                        </div>
+
+                        {/* 添加功能卡片部分 */}
+                        <div className="mt-12 mb-8">
+                            <h2 className="text-2xl font-semibold text-center mb-8 bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
+                                {t.features.title[language]}
+                            </h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                {FEATURES.map((feature, index) => {
+                                    const Icon = lucideIcons[feature.icon];
+                                    return (
+                                        <div key={index} className="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group">
+                                            <div className="w-12 h-12 mb-4 rounded-lg bg-gradient-to-br from-orange-500/10 to-teal-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                                <Icon className="w-6 h-6 text-orange-600" />
+                                            </div>
+                                            <h3 className="text-lg font-semibold mb-2 bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
+                                                {feature.title[language]}
+                                            </h3>
+                                            <p className="text-gray-600 text-sm">
+                                                {feature.desc[language]}
+                                            </p>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="mt-8 space-y-8">
+                            <div className="grid grid-cols-1 gap-8">
+                                <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                                    {renderUploadBox(
+                                        personPhoto,
+                                        setPersonPhoto,
+                                        t.upload.person,
+                                        t.upload.photo,
+                                        <Camera className="w-12 h-12 text-orange-400" />
+                                    )}
+                                    {renderUploadBox(
+                                        topGarment,
+                                        setTopGarment,
+                                        t.upload.top,
+                                        t.upload.top_text,
+                                        <Upload className="w-12 h-12 text-orange-400" />
+                                    )}
+                                    {renderUploadBox(
+                                        bottomGarment,
+                                        setBottomGarment,
+                                        t.upload.bottom,
+                                        t.upload.bottom_text,
+                                        <Upload className="w-12 h-12 text-orange-400" />
+                                    )}
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                    <div className="space-y-4">
+                                        {Object.entries(t.measurements).slice(0, 3).map(([key, label]) => (
+                                            <div key={key} className="group">
+                                                <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
+                                                    {label[language]}
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    name={key}
+                                                    value={formData[key as keyof FormData]}
+                                                    onChange={handleInputChange}
+                                                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
+                                                    required
+                                                    min="1"
+                                                    step="0.1"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="space-y-4">
+                                        {Object.entries(t.measurements).slice(3).map(([key, label]) => (
+                                            <div key={key} className="group">
+                                                <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
+                                                    {label[language]}
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    name={key}
+                                                    value={formData[key as keyof FormData]}
+                                                    onChange={handleInputChange}
+                                                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
+                                                    required
+                                                    min="1"
+                                                    step="0.1"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="group">
+                                    <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
+                                        {t.style[language]}
+                                    </label>
+                                    <select
+                                        name="style_preference"
+                                        value={formData.style_preference}
+                                        onChange={handleInputChange}
+                                        className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
+                                    >
+                                        {STYLE_PREFERENCES.map((style) => (
+                                            <option key={style.zh} value={style.zh}>
+                                                {language === 'en' ? style.en : style.zh}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className={`w-full flex items-center justify-center py-3 px-4 rounded-lg text-sm font-semibold text-white transition-all duration-200 ${
+                                            loading
+                                            <h3 className="text-lg font-semibold bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
+                                                {t.results.generated[language]}
+                                            </h3>
+                                            {renderGeneratedHairstyles()}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 添加动态背景效果 */}
+                        <div className="absolute inset-0 -z-10">
+                            <div className="absolute inset-0 bg-gradient-to-br from-orange-100/40 via-purple-100/40 to-teal-100/40 animate-gradient-xy"></div>
+                            <div className="absolute inset-0 opacity-30">
+                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,140,50,0.1),rgba(100,220,200,0.1))] animate-pulse"></div>
+                                <div className="absolute inset-0 bg-[url('/pattern.svg')] bg-repeat opacity-10 animate-slide"></div>
+                            </div>
+                        </div>
+
+                        {/* 添加功能卡片部分 */}
+                        <div className="mt-12 mb-8">
+                            <h2 className="text-2xl font-semibold text-center mb-8 bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
+                                {t.features.title[language]}
+                            </h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                {FEATURES.map((feature, index) => {
+                                    const Icon = lucideIcons[feature.icon];
+                                    return (
+                                        <div key={index} className="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group">
+                                            <div className="w-12 h-12 mb-4 rounded-lg bg-gradient-to-br from-orange-500/10 to-teal-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                                <Icon className="w-6 h-6 text-orange-600" />
+                                            </div>
+                                            <h3 className="text-lg font-semibold mb-2 bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
+                                                {feature.title[language]}
+                                            </h3>
+                                            <p className="text-gray-600 text-sm">
+                                                {feature.desc[language]}
+                                            </p>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="mt-8 space-y-8">
+                            <div className="grid grid-cols-1 gap-8">
+                                <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                                    {renderUploadBox(
+                                        personPhoto,
+                                        setPersonPhoto,
+                                        t.upload.person,
+                                        t.upload.photo,
+                                        <Camera className="w-12 h-12 text-orange-400" />
+                                    )}
+                                    {renderUploadBox(
+                                        topGarment,
+                                        setTopGarment,
+                                        t.upload.top,
+                                        t.upload.top_text,
+                                        <Upload className="w-12 h-12 text-orange-400" />
+                                    )}
+                                    {renderUploadBox(
+                                        bottomGarment,
+                                        setBottomGarment,
+                                        t.upload.bottom,
+                                        t.upload.bottom_text,
+                                        <Upload className="w-12 h-12 text-orange-400" />
+                                    )}
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                    <div className="space-y-4">
+                                        {Object.entries(t.measurements).slice(0, 3).map(([key, label]) => (
+                                            <div key={key} className="group">
+                                                <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
+                                                    {label[language]}
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    name={key}
+                                                    value={formData[key as keyof FormData]}
+                                                    onChange={handleInputChange}
+                                                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
+                                                    required
+                                                    min="1"
+                                                    step="0.1"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="space-y-4">
+                                        {Object.entries(t.measurements).slice(3).map(([key, label]) => (
+                                            <div key={key} className="group">
+                                                <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
+                                                    {label[language]}
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    name={key}
+                                                    value={formData[key as keyof FormData]}
+                                                    onChange={handleInputChange}
+                                                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
+                                                    required
+                                                    min="1"
+                                                    step="0.1"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="group">
+                                    <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
+                                        {t.style[language]}
+                                    </label>
+                                    <select
+                                        name="style_preference"
+                                        value={formData.style_preference}
+                                        onChange={handleInputChange}
+                                        className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
+                                    >
+                                        {STYLE_PREFERENCES.map((style) => (
+                                            <option key={style.zh} value={style.zh}>
+                                                {language === 'en' ? style.en : style.zh}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className={`w-full flex items-center justify-center py-3 px-4 rounded-lg text-sm font-semibold text-white transition-all duration-200 ${
+                                            loading
+                                                ? 'bg-gray-400 cursor-not-allowed'
+                                                : 'bg-gradient-to-r from-orange-600 to-teal-600 hover:from-orange-500 hover:to-teal-500 transform hover:scale-[1.02]'
+                                        }`}
+                                    >
+                                        <Sparkles className={`w-5 h-5 mr-2 ${loading ? 'animate-spin' : 'animate-pulse'}`} />
+                                        {loading ? t.button.generating[language] : t.button.generate[language]}
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+
+                        {result && (
+                            <div className="mt-12 space-y-12">
+                                {/* 虚拟换衣结果 */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    {/* 自选搭配结果 */}
+                                    <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
+                                        <h3 className="text-lg font-semibold p-4 bg-gradient-to-r from-orange-500 to-teal-500 text-white">
+                                            {t.results.custom[language]}
+                                        </h3>
+                                        <div className="p-4 space-y-4">
+                                            <div className="relative aspect-[3/4] rounded-xl overflow-hidden">
+                                                <img
+                                                    src={result.custom.tryOnUrl}
+                                                    alt="Custom outfit try-on"
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-gray-700">{t.results.score[language]}</span>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="flex">
+                                                        {[1, 2, 3, 4, 5].map((star) => (
+                                                            <Star
+                                                                key={star}
+                                                                className={`w-4 h-4 ${
+                                                                    star <= result.custom.score / 2
+                                                                        ? 'text-orange-500 fill-orange-500'
+                                                                        : 'text-gray-300 fill-gray-300'
+                                                                }`}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                    <span className="font-bold">{result.custom.score}</span>
+                                                </div>
+                                            </div>
+                                            <div className="text-sm text-gray-600">
+                                                {result.custom.commentary}
+                                            </div>
+                                        </div>
+                                    </div>
+                                
+                                    {/* AI推荐搭配结果 */}
+                                    <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
+                                        <h3 className="text-lg font-semibold p-4 bg-gradient-to-r from-orange-500 to-teal-500 text-white">
+                                            {t.results.generated[language]}
+                                        </h3>
+                                        <div className="p-4 space-y-4">
+                                            <div className="relative aspect-[3/4] rounded-xl overflow-hidden">
+                                                <img
+                                                    src={result.generated.tryOnUrl}
+                                                    alt="AI generated outfit try-on"
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-gray-700">{t.results.score[language]}</span>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="flex">
+                                                        {[1, 2, 3, 4, 5].map((star) => (
+                                                            <Star
+                                                                key={star}
+                                                                className={`w-4 h-4 ${
+                                                                    star <= result.generated.score / 2
+                                                                        ? 'text-orange-500 fill-orange-500'
+                                                                        : 'text-gray-300 fill-gray-300'
+                                                                }`}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                    <span className="font-bold">{result.generated.score}</span>
+                                                </div>
+                                            </div>
+                                            <div className="text-sm text-gray-600">
+                                                {result.generated.commentary}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 虚拟换发结果 */}
+                                <div className="space-y-8">
+                                    <h2 className="text-2xl font-semibold bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent text-center">
+                                        {language === 'en' ? 'Hairstyle Recommendations' : '发型推荐'}
+                                    </h2>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        {/* 自选搭配发型推荐 */}
+                                        <div className="space-y-4">
+                                            <h3 className="text-lg font-semibold bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
+                                                {t.results.custom[language]}
+                                            </h3>
+                                            {renderCustomHairstyles()}
+                                        </div>
+                                        {/* AI推荐发型 */}
+                                        <div className="space-y-4">
+                                            <h3 className="text-lg font-semibold bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
+                                                {t.results.generated[language]}
+                                            </h3>
+                                            {renderGeneratedHairstyles()}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 添加动态背景效果 */}
+                        <div className="absolute inset-0 -z-10">
+                            <div className="absolute inset-0 bg-gradient-to-br from-orange-100/40 via-purple-100/40 to-teal-100/40 animate-gradient-xy"></div>
+                            <div className="absolute inset-0 opacity-30">
+                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,140,50,0.1),rgba(100,220,200,0.1))] animate-pulse"></div>
+                                <div className="absolute inset-0 bg-[url('/pattern.svg')] bg-repeat opacity-10 animate-slide"></div>
+                            </div>
+                        </div>
+
+                        {/* 添加功能卡片部分 */}
+                        <div className="mt-12 mb-8">
+                            <h2 className="text-2xl font-semibold text-center mb-8 bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
+                                {t.features.title[language]}
+                            </h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                {FEATURES.map((feature, index) => {
+                                    const Icon = lucideIcons[feature.icon];
+                                    return (
+                                        <div key={index} className="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group">
+                                            <div className="w-12 h-12 mb-4 rounded-lg bg-gradient-to-br from-orange-500/10 to-teal-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                                <Icon className="w-6 h-6 text-orange-600" />
+                                            </div>
+                                            <h3 className="text-lg font-semibold mb-2 bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
+                                                {feature.title[language]}
+                                            </h3>
+                                            <p className="text-gray-600 text-sm">
+                                                {feature.desc[language]}
+                                            </p>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="mt-8 space-y-8">
+                            <div className="grid grid-cols-1 gap-8">
+                                <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                                    {renderUploadBox(
+                                        personPhoto,
+                                        setPersonPhoto,
+                                        t.upload.person,
+                                        t.upload.photo,
+                                        <Camera className="w-12 h-12 text-orange-400" />
+                                    )}
+                                    {renderUploadBox(
+                                        topGarment,
+                                        setTopGarment,
+                                        t.upload.top,
+                                        t.upload.top_text,
+                                        <Upload className="w-12 h-12 text-orange-400" />
+                                    )}
+                                    {renderUploadBox(
+                                        bottomGarment,
+                                        setBottomGarment,
+                                        t.upload.bottom,
+                                        t.upload.bottom_text,
+                                        <Upload className="w-12 h-12 text-orange-400" />
+                                    )}
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                    <div className="space-y-4">
+                                        {Object.entries(t.measurements).slice(0, 3).map(([key, label]) => (
+                                            <div key={key} className="group">
+                                                <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
+                                                    {label[language]}
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    name={key}
+                                                    value={formData[key as keyof FormData]}
+                                                    onChange={handleInputChange}
+                                                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
+                                                    required
+                                                    min="1"
+                                                    step="0.1"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="space-y-4">
+                                        {Object.entries(t.measurements).slice(3).map(([key, label]) => (
+                                            <div key={key} className="group">
+                                                <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
+                                                    {label[language]}
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    name={key}
+                                                    value={formData[key as keyof FormData]}
+                                                    onChange={handleInputChange}
+                                                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
+                                                    required
+                                                    min="1"
+                                                    step="0.1"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="group">
+                                    <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
+                                        {t.style[language]}
+                                    </label>
+                                    <select
+                                        name="style_preference"
+                                        value={formData.style_preference}
+                                        onChange={handleInputChange}
+                                        className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
+                                    >
+                                        {STYLE_PREFERENCES.map((style) => (
+                                            <option key={style.zh} value={style.zh}>
+                                                {language === 'en' ? style.en : style.zh}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className={`w-full flex items-center justify-center py-3 px-4 rounded-lg text-sm font-semibold text-white transition-all duration-200 ${
+                                            loading
+                                            <h3 className="text-lg font-semibold bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
+                                                {t.results.generated[language]}
+                                            </h3>
+                                            {renderGeneratedHairstyles()}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 添加动态背景效果 */}
+                        <div className="absolute inset-0 -z-10">
+                            <div className="absolute inset-0 bg-gradient-to-br from-orange-100/40 via-purple-100/40 to-teal-100/40 animate-gradient-xy"></div>
+                            <div className="absolute inset-0 opacity-30">
+                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,140,50,0.1),rgba(100,220,200,0.1))] animate-pulse"></div>
+                                <div className="absolute inset-0 bg-[url('/pattern.svg')] bg-repeat opacity-10 animate-slide"></div>
+                            </div>
+                        </div>
+
+                        {/* 添加功能卡片部分 */}
+                        <div className="mt-12 mb-8">
+                            <h2 className="text-2xl font-semibold text-center mb-8 bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
+                                {t.features.title[language]}
+                            </h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                {FEATURES.map((feature, index) => {
+                                    const Icon = lucideIcons[feature.icon];
+                                    return (
+                                        <div key={index} className="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group">
+                                            <div className="w-12 h-12 mb-4 rounded-lg bg-gradient-to-br from-orange-500/10 to-teal-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                                <Icon className="w-6 h-6 text-orange-600" />
+                                            </div>
+                                            <h3 className="text-lg font-semibold mb-2 bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
+                                                {feature.title[language]}
+                                            </h3>
+                                            <p className="text-gray-600 text-sm">
+                                                {feature.desc[language]}
+                                            </p>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="mt-8 space-y-8">
+                            <div className="grid grid-cols-1 gap-8">
+                                <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                                    {renderUploadBox(
+                                        personPhoto,
+                                        setPersonPhoto,
+                                        t.upload.person,
+                                        t.upload.photo,
+                                        <Camera className="w-12 h-12 text-orange-400" />
+                                    )}
+                                    {renderUploadBox(
+                                        topGarment,
+                                        setTopGarment,
+                                        t.upload.top,
+                                        t.upload.top_text,
+                                        <Upload className="w-12 h-12 text-orange-400" />
+                                    )}
+                                    {renderUploadBox(
+                                        bottomGarment,
+                                        setBottomGarment,
+                                        t.upload.bottom,
+                                        t.upload.bottom_text,
+                                        <Upload className="w-12 h-12 text-orange-400" />
+                                    )}
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                    <div className="space-y-4">
+                                        {Object.entries(t.measurements).slice(0, 3).map(([key, label]) => (
+                                            <div key={key} className="group">
+                                                <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
+                                                    {label[language]}
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    name={key}
+                                                    value={formData[key as keyof FormData]}
+                                                    onChange={handleInputChange}
+                                                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
+                                                    required
+                                                    min="1"
+                                                    step="0.1"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="space-y-4">
+                                        {Object.entries(t.measurements).slice(3).map(([key, label]) => (
+                                            <div key={key} className="group">
+                                                <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
+                                                    {label[language]}
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    name={key}
+                                                    value={formData[key as keyof FormData]}
+                                                    onChange={handleInputChange}
+                                                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
+                                                    required
+                                                    min="1"
+                                                    step="0.1"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="group">
+                                    <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
+                                        {t.style[language]}
+                                    </label>
+                                    <select
+                                        name="style_preference"
+                                        value={formData.style_preference}
+                                        onChange={handleInputChange}
+                                        className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
+                                    >
+                                        {STYLE_PREFERENCES.map((style) => (
+                                            <option key={style.zh} value={style.zh}>
+                                                {language === 'en' ? style.en : style.zh}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>  {/* 修复这里的闭合标签 */}
 
                                 <div>
@@ -1001,945 +2231,8 @@ function App() {
                                         </div>
                                     </div>
                                 </div>
-                            
-                                {/* 虚拟换发结果 */}
-                                <div className="space-y-8">
-                                    <h2 className="text-2xl font-semibold bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent text-center">
-                                        {language === 'en' ? 'Hairstyle Recommendations' : '发型推荐'}
-                                    </h2>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        {/* 自选搭配发型推荐 */}
-                                        <div className="space-y-4">
-                                            <h3 className="text-lg font-semibold bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
-                                                {t.results.custom[language]}
-                                            </h3>
-                                            {renderCustomHairstyles()}
-                                        </div>
-                                        {/* AI推荐发型 */}
-                                        <div className="space-y-4">
-                                            <h3 className="text-lg font-semibold bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
-                                                {t.results.generated[language]}
-                                            </h3>
-                                            {renderGeneratedHairstyles()}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
 
-                        {/* 添加动态背景效果 */}
-                        <div className="absolute inset-0 -z-10">
-                            <div className="absolute inset-0 bg-gradient-to-br from-orange-100/40 via-purple-100/40 to-teal-100/40 animate-gradient-xy"></div>
-                            <div className="absolute inset-0 opacity-30">
-                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,140,50,0.1),rgba(100,220,200,0.1))] animate-pulse"></div>
-                                <div className="absolute inset-0 bg-[url('/pattern.svg')] bg-repeat opacity-10 animate-slide"></div>
-                            </div>
-                        </div>
 
-                        {/* 添加功能卡片部分 */}
-                        <div className="mt-12 mb-8">
-                            <h2 className="text-2xl font-semibold text-center mb-8 bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
-                                {t.features.title[language]}
-                            </h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                {FEATURES.map((feature, index) => {
-                                    const Icon = lucideIcons[feature.icon];
-                                    return (
-                                        <div key={index} className="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group">
-                                            <div className="w-12 h-12 mb-4 rounded-lg bg-gradient-to-br from-orange-500/10 to-teal-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                                <Icon className="w-6 h-6 text-orange-600" />
-                                            </div>
-                                            <h3 className="text-lg font-semibold mb-2 bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
-                                                {feature.title[language]}
-                                            </h3>
-                                            <p className="text-gray-600 text-sm">
-                                                {feature.desc[language]}
-                                            </p>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        <form onSubmit={handleSubmit} className="mt-8 space-y-8">
-                            <div className="grid grid-cols-1 gap-8">
-                                <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-                                    {renderUploadBox(
-                                        personPhoto,
-                                        setPersonPhoto,
-                                        t.upload.person,
-                                        t.upload.photo,
-                                        <Camera className="w-12 h-12 text-orange-400" />
-                                    )}
-                                    {renderUploadBox(
-                                        topGarment,
-                                        setTopGarment,
-                                        t.upload.top,
-                                        t.upload.top_text,
-                                        <Upload className="w-12 h-12 text-orange-400" />
-                                    )}
-                                    {renderUploadBox(
-                                        bottomGarment,
-                                        setBottomGarment,
-                                        t.upload.bottom,
-                                        t.upload.bottom_text,
-                                        <Upload className="w-12 h-12 text-orange-400" />
-                                    )}
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                    <div className="space-y-4">
-                                        {Object.entries(t.measurements).slice(0, 3).map(([key, label]) => (
-                                            <div key={key} className="group">
-                                                <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
-                                                    {label[language]}
-                                                </label>
-                                                <input
-                                                    type="number"
-                                                    name={key}
-                                                    value={formData[key as keyof FormData]}
-                                                    onChange={handleInputChange}
-                                                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
-                                                    required
-                                                    min="1"
-                                                    step="0.1"
-                                                />
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <div className="space-y-4">
-                                        {Object.entries(t.measurements).slice(3).map(([key, label]) => (
-                                            <div key={key} className="group">
-                                                <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
-                                                    {label[language]}
-                                                </label>
-                                                <input
-                                                    type="number"
-                                                    name={key}
-                                                    value={formData[key as keyof FormData]}
-                                                    onChange={handleInputChange}
-                                                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
-                                                    required
-                                                    min="1"
-                                                    step="0.1"
-                                                />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="group">
-                                    <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
-                                        {t.style[language]}
-                                    </label>
-                                    <select
-                                        name="style_preference"
-                                        value={formData.style_preference}
-                                        onChange={handleInputChange}
-                                        className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
-                                    >
-                                        {STYLE_PREFERENCES.map((style) => (
-                                            <option key={style.zh} value={style.zh}>
-                                                {language === 'en' ? style.en : style.zh}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>  {/* 修复这里的闭合标签 */}
-
-                                <div>
-                                    <button
-                                        type="submit"
-                                        disabled={loading}
-                                        className={`w-full flex items-center justify-center py-3 px-4 rounded-lg text-sm font-semibold text-white transition-all duration-200 ${
-                                            loading
-                                                ? 'bg-gray-400 cursor-not-allowed'
-                                                : 'bg-gradient-to-r from-orange-600 to-teal-600 hover:from-orange-500 hover:to-teal-500 transform hover:scale-[1.02]'
-                                        }`}
-                                    >
-                                        <Sparkles className={`w-5 h-5 mr-2 ${loading ? 'animate-spin' : 'animate-pulse'}`} />
-                                        {loading ? t.button.generating[language] : t.button.generate[language]}
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-
-                        {result && (
-                            <div className="mt-12 space-y-12">
-                                {/* 虚拟换衣结果 */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    {/* 自选搭配结果 */}
-                                    <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
-                                        <h3 className="text-lg font-semibold p-4 bg-gradient-to-r from-orange-500 to-teal-500 text-white">
-                                            {t.results.custom[language]}
-                                        </h3>
-                                        <div className="p-4 space-y-4">
-                                            <div className="relative aspect-[3/4] rounded-xl overflow-hidden">
-                                                <img
-                                                    src={result.custom.tryOnUrl}
-                                                    alt="Custom outfit try-on"
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            </div>
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-gray-700">{t.results.score[language]}</span>
-                                                <div className="flex items-center gap-2">
-                                                    <div className="flex">
-                                                        {[1, 2, 3, 4, 5].map((star) => (
-                                                            <Star
-                                                                key={star}
-                                                                className={`w-4 h-4 ${
-                                                                    star <= result.custom.score / 2
-                                                                        ? 'text-orange-500 fill-orange-500'
-                                                                        : 'text-gray-300 fill-gray-300'
-                                                                }`}
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                    <span className="font-bold">{result.custom.score}</span>
-                                                </div>
-                                            </div>
-                                            <div className="text-sm text-gray-600">
-                                                {result.custom.commentary}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* AI推荐搭配结果 */}
-                                    <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
-                                        <h3 className="text-lg font-semibold p-4 bg-gradient-to-r from-orange-500 to-teal-500 text-white">
-                                            {t.results.generated[language]}
-                                        </h3>
-                                        <div className="p-4 space-y-4">
-                                            <div className="relative aspect-[3/4] rounded-xl overflow-hidden">
-                                                <img
-                                                    src={result.generated.tryOnUrl}
-                                                    alt="AI generated outfit try-on"
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            </div>
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-gray-700">{t.results.score[language]}</span>
-                                                <div className="flex items-center gap-2">
-                                                    <div className="flex">
-                                                        {[1, 2, 3, 4, 5].map((star) => (
-                                                            <Star
-                                                                key={star}
-                                                                className={`w-4 h-4 ${
-                                                                    star <= result.generated.score / 2
-                                                                        ? 'text-orange-500 fill-orange-500'
-                                                                        : 'text-gray-300 fill-gray-300'
-                                                                }`}
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                    <span className="font-bold">{result.generated.score}</span>
-                                                </div>
-                                            </div>
-                                            <div className="text-sm text-gray-600">
-                                                {result.generated.commentary}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* 虚拟换发结果 */}
-                                <div className="space-y-8">
-                                    <h2 className="text-2xl font-semibold bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent text-center">
-                                        {language === 'en' ? 'Hairstyle Recommendations' : '发型推荐'}
-                                    </h2>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        {/* 自选搭配发型推荐 */}
-                                        <div className="space-y-4">
-                                            <h3 className="text-lg font-semibold bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
-                                                {t.results.custom[language]}
-                                            </h3>
-                                            {renderCustomHairstyles()}
-                                        </div>
-                                        {/* AI推荐发型 */}
-                                        <div className="space-y-4">
-                                            <h3 className="text-lg font-semibold bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
-                                                {t.results.generated[language]}
-                                            </h3>
-                                            {renderGeneratedHairstyles()}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* 添加动态背景效果 */}
-                        <div className="absolute inset-0 -z-10">
-                            <div className="absolute inset-0 bg-gradient-to-br from-orange-100/40 via-purple-100/40 to-teal-100/40 animate-gradient-xy"></div>
-                            <div className="absolute inset-0 opacity-30">
-                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,140,50,0.1),rgba(100,220,200,0.1))] animate-pulse"></div>
-                                <div className="absolute inset-0 bg-[url('/pattern.svg')] bg-repeat opacity-10 animate-slide"></div>
-                            </div>
-                        </div>
-
-                        {/* 添加功能卡片部分 */}
-                        <div className="mt-12 mb-8">
-                            <h2 className="text-2xl font-semibold text-center mb-8 bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
-                                {t.features.title[language]}
-                            </h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                {FEATURES.map((feature, index) => {
-                                    const Icon = lucideIcons[feature.icon];
-                                    return (
-                                        <div key={index} className="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group">
-                                            <div className="w-12 h-12 mb-4 rounded-lg bg-gradient-to-br from-orange-500/10 to-teal-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                                <Icon className="w-6 h-6 text-orange-600" />
-                                            </div>
-                                            <h3 className="text-lg font-semibold mb-2 bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
-                                                {feature.title[language]}
-                                            </h3>
-                                            <p className="text-gray-600 text-sm">
-                                                {feature.desc[language]}
-                                            </p>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        <form onSubmit={handleSubmit} className="mt-8 space-y-8">
-                            <div className="grid grid-cols-1 gap-8">
-                                <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-                                    {renderUploadBox(
-                                        personPhoto,
-                                        setPersonPhoto,
-                                        t.upload.person,
-                                        t.upload.photo,
-                                        <Camera className="w-12 h-12 text-orange-400" />
-                                    )}
-                                    {renderUploadBox(
-                                        topGarment,
-                                        setTopGarment,
-                                        t.upload.top,
-                                        t.upload.top_text,
-                                        <Upload className="w-12 h-12 text-orange-400" />
-                                    )}
-                                    {renderUploadBox(
-                                        bottomGarment,
-                                        setBottomGarment,
-                                        t.upload.bottom,
-                                        t.upload.bottom_text,
-                                        <Upload className="w-12 h-12 text-orange-400" />
-                                    )}
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                    <div className="space-y-4">
-                                        {Object.entries(t.measurements).slice(0, 3).map(([key, label]) => (
-                                            <div key={key} className="group">
-                                                <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
-                                                    {label[language]}
-                                                </label>
-                                                <input
-                                                    type="number"
-                                                    name={key}
-                                                    value={formData[key as keyof FormData]}
-                                                    onChange={handleInputChange}
-                                                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
-                                                    required
-                                                    min="1"
-                                                    step="0.1"
-                                                />
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <div className="space-y-4">
-                                        {Object.entries(t.measurements).slice(3).map(([key, label]) => (
-                                            <div key={key} className="group">
-                                                <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
-                                                    {label[language]}
-                                                </label>
-                                                <input
-                                                    type="number"
-                                                    name={key}
-                                                    value={formData[key as keyof FormData]}
-                                                    onChange={handleInputChange}
-                                                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
-                                                    required
-                                                    min="1"
-                                                    step="0.1"
-                                                />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="group">
-                                    <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
-                                        {t.style[language]}
-                                    </label>
-                                    <select
-                                        name="style_preference"
-                                        value={formData.style_preference}
-                                        onChange={handleInputChange}
-                                        className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
-                                    >
-                                        {STYLE_PREFERENCES.map((style) => (
-                                            <option key={style.zh} value={style.zh}>
-                                                {language === 'en' ? style.en : style.zh}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>  {/* 修复这里的闭合标签 */}
-
-                                <div>
-                                    <button
-                                        type="submit"
-                                        disabled={loading}
-                                        className={`w-full flex items-center justify-center py-3 px-4 rounded-lg text-sm font-semibold text-white transition-all duration-200 ${
-                                            loading
-                                                ? 'bg-gray-400 cursor-not-allowed'
-                                                : 'bg-gradient-to-r from-orange-600 to-teal-600 hover:from-orange-500 hover:to-teal-500 transform hover:scale-[1.02]'
-                                        }`}
-                                    >
-                                        <Sparkles className={`w-5 h-5 mr-2 ${loading ? 'animate-spin' : 'animate-pulse'}`} />
-                                        {loading ? t.button.generating[language] : t.button.generate[language]}
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-
-                        {result && (
-                            <div className="mt-12 space-y-12">
-                                {/* 虚拟换衣结果 */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    {/* 自选搭配结果 */}
-                                    <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
-                                        <h3 className="text-lg font-semibold p-4 bg-gradient-to-r from-orange-500 to-teal-500 text-white">
-                                            {t.results.custom[language]}
-                                        </h3>
-                                        <div className="p-4 space-y-4">
-                                            <div className="relative aspect-[3/4] rounded-xl overflow-hidden">
-                                                <img
-                                                    src={result.custom.tryOnUrl}
-                                                    alt="Custom outfit try-on"
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            </div>
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-gray-700">{t.results.score[language]}</span>
-                                                <div className="flex items-center gap-2">
-                                                    <div className="flex">
-                                                        {[1, 2, 3, 4, 5].map((star) => (
-                                                            <Star
-                                                                key={star}
-                                                                className={`w-4 h-4 ${
-                                                                    star <= result.custom.score / 2
-                                                                        ? 'text-orange-500 fill-orange-500'
-                                                                        : 'text-gray-300 fill-gray-300'
-                                                                }`}
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                    <span className="font-bold">{result.custom.score}</span>
-                                                </div>
-                                            </div>
-                                            <div className="text-sm text-gray-600">
-                                                {result.custom.commentary}
-                                            </div>
-                                        </div>
-                                    </div>
-                                
-                                    {/* AI推荐搭配结果 */}
-                                    <div className="bg
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-gray-700">{t.results.score[language]}</span>
-                                                <div className="flex items-center gap-2">
-                                                    <div className="flex">
-                                                        {[1, 2, 3, 4, 5].map((star) => (
-                                                            <Star
-                                                                key={star}
-                                                                className={`w-4 h-4 ${
-                                                                    star <= result.generated.score / 2
-                                                                        ? 'text-orange-500 fill-orange-500'
-                                                                        : 'text-gray-300 fill-gray-300'
-                                                                }`}
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                    <span className="font-bold">{result.generated.score}</span>
-                                                </div>
-                                            </div>
-                                            <div className="text-sm text-gray-600">
-                                                {result.generated.commentary}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            
-                                {/* 虚拟换发结果 */}
-                                <div className="space-y-8">
-                                    <h2 className="text-2xl font-semibold bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent text-center">
-                                        {language === 'en' ? 'Hairstyle Recommendations' : '发型推荐'}
-                                    </h2>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        {/* 自选搭配发型推荐 */}
-                                        <div className="space-y-4">
-                                            <h3 className="text-lg font-semibold bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
-                                                {t.results.custom[language]}
-                                            </h3>
-                                            {renderCustomHairstyles()}
-                                        </div>
-                                        {/* AI推荐发型 */}
-                                        <div className="space-y-4">
-                                            <h3 className="text-lg font-semibold bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
-                                                {t.results.generated[language]}
-                                            </h3>
-                                            {renderGeneratedHairstyles()}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* 添加动态背景效果 */}
-                        <div className="absolute inset-0 -z-10">
-                            <div className="absolute inset-0 bg-gradient-to-br from-orange-100/40 via-purple-100/40 to-teal-100/40 animate-gradient-xy"></div>
-                            <div className="absolute inset-0 opacity-30">
-                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,140,50,0.1),rgba(100,220,200,0.1))] animate-pulse"></div>
-                                <div className="absolute inset-0 bg-[url('/pattern.svg')] bg-repeat opacity-10 animate-slide"></div>
-                            </div>
-                        </div>
-
-                        {/* 添加功能卡片部分 */}
-                        <div className="mt-12 mb-8">
-                            <h2 className="text-2xl font-semibold text-center mb-8 bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
-                                {t.features.title[language]}
-                            </h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                {FEATURES.map((feature, index) => {
-                                    const Icon = lucideIcons[feature.icon];
-                                    return (
-                                        <div key={index} className="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group">
-                                            <div className="w-12 h-12 mb-4 rounded-lg bg-gradient-to-br from-orange-500/10 to-teal-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                                <Icon className="w-6 h-6 text-orange-600" />
-                                            </div>
-                                            <h3 className="text-lg font-semibold mb-2 bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
-                                                {feature.title[language]}
-                                            </h3>
-                                            <p className="text-gray-600 text-sm">
-                                                {feature.desc[language]}
-                                            </p>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        <form onSubmit={handleSubmit} className="mt-8 space-y-8">
-                            <div className="grid grid-cols-1 gap-8">
-                                <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-                                    {renderUploadBox(
-                                        personPhoto,
-                                        setPersonPhoto,
-                                        t.upload.person,
-                                        t.upload.photo,
-                                        <Camera className="w-12 h-12 text-orange-400" />
-                                    )}
-                                    {renderUploadBox(
-                                        topGarment,
-                                        setTopGarment,
-                                        t.upload.top,
-                                        t.upload.top_text,
-                                        <Upload className="w-12 h-12 text-orange-400" />
-                                    )}
-                                    {renderUploadBox(
-                                        bottomGarment,
-                                        setBottomGarment,
-                                        t.upload.bottom,
-                                        t.upload.bottom_text,
-                                        <Upload className="w-12 h-12 text-orange-400" />
-                                    )}
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                    <div className="space-y-4">
-                                        {Object.entries(t.measurements).slice(0, 3).map(([key, label]) => (
-                                            <div key={key} className="group">
-                                                <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
-                                                    {label[language]}
-                                                </label>
-                                                <input
-                                                    type="number"
-                                                    name={key}
-                                                    value={formData[key as keyof FormData]}
-                                                    onChange={handleInputChange}
-                                                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
-                                                    required
-                                                    min="1"
-                                                    step="0.1"
-                                                />
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <div className="space-y-4">
-                                        {Object.entries(t.measurements).slice(3).map(([key, label]) => (
-                                            <div key={key} className="group">
-                                                <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
-                                                    {label[language]}
-                                                </label>
-                                                <input
-                                                    type="number"
-                                                    name={key}
-                                                    value={formData[key as keyof FormData]}
-                                                    onChange={handleInputChange}
-                                                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
-                                                    required
-                                                    min="1"
-                                                    step="0.1"
-                                                />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="group">
-                                    <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
-                                        {t.style[language]}
-                                    </label>
-                                    <select
-                                        name="style_preference"
-                                        value={formData.style_preference}
-                                        onChange={handleInputChange}
-                                        className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
-                                    >
-                                        {STYLE_PREFERENCES.map((style) => (
-                                            <option key={style.zh} value={style.zh}>
-                                                {language === 'en' ? style.en : style.zh}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>  {/* 修复这里的闭合标签 */}
-
-                                <div>
-                                    <button
-                                        type="submit"
-                                        disabled={loading}
-                                        className={`w-full flex items-center justify-center py-3 px-4 rounded-lg text-sm font-semibold text-white transition-all duration-200 ${
-                                            loading
-                                                ? 'bg-gray-400 cursor-not-allowed'
-                                                : 'bg-gradient-to-r from-orange-600 to-teal-600 hover:from-orange-500 hover:to-teal-500 transform hover:scale-[1.02]'
-                                        }`}
-                                    >
-                                        <Sparkles className={`w-5 h-5 mr-2 ${loading ? 'animate-spin' : 'animate-pulse'}`} />
-                                        {loading ? t.button.generating[language] : t.button.generate[language]}
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-
-                        {result && (
-                            <div className="mt-12 space-y-12">
-                                {/* 虚拟换衣结果 */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    {/* 自选搭配结果 */}
-                                    <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
-                                        <h3 className="text-lg font-semibold p-4 bg-gradient-to-r from-orange-500 to-teal-500 text-white">
-                                            {t.results.custom[language]}
-                                        </h3>
-                                        <div className="p-4 space-y-4">
-                                            <div className="relative aspect-[3/4] rounded-xl overflow-hidden">
-                                                <img
-                                                    src={result.custom.tryOnUrl}
-                                                    alt="Custom outfit try-on"
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            </div>
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-gray-700">{t.results.score[language]}</span>
-                                                <div className="flex items-center gap-2">
-                                                    <div className="flex">
-                                                        {[1, 2, 3, 4, 5].map((star) => (
-                                                            <Star
-                                                                key={star}
-                                                                className={`w-4 h-4 ${
-                                                                    star <= result.custom.score / 2
-                                                                        ? 'text-orange-500 fill-orange-500'
-                                                                        : 'text-gray-300 fill-gray-300'
-                                                                }`}
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                    <span className="font-bold">{result.custom.score}</span>
-                                                </div>
-                                            </div>
-                                            <div className="text-sm text-gray-600">
-                                                {result.custom.commentary}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* AI推荐搭配结果 */}
-                                    <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
-                                        <h3 className="text-lg font-semibold p-4 bg-gradient-to-r from-orange-500 to-teal-500 text-white">
-                                            {t.results.generated[language]}
-                                        </h3>
-                                        <div className="p-4 space-y-4">
-                                            <div className="relative aspect-[3/4] rounded-xl overflow-hidden">
-                                                <img
-                                                    src={result.generated.tryOnUrl}
-                                                    alt="AI generated outfit try-on"
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            </div>
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-gray-700">{t.results.score[language]}</span>
-                                                <div className="flex items-center gap-2">
-                                                    <div className="flex">
-                                                        {[1, 2, 3, 4, 5].map((star) => (
-                                                            <Star
-                                                                key={star}
-                                                                className={`w-4 h-4 ${
-                                                                    star <= result.generated.score / 2
-                                                                        ? 'text-orange-500 fill-orange-500'
-                                                                        : 'text-gray-300 fill-gray-300'
-                                                                }`}
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                    <span className="font-bold">{result.generated.score}</span>
-                                                </div>
-                                            </div>
-                                            <div className="text-sm text-gray-600">
-                                                {result.generated.commentary}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* 虚拟换发结果 */}
-                                <div className="space-y-8">
-                                    <h2 className="text-2xl font-semibold bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent text-center">
-                                        {language === 'en' ? 'Hairstyle Recommendations' : '发型推荐'}
-                                    </h2>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        {/* 自选搭配发型推荐 */}
-                                        <div className="space-y-4">
-                                            <h3 className="text-lg font-semibold bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
-                                                {t.results.custom[language]}
-                                            </h3>
-                                            {renderCustomHairstyles()}
-                                        </div>
-                                        {/* AI推荐发型 */}
-                                        <div className="space-y-4">
-                                            <h3 className="text-lg font-semibold bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
-                                                {t.results.generated[language]}
-                                            </h3>
-                                            {renderGeneratedHairstyles()}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* 添加动态背景效果 */}
-                        <div className="absolute inset-0 -z-10">
-                            <div className="absolute inset-0 bg-gradient-to-br from-orange-100/40 via-purple-100/40 to-teal-100/40 animate-gradient-xy"></div>
-                            <div className="absolute inset-0 opacity-30">
-                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,140,50,0.1),rgba(100,220,200,0.1))] animate-pulse"></div>
-                                <div className="absolute inset-0 bg-[url('/pattern.svg')] bg-repeat opacity-10 animate-slide"></div>
-                            </div>
-                        </div>
-
-                        {/* 添加功能卡片部分 */}
-                        <div className="mt-12 mb-8">
-                            <h2 className="text-2xl font-semibold text-center mb-8 bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
-                                {t.features.title[language]}
-                            </h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                {FEATURES.map((feature, index) => {
-                                    const Icon = lucideIcons[feature.icon];
-                                    return (
-                                        <div key={index} className="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group">
-                                            <div className="w-12 h-12 mb-4 rounded-lg bg-gradient-to-br from-orange-500/10 to-teal-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                                <Icon className="w-6 h-6 text-orange-600" />
-                                            </div>
-                                            <h3 className="text-lg font-semibold mb-2 bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
-                                                {feature.title[language]}
-                                            </h3>
-                                            <p className="text-gray-600 text-sm">
-                                                {feature.desc[language]}
-                                            </p>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        <form onSubmit={handleSubmit} className="mt-8 space-y-8">
-                            <div className="grid grid-cols-1 gap-8">
-                                <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-                                    {renderUploadBox(
-                                        personPhoto,
-                                        setPersonPhoto,
-                                        t.upload.person,
-                                        t.upload.photo,
-                                        <Camera className="w-12 h-12 text-orange-400" />
-                                    )}
-                                    {renderUploadBox(
-                                        topGarment,
-                                        setTopGarment,
-                                        t.upload.top,
-                                        t.upload.top_text,
-                                        <Upload className="w-12 h-12 text-orange-400" />
-                                    )}
-                                    {renderUploadBox(
-                                        bottomGarment,
-                                        setBottomGarment,
-                                        t.upload.bottom,
-                                        t.upload.bottom_text,
-                                        <Upload className="w-12 h-12 text-orange-400" />
-                                    )}
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                    <div className="space-y-4">
-                                        {Object.entries(t.measurements).slice(0, 3).map(([key, label]) => (
-                                            <div key={key} className="group">
-                                                <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
-                                                    {label[language]}
-                                                </label>
-                                                <input
-                                                    type="number"
-                                                    name={key}
-                                                    value={formData[key as keyof FormData]}
-                                                    onChange={handleInputChange}
-                                                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
-                                                    required
-                                                    min="1"
-                                                    step="0.1"
-                                                />
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <div className="space-y-4">
-                                        {Object.entries(t.measurements).slice(3).map(([key, label]) => (
-                                            <div key={key} className="group">
-                                                <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
-                                                    {label[language]}
-                                                </label>
-                                                <input
-                                                    type="number"
-                                                    name={key}
-                                                    value={formData[key as keyof FormData]}
-                                                    onChange={handleInputChange}
-                                                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
-                                                    required
-                                                    min="1"
-                                                    step="0.1"
-                                                />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="group">
-                                    <label className="block text-sm font-medium text-gray-700 group-hover:text-orange-600">
-                                        {t.style[language]}
-                                    </label>
-                                    <select
-                                        name="style_preference"
-                                        value={formData.style_preference}
-                                        onChange={handleInputChange}
-                                        className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm transition-colors"
-                                    >
-                                        {STYLE_PREFERENCES.map((style) => (
-                                            <option key={style.zh} value={style.zh}>
-                                                {language === 'en' ? style.en : style.zh}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>  {/* 修复这里的闭合标签 */}
-
-                                <div>
-                                    <button
-                                        type="submit"
-                                        disabled={loading}
-                                        className={`w-full flex items-center justify-center py-3 px-4 rounded-lg text-sm font-semibold text-white transition-all duration-200 ${
-                                            loading
-                                                ? 'bg-gray-400 cursor-not-allowed'
-                                                : 'bg-gradient-to-r from-orange-600 to-teal-600 hover:from-orange-500 hover:to-teal-500 transform hover:scale-[1.02]'
-                                        }`}
-                                    >
-                                        <Sparkles className={`w-5 h-5 mr-2 ${loading ? 'animate-spin' : 'animate-pulse'}`} />
-                                        {loading ? t.button.generating[language] : t.button.generate[language]}
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-
-                        {result && (
-                            <div className="mt-12 space-y-12">
-                                {/* 虚拟换衣结果 */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    {/* 自选搭配结果 */}
-                                    <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
-                                        <h3 className="text-lg font-semibold p-4 bg-gradient-to-r from-orange-500 to-teal-500 text-white">
-                                            {t.results.custom[language]}
-                                        </h3>
-                                        <div className="p-4 space-y-4">
-                                            <div className="relative aspect-[3/4] rounded-xl overflow-hidden">
-                                                <img
-                                                    src={result.custom.tryOnUrl}
-                                                    alt="Custom outfit try-on"
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            </div>
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-gray-700">{t.results.score[language]}</span>
-                                                <div className="flex items-center gap-2">
-                                                    <div className="flex">
-                                                        {[1, 2, 3, 4, 5].map((star) => (
-                                                            <Star
-                                                                key={star}
-                                                                className={`w-4 h-4 ${
-                                                                    star <= result.custom.score / 2
-                                                                        ? 'text-orange-500 fill-orange-500'
-                                                                        : 'text-gray-300 fill-gray-300'
-                                                                }`}
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                    <span className="font-bold">{result.custom.score}</span>
-                                                </div>
-                                            </div>
-                                            <div className="text-sm text-gray-600">
-                                                {result.custom.commentary}
-                                            </div>
-                                        </div>
-                                    </div>
-                                
-                                    {/* AI推荐搭配结果 */}
-                                    <div className="bg
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-gray-700">{t.results.score[language]}</span>
-                                                <div className="flex items-center gap-2">
-                                                    <div className="flex">
-                                                        {[1, 2, 3, 4, 5].map((star) => (
-                                                            <Star
-                                                                key={star}
-                                                                className={`w-4 h-4 ${
-                                                                    star <= result.generated.score / 2
-                                                                        ? 'text-orange-500 fill-orange-500'
-                                                                        : 'text-gray-300 fill-gray-300'
-                                                                }`}
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                    <span className="font-bold">{result.generated.score}</span>
-                                                </div>
-                                            </div>
-                                            <div className="text-sm text-gray-600">
-                                                {result.generated.commentary}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            
                                 {/* 虚拟换发结果 */}
                                 <div className="space-y-8">
                                     <h2 className="text-2xl font-semibold bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent text-center">
