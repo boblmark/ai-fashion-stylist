@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -72,7 +73,7 @@
 }
 
 .bg-gradient-conic {
-  background-image: conic-gradient(var(--tw-gradient-stops));
+  background: conic-gradient(var(--tw-gradient-stops));
 }
 
 @keyframes fade-in {
