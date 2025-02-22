@@ -576,13 +576,9 @@ function App() {
         title: { en: string; zh: string }
     ) => {
         const commentaryLines = outfit.commentary.split('\n').filter(line => line.trim());
-        // 优化正则表达式，使其更准确地匹配评分
         const scoreMatch = outfit.commentary.match(/综合评分[：:]\s*(\d+(?:\.\d+)?)\s*分/);
         const score = scoreMatch ? parseFloat(scoreMatch[1]) : outfit.score;
-        const commentaryWithoutScore = commentaryLines
-            .filter(line => !line.includes('综合评分'))
-            .join('\n');
-    
+
         return (
             <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
                 <div className="relative">
@@ -609,6 +605,7 @@ function App() {
                         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     </div>
 
+                    {/* 修复嵌套结构：移除多余的 div 层级 */}
                     <div className="space-y-4">
                         <div className="flex items-center gap-2 text-lg font-semibold text-gray-900">
                             <TrendingUp className="w-5 h-5 text-orange-500" />
@@ -616,28 +613,28 @@ function App() {
                         </div>
 
                         <div className="grid grid-cols-1 gap-4">
-                            {commentaryLines.map((line, index) => {
-                                if (line.includes('综合评分')) return null;
+                            {commentaryLines
+                                .filter(line => !line.includes('综合评分'))
+                                .map((line, index) => {
+                                    const icons = [ThumbsUp, Star, Scale, Palette];
+                                    const Icon = icons[index % icons.length];
 
-                                const icons = [ThumbsUp, Star, Scale, Palette];
-                                const Icon = icons[index % icons.length];
-
-                                return (
-                                    <div
-                                        key={index}
-                                        className="p-4 rounded-lg bg-gradient-to-r from-orange-50 to-teal-50 border border-gray-100"
-                                    >
-                                        <div className="flex gap-3">
-                                            <div className="flex-shrink-0">
-                                                <Icon className="w-5 h-5 text-orange-500" />
+                                    return (
+                                        <div
+                                            key={index}
+                                            className="p-4 rounded-lg bg-gradient-to-r from-orange-50 to-teal-50 border border-gray-100"
+                                        >
+                                            <div className="flex gap-3">
+                                                <div className="flex-shrink-0">
+                                                    <Icon className="w-5 h-5 text-orange-500" />
+                                                </div>
+                                                <p className="text-sm text-gray-700 leading-relaxed">
+                                                    {line}
+                                                </p>
                                             </div>
-                                            <p className="text-sm text-gray-700 leading-relaxed">
-                                                {line}
-                                            </p>
                                         </div>
-                                    </div>
-                                );
-                            })}
+                                    );
+                                })}
                         </div>
 
                         <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-orange-500 to-teal-500 text-white">
@@ -649,7 +646,7 @@ function App() {
                                             <Star
                                                 key={star}
                                                 className={`w-4 h-4 ${
-                                                    star <= outfit.score / 2
+                                                    star <= score / 2
                                                         ? 'fill-white'
                                                         : 'fill-white/30'
                                                 }`}
