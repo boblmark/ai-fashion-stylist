@@ -3,13 +3,16 @@ import React, { useState, useCallback, useRef } from 'react';
 import { Upload, Camera, Sparkles, Star, Palette, TrendingUp, ThumbsUp, Scale, Scissors, Brain, Wand, Crown } from 'lucide-react';
 import FashionBackground from './components/FashionBackground';
 
+// 定义 STYLE_PREFERENCES 的中文名称类型
+type StylePreference = typeof STYLE_PREFERENCES[number]['zh'];
+
 interface FormData {
     height: string;
     weight: string;
     bust: string;
     waist: string;
     hips: string;
-    style_preference: string;
+    style_preference: StylePreference;
 }
 
 interface UploadPreview {
@@ -277,62 +280,99 @@ function App() {
 
     // 在 handleSubmit 函数中
     const handleSubmit = async (event: React.FormEvent) => {
-    // 原有的代码...
-    
-    // 获取发型推荐后添加以下代码
-    console.log('API返回的原始发型数据:', customHairstyles, generatedHairstyles);
-    
-    // 在设置 hairstyles 状态之前添加检查
-    const validateHairstyle = (style: any) => {
-        const isValid = style &&
-            typeof style.hairstyle === 'string' &&
-            typeof style.reasons === 'string' &&
-            typeof style.img === 'string';
-    
-        if (!isValid) {
-            console.warn('无效的发型数据:', style);
+    event.preventDefault();
+    setLoading(true);
+    setResult(null);
+    setError({ message: '', visible: false });
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
+
+    try {
+        // Validate if all required images are uploaded
+        if (!personPhoto || !topGarment || !bottomGarment) {
+            showError(t.error.upload[language]);
+            return;
         }
-        return isValid;
-    };
-    
-    // 处理和验证数据
-    const processedCustomHairstyles = Array.isArray(customHairstyles)
-       ? customHairstyles
-            .filter(validateHairstyle)
-            .map(style => ({
-                hairstyle: style.hairstyle,
-                reasons: style.reasons,
-                img: style.img
-            }))
-        : [];
-    
-    const processedGeneratedHairstyles = Array.isArray(generatedHairstyles)
-       ? generatedHairstyles
-            .filter(validateHairstyle)
-            .map(style => ({
-                hairstyle: style.hairstyle,
-                reasons: style.reasons,
-                img: style.img
-            }))
-        : [];
-    
-    console.log('处理后的自选搭配发型:', processedCustomHairstyles);
-    console.log('处理后的AI推荐发型:', processedGeneratedHairstyles);
-    
-    // 新增日志：在设置状态前打印数据
-    console.log('即将设置的发型状态数据:', {
-        custom: processedCustomHairstyles,
-        generated: processedGeneratedHairstyles
-    });
-    
-    setHairstyles({
-        custom: processedCustomHairstyles,
-        generated: processedGeneratedHairstyles
-    });
 
+        updateProgress('UPLOAD');
 
+        // Create FormData
+        const formDataToSend = new FormData();
+        formDataToSend.append('personPhoto', personPhoto.file);
+        formDataToSend.append('topGarment', topGarment.file);
+        formDataToSend.append('bottomGarment', bottomGarment.file);
+        Object.entries(formData).forEach(([key, value]) => {
+            formDataToSend.append(key, value);
+        });
 
+        // Send request
+        const response = await fetch('/api/generate', {
+            method: 'POST',
+            body: formDataToSend,
+            signal
+        });
 
+        if (!response.ok) {
+            throw new Error('Failed to generate outfit');
+        }
+
+        const data = await response.json();
+        setResult(data);
+
+        // Get hairstyle recommendations
+        const hairstyleResponse = await fetch('/api/hairstyles', {
+            method: 'POST',
+            body: formDataToSend,
+            signal
+        });
+
+        if (!hairstyleResponse.ok) {
+            throw new Error('Failed to get hairstyle recommendations');
+        }
+
+        const hairstyleData = await hairstyleResponse.json();
+        const { customHairstyles, generatedHairstyles } = hairstyleData;
+
+        // Validate hairstyle data
+        const validateHairstyle = (style: any) => {
+            const isValid = style &&
+                typeof style.hairstyle === 'string' &&
+                typeof style.reasons === 'string' &&
+                typeof style.img === 'string';
+
+            if (!isValid) {
+                console.warn('Invalid hairstyle data:', style);
+            }
+            return isValid;
+        };
+
+        // Process and validate data
+        const processedCustomHairstyles = Array.isArray(customHairstyles)
+           ? customHairstyles
+                .filter(validateHairstyle)
+                .map(style => ({
+                    hairstyle: style.hairstyle,
+                    reasons: style.reasons,
+                    img: style.img
+                }))
+            : [];
+
+        const processedGeneratedHairstyles = Array.isArray(generatedHairstyles)
+           ? generatedHairstyles
+                .filter(validateHairstyle)
+                .map(style => ({
+                    hairstyle: style.hairstyle,
+                    reasons: style.reasons,
+                    img: style.img
+                }))
+            : [];
+
+        setHairstyles({
+            custom: processedCustomHairstyles,
+            generated: processedGeneratedHairstyles
+        });
+
+        updateProgress('COMPLETE');
     } catch (error) {
         if (error instanceof Error) {
             if (error.name === 'AbortError') {
@@ -349,7 +389,7 @@ function App() {
         setLoading(false);
         abortControllerRef.current = null;
     }
-    };
+};
 
     const renderCustomHairstyles = useCallback(() => {
         if (hairstyles.custom.length === 0) {
