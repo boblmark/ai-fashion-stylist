@@ -248,6 +248,9 @@ const lucideIcons = {
 };
 
 function App() {
+    // 实例化 Semaphore，限制并发请求数量为 4
+    const semaphore = new Semaphore(4);
+
     const [personPhoto, setPersonPhoto] = useState<UploadPreview | null>(null);
     const [topGarment, setTopGarment] = useState<UploadPreview | null>(null);
     const [bottomGarment, setBottomGarment] = useState<UploadPreview | null>(null);
@@ -425,11 +428,11 @@ function App() {
                 updateProgress('HAIRSTYLE_ANALYSIS');
                 
                 try {
-                    // Acquire a semaphore lock before making the request
+                    // 获取信号量锁
                     const [value, release] = await semaphore.acquire();
     
                     try {
-                        // Send hairstyle analysis request
+                        // 发送发型分析请求
                         const response = await fetch('https://api.coze.cn/v1/workflow/run', {
                             method: 'POST',
                             headers: {
