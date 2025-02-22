@@ -307,7 +307,14 @@ function App() {
 
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
+        console.log('表单提交开始'); // 添加日志
+    
         if (!personPhoto?.file || !topGarment?.file || !bottomGarment?.file) {
+            console.log('缺少必要的图片文件:', { 
+                personPhoto: !!personPhoto, 
+                topGarment: !!topGarment, 
+                bottomGarment: !!bottomGarment 
+            }); // 添加日志
             showError(t.error.upload[language]);
             return;
         }
@@ -328,20 +335,35 @@ function App() {
             formDataToSend.append('person_photo', personPhoto.file);
             formDataToSend.append('custom_top_garment', topGarment.file);
             formDataToSend.append('custom_bottom_garment', bottomGarment.file);
-
+    
+            console.log('表单数据:', {
+                height: formData.height,
+                weight: formData.weight,
+                bust: formData.bust,
+                waist: formData.waist,
+                hips: formData.hips,
+                style_preference: formData.style_preference
+            }); // 添加日志
+    
             Object.entries(formData).forEach(([key, value]) => {
                 if (!value) {
+                    console.log('缺少必要的表单字段:', key); // 添加日志
                     throw new Error('All measurements are required');
                 }
                 formDataToSend.append(key, value);
             });
-
+    
             const apiUrl = import.meta.env.VITE_API_URL || '';
             const baseUrl = apiUrl || window.location.origin;
             const fullUrl = `${baseUrl}/api/generate-clothing`;
-
-            console.log('Sending request to:', fullUrl);
-
+    
+            console.log('发送请求到:', fullUrl); // 添加日志
+            console.log('请求配置:', {
+                method: 'POST',
+                credentials: 'include',
+                mode: 'cors'
+            }); // 添加日志
+    
             const response = await fetch(fullUrl, {
                 method: 'POST',
                 body: formDataToSend,
@@ -349,7 +371,7 @@ function App() {
                 credentials: 'include',
                 mode: 'cors'
             });
-
+    
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({ error: 'Failed to parse error response' }));
                 throw new Error(errorData.error || `Server error: ${response.status}`);
