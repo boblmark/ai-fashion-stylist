@@ -6,7 +6,20 @@ module.exports = {
   ],
   theme: {
     extend: {
+      keyframes: {
+        'width-expand': {
+          '0%': { width: '0%' },
+          '100%': { width: '100%' }
+        }
+      },
       animation: {
+        'width-expand': 'width-expand 1.5s ease-out'
+      }
+    }
+  }
+}
+
+animation: {
         'gradient-xy': 'gradient-xy 15s ease infinite',
         'float': 'float 6s ease-in-out infinite',
         'spin-slow': 'spin 20s linear infinite',
