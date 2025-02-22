@@ -103,80 +103,46 @@
   }
 }
 
-/* Logo animation */
-@keyframes float {
-  0% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-  100% {
-    transform: translateY(0px);
-  }
-}
-
-.logo-float {
-  animation: float 3s ease-in-out infinite;
-}
-
-/* Progress bar animation */
-@keyframes progress {
-  from {
-    width: 0;
-  }
-  to {
-    width: 100%;
-  }
-}
-
-.progress-bar {
-  animation: progress 2s ease-out forwards;
-}
-
-/* 时尚元素动画 */
 @keyframes float-element-0 {
-    0%, 100% { transform: translate(0, 0) rotate(0deg); }
-    25% { transform: translate(100px, 50px) rotate(90deg); }
-    50% { transform: translate(50px, 100px) rotate(180deg); }
-    75% { transform: translate(-50px, 50px) rotate(270deg); }
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(100px, 50px) rotate(90deg); }
+  50% { transform: translate(50px, 100px) rotate(180deg); }
+  75% { transform: translate(-50px, 50px) rotate(270deg); }
 }
 
 @keyframes float-element-1 {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    50% { transform: translate(150px, -50px) scale(1.5); }
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(150px, -50px) scale(1.5); }
 }
 
 @keyframes float-element-2 {
-    0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1); }
-    33% { transform: translate(-100px, 100px) rotate(120deg) scale(1.2); }
-    66% { transform: translate(100px, -100px) rotate(240deg) scale(0.8); }
+  0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+  33% { transform: translate(-100px, 100px) rotate(120deg) scale(1.2); }
+  66% { transform: translate(100px, -100px) rotate(240deg) scale(0.8); }
 }
 
 @keyframes float-element-3 {
-    0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
-    50% { transform: translate(-120px, 80px) scale(1.3) rotate(180deg); }
+  0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
+  50% { transform: translate(-120px, 80px) scale(1.3) rotate(180deg); }
 }
 
 @keyframes float-element-4 {
-    0%, 100% { transform: translate(0, 0) rotate(0deg); }
-    25% { transform: translate(80px, -80px) rotate(90deg); }
-    75% { transform: translate(-80px, 80px) rotate(270deg); }
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(80px, -80px) rotate(90deg); }
+  75% { transform: translate(-80px, 80px) rotate(270deg); }
 }
 
-/* 时尚元素动画 */
 .fashion-element {
-    opacity: 0.2;
-    transition: all 0.3s ease;
+  opacity: 0.2;
+  transition: all 0.3s ease;
 }
 
-.fashion-element-0 { animation: float-element-0 20s infinite; animation-delay: 0s; }
-.fashion-element-1 { animation: float-element-1 25s infinite; animation-delay: 2s; }
-.fashion-element-2 { animation: float-element-2 30s infinite; animation-delay: 4s; }
-.fashion-element-3 { animation: float-element-3 35s infinite; animation-delay: 6s; }
-.fashion-element-4 { animation: float-element-4 40s infinite; animation-delay: 8s; }
+.fashion-element-0 { animation: float-element-0 20s infinite; }
+.fashion-element-1 { animation: float-element-1 25s infinite; }
+.fashion-element-2 { animation: float-element-2 30s infinite; }
+.fashion-element-3 { animation: float-element-3 35s infinite; }
+.fashion-element-4 { animation: float-element-4 40s infinite; }
 
-/* 删除 @for 循环部分，改用固定的延迟类 */
 .fashion-delay-0 { animation-delay: 0s; }
 .fashion-delay-1 { animation-delay: 1s; }
 .fashion-delay-2 { animation-delay: 2s; }
