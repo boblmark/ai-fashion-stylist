@@ -51,25 +51,6 @@ interface HairStyles {
     }>;
 }
 
-interface FormData {
-    height: string;
-    weight: string;
-    bust: string;
-    waist: string;
-    hips: string;
-    style_preference: string;
-}
-
-interface UploadPreview {
-    file: File;
-    preview: string;
-}
-
-interface ErrorState {
-    message: string;
-    visible: boolean;
-}
-
 interface OutfitResult {
     topUrl: string;
     bottomUrl: string;
