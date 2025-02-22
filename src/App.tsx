@@ -98,17 +98,16 @@ interface ProgressState {
 }
 
 const PROGRESS_STAGES = {
-    UPLOAD: { percent: 0, en: 'Uploading images', zh: '上传图片中...' },
-    ANALYSIS: { percent: 20, en: 'Analyzing body features', zh: '分析身体特征中...' },
-    GENERATE_TOP: { percent: 40, en: 'Generating top garment', zh: '生成上衣中...' },
-    GENERATE_BOTTOM: { percent: 50, en: 'Generating bottom garment', zh: '生成下装中...' },
-    TRYON_CUSTOM: { percent: 60, en: 'Processing custom outfit', zh: '处理自选服装中...' },
-    TRYON_GENERATED: { percent: 80, en: 'Processing generated outfit', zh: '处理生成服装中...' },
-    COMMENTARY: { percent: 85, en: 'Getting style commentary', zh: '获取穿搭点评中...' },
-    HAIRSTYLE_ANALYSIS: { percent: 90, en: 'Analyzing hairstyle options', zh: '分析发型选项中...' },
-    HAIRSTYLE_GENERATION: { percent: 95, en: 'Generating hairstyle previews', zh: '生成发型预览中...' },
-    COMPLETE: { percent: 100, en: 'Completed', zh: '完成' }
-} as const;
+    UPLOAD: { percent: 10, en: 'Uploading files...', zh: '正在上传文件...' },
+    ANALYSIS: { percent: 20, en: 'Analyzing...', zh: '正在分析...' },
+    GENERATE_TOP: { percent: 35, en: 'Generating top...', zh: '正在生成上衣...' },
+    GENERATE_BOTTOM: { percent: 50, en: 'Generating bottom...', zh: '正在生成下装...' },
+    TRYON_CUSTOM: { percent: 65, en: 'Trying on custom outfit...', zh: '正在试穿自选搭配...' },
+    TRYON_GENERATED: { percent: 80, en: 'Trying on AI-generated outfit...', zh: '正在试穿AI推荐搭配...' },
+    COMMENTARY: { percent: 90, en: 'Generating commentary...', zh: '正在生成点评...' },
+    HAIRSTYLE: { percent: 95, en: 'Generating hairstyle recommendations...', zh: '正在生成发型推荐...' },
+    COMPLETE: { percent: 100, en: 'Complete!', zh: '完成！' }
+};
 
 type ProgressStage = keyof typeof PROGRESS_STAGES;
 
@@ -267,10 +266,15 @@ function App() {
     });
 
     const updateProgress = useCallback((stage: ProgressStage) => {
+        const progressStage = PROGRESS_STAGES[stage];
+        if (!progressStage) {
+            console.error('Invalid progress stage:', stage);
+            return;
+        }
         setProgress({
             stage,
-            percent: PROGRESS_STAGES[stage].percent,
-            message: PROGRESS_STAGES[stage][language]
+            percent: progressStage.percent,
+            message: progressStage[language]
         });
     }, [language]);
 
