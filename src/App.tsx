@@ -137,44 +137,10 @@ const renderOutfitResult = useCallback((
     </div>
 ), [language]);
 
-// 修改 getHairstyleRecommendation 函数
-const getHairstyleRecommendation = async (image: string): Promise<HairstyleRecommendation[]> => {
-    try {
-        const response = await fetch('https://api.coze.cn/v1/workflow/run', {
-            method: 'POST',
-            headers: {
-                'Authorization': 'Bearer pat_XCdzRC2c6K7oMcc2xVJv37KYJR311nrU8uUCPbdnAPlWKaDY9TikL2W8nnkW9cbY',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                workflow_id: '7472218638747467817',
-                parameters: {
-                    input_image: image
-                }
-            })
-        });
+// 移除重复的 renderOutfitResult 函数声明
+// 保留最初的定义即可
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const responseData = await response.json();
-        if (responseData.code === 0 && responseData.data) {
-            const hairstyles = Array.isArray(responseData.data) ? responseData.data : [responseData.data];
-            return hairstyles.map(style => ({
-                hairstyle: style.hairstyle || '推荐发型',
-                reasons: style.reasons || '根据您的风格特点推荐此发型',
-                img: style.img || ''
-            })).filter(style => style.img);
-        }
-        return [];
-    } catch (error) {
-        console.error('获取发型推荐失败:', error);
-        return [];
-    }
-};
-
-// 修改 handleSubmit 函数
+// 修改 handleSubmit 函数，移除嵌套的 getHairstyleRecommendation 函数
 const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!personPhoto?.file || !topGarment?.file || !bottomGarment?.file) {
@@ -383,8 +349,8 @@ const handleSubmit = async (event: React.FormEvent) => {
         console.log('Coze API 返回的AI推荐发型数据:', generatedHairstyles);
         
         setHairstyles({
-        custom: processedCustomHairstyles,
-        generated: processedGeneratedHairstyles
+        custom: customHairstyles,
+        generated: generatedHairstyles
         });
 
 
