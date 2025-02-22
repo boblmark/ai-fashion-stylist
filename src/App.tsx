@@ -701,7 +701,6 @@ function App() {
             <div className="max-w-5xl mx-auto relative z-10">
                 <div className="relative backdrop-blur-sm bg-white/80 rounded-3xl shadow-2xl overflow-hidden border border-white/20">
                     <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-teal-500/10 animate-pulse"></div>
-                    // 修复嵌套的 div 结构
                     <div className="relative px-6 py-8 sm:p-10">
                         <div className="flex items-center justify-center mb-8">
                             <div className="w-32 h-32 relative animate-float">
