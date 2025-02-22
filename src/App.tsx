@@ -721,9 +721,7 @@ function App() {
                                 <div className="absolute -inset-1 bg-gradient-to-r from-orange-600 via-purple-500 to-teal-600 rounded-lg blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200 animate-gradient-xy"></div>
                                 <p className="relative px-7 py-4 bg-black bg-opacity-80 rounded-lg leading-none">
                                     <span className="text-lg bg-gradient-to-r from-orange-400 via-pink-500 to-teal-400 bg-clip-text text-transparent font-medium animate-pulse">
-                                        {language === 'en' 
-                                            ? 'Where Style Meets Innovation'
-                                            : '魅影随行，演绎时尚'}
+                                        {language === 'en' ? 'Where Style Meets Innovation' : '魅影随行，演绎时尚'}
                                     </span>
                                 </p>
                             </div>
