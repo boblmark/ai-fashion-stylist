@@ -38,7 +38,17 @@ interface HairstyleRecommendation {
     img: string;
 }
 
-// 修改 renderOutfitResult 函数
+// 确保 OutfitResult 接口只定义一次
+interface OutfitResult {
+    tryOnUrl: string;
+    score: number;
+    commentary: {
+        en: string;
+        zh: string;
+    };
+}
+
+// 修改 renderOutfitResult 函数，添加 language 作为依赖项
 const renderOutfitResult = useCallback((
     outfit: OutfitResult,
     title: { en: string; zh: string }
