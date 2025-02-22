@@ -2,6 +2,7 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { Upload, Camera, Sparkles, Star, Palette, TrendingUp, ThumbsUp, Scale, Scissors, Brain, Wand, Crown } from 'lucide-react';
 import FashionBackground from './components/FashionBackground';
+import { Sparkles, Palette, Scale, ThumbsUp, Check, Info } from 'lucide-react';
 
 interface FormData {
     height: string;
