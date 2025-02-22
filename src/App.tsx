@@ -275,264 +275,92 @@ function App() {
         }));
     }, []);
 
+    // 在 handleSubmit 函数中
     const handleSubmit = async (event: React.FormEvent) => {
-        event.preventDefault();
-        if (!personPhoto?.file || !topGarment?.file || !bottomGarment?.file) {
-            showError(t.error.upload[language]);
-            return;
+    // 原有的代码...
+    
+    // 获取发型推荐后添加以下代码
+    console.log('API返回的原始发型数据:', customHairstyles, generatedHairstyles);
+    
+    // 在设置 hairstyles 状态之前添加检查
+    const validateHairstyle = (style: any) => {
+        const isValid = style &&
+            typeof style.hairstyle === 'string' &&
+            typeof style.reasons === 'string' &&
+            typeof style.img === 'string';
+    
+        if (!isValid) {
+            console.warn('无效的发型数据:', style);
         }
+        return isValid;
+    };
+    
+    // 处理和验证数据
+    const processedCustomHairstyles = Array.isArray(customHairstyles)
+       ? customHairstyles
+            .filter(validateHairstyle)
+            .map(style => ({
+                hairstyle: style.hairstyle,
+                reasons: style.reasons,
+                img: style.img
+            }))
+        : [];
+    
+    const processedGeneratedHairstyles = Array.isArray(generatedHairstyles)
+       ? generatedHairstyles
+            .filter(validateHairstyle)
+            .map(style => ({
+                hairstyle: style.hairstyle,
+                reasons: style.reasons,
+                img: style.img
+            }))
+        : [];
+    
+    console.log('处理后的自选搭配发型:', processedCustomHairstyles);
+    console.log('处理后的AI推荐发型:', processedGeneratedHairstyles);
+    
+    // 新增日志：在设置状态前打印数据
+    console.log('即将设置的发型状态数据:', {
+        custom: processedCustomHairstyles,
+        generated: processedGeneratedHairstyles
+    });
+    
+    setHairstyles({
+        custom: processedCustomHairstyles,
+        generated: processedGeneratedHairstyles
+    });
 
-        // Cancel any existing request
-        if (abortControllerRef.current) {
-            abortControllerRef.current.abort();
+
+
+
+    } catch (error) {
+        if (error instanceof Error) {
+            if (error.name === 'AbortError') {
+                console.log('Request cancelled');
+                return;
+            }
+            console.error('Error:', error);
+            showError(error.message);
+        } else {
+            console.error('Unknown error:', error);
+            showError(t.error.general[language]);
         }
-
-        // Create new AbortController for this request
-        abortControllerRef.current = new AbortController();
-
-        setLoading(true);
-        updateProgress('UPLOAD');
-
-        try {
-            const formDataToSend = new FormData();
-            formDataToSend.append('person_photo', personPhoto.file);
-            formDataToSend.append('custom_top_garment', topGarment.file);
-            formDataToSend.append('custom_bottom_garment', bottomGarment.file);
-
-            Object.entries(formData).forEach(([key, value]) => {
-                if (!value) {
-                    throw new Error('All measurements are required');
-                }
-                formDataToSend.append(key, value);
-            });
-
-            const apiUrl = import.meta.env.VITE_API_URL || '';
-            const baseUrl = apiUrl || window.location.origin;
-            const fullUrl = `${baseUrl}/api/generate-clothing`;
-
-            console.log('Sending request to:', fullUrl);
-
-            const response = await fetch(fullUrl, {
-                method: 'POST',
-                body: formDataToSend,
-                signal: abortControllerRef.current.signal,
-                credentials: 'include',
-                mode: 'cors'
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ error: 'Failed to parse error response' }));
-                throw new Error(errorData.error || `Server error: ${response.status}`);
-            }
-
-            const data = await response.json();
-            console.log('Received response:', data);
-
-            const stages: ProgressStage[] = [
-                'UPLOAD',
-                'ANALYSIS',
-                'GENERATE_TOP',
-                'GENERATE_BOTTOM',
-                'TRYON_CUSTOM',
-                'TRYON_GENERATED',
-                'COMMENTARY',
-                'HAIRSTYLE',
-                'COMPLETE'
-            ];
-
-            for (const stage of stages) {
-                if (abortControllerRef.current?.signal.aborted) {
-                    throw new Error('Request cancelled');
-                }
-                updateProgress(stage);
-                await new Promise(resolve => setTimeout(resolve, 500));
-            }
-
-            setResult(data);
-
-            // 获取发型推荐
-            // 修改并发处理逻辑
-            const getHairstyleRecommendation = async (image: string) => {
-                try {
-                    // 先获取发型推荐
-                    console.log('开始获取发型推荐，输入图片:', image);
-                    const response = await fetch('https://api.coze.cn/v1/workflow/run', {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': 'Bearer pat_XCdzRC2c6K7oMcc2xVJv37KYJR311nrU8uUCPbdnAPlWKaDY9TikL2W8nnkW9cbY',
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            workflow_id: '7472218638747467817',  // 使用同一个 workflow_id
-                            parameters: {
-                                input_image: image
-                            }
-                        })
-                    });
-                
-                    const responseData = await response.json();
-                    console.log('发型推荐原始响应:', responseData);
-                    
-                    if (responseData.code === 0 && responseData.data) {
-                        try {
-                            // 尝试解析返回的数据
-                            let parsedData;
-                            if (typeof responseData.data === 'string') {
-                                parsedData = JSON.parse(responseData.data);
-                            } else {
-                                parsedData = responseData.data;
-                            }
-                            
-                            console.log('解析后的发型数据:', parsedData);
-                            
-                            // 获取推荐的发型列表
-                            let hairstyles = [];
-                            if (Array.isArray(parsedData)) {
-                                hairstyles = parsedData;
-                            } else if (parsedData.output && Array.isArray(parsedData.output)) {
-                                hairstyles = parsedData.output;
-                            } else if (parsedData.hairstyles && Array.isArray(parsedData.hairstyles)) {
-                                hairstyles = parsedData.hairstyles;
-                            } else if (typeof parsedData === 'string') {
-                                // 尝试从字符串中提取发型信息
-                                try {
-                                    const extractedData = JSON.parse(parsedData);
-                                    hairstyles = Array.isArray(extractedData) ? extractedData : 
-                                    (extractedData.output && Array.isArray(extractedData.output)) ? extractedData.output :
-                                    (extractedData.hairstyles && Array.isArray(extractedData.hairstyles)) ? extractedData.hairstyles : [];
-                                } catch (e) {
-                                    console.error('解析字符串数据失败:', e);
-                                }
-                            }
-                            
-                            // 确保每个发型对象都有必要的字段
-                            hairstyles = hairstyles.map(style => ({
-                                hairstyle: typeof style === 'string' ? style : style.hairstyle || '推荐发型',
-                                reasons: style.reasons || '根据您的风格特点推荐此发型',
-                                img: style.img || ''  // 这个字段会在虚拟换发后更新
-                            }));
-                            
-                            console.log('标准化后的发型列表:', hairstyles);
-                            
-                            // 使用 Promise.all 并行处理每个发型的虚拟换发
-                            const virtualHairstyles = await Promise.all(
-                                hairstyles.map(async (style) => {
-                                    try {
-                                        console.log(`开始处理发型: ${style.hairstyle}`);
-                                        const tryOnResponse = await fetch('https://api.coze.cn/v1/workflow/run', {
-                                            method: 'POST',
-                                            headers: {
-                                                'Authorization': 'Bearer pat_XCdzRC2c6K7oMcc2xVJv37KYJR311nrU8uUCPbdnAPlWKaDY9TikL2W8nnkW9cbY',
-                                                'Content-Type': 'application/json'
-                                            },
-                                            body: JSON.stringify({
-                                                workflow_id: '7472218638747467817',  // 使用同一个 workflow_id
-                                                parameters: {
-                                                    input_image: image,
-                                                    hairstyle: style.hairstyle
-                                                }
-                                            })
-                                        });
-
-                                        const tryOnData = await tryOnResponse.json();
-                                        console.log(`发型 ${style.hairstyle} 换发响应:`, tryOnData);
-
-                                        if (tryOnData.code === 0 && tryOnData.data) {
-                                            const outputImage = tryOnData.data.output_image || 
-                                                 (tryOnData.data.output && tryOnData.data.output.image) ||
-                                                 (typeof tryOnData.data === 'string' && tryOnData.data) ||
-                                                 tryOnData.data.image;
-                                            
-                                            if (outputImage) {
-                                                return {
-                                                    ...style,
-                                                    img: outputImage
-                                                };
-                                            }
-                                        }
-                                        return null;
-                                    } catch (e) {
-                                        console.error(`处理发型 ${style.hairstyle} 失败:`, e);
-                                        return null;
-                                    }
-                                })
-                            );
-
-                            // 过滤掉失败的结果
-                            return virtualHairstyles.filter(style => style !== null);
-                        } catch (e) {
-                            console.error('解析发型数据失败:', e);
-                            return [];
-                        }
-                    }
-                    return [];
-                } catch (e) {
-                    console.error('获取发型推荐失败:', e);
-                    return [];
-                }
-            };
-            
-            // 并行获取两种搭配的发型推荐
-            const [customHairstyles, generatedHairstyles] = await Promise.all([
-                getHairstyleRecommendation(data.custom.tryOnUrl),
-                getHairstyleRecommendation(data.generated.tryOnUrl)
-            ]);
-
-            console.log('自选搭配发型:', customHairstyles); // 添加日志
-            console.log('AI推荐搭配发型:', generatedHairstyles); // 添加日志
-
-            // 修改数据设置逻辑
-            const processedCustomHairstyles = Array.isArray(customHairstyles) ? customHairstyles.map(style => ({
-                hairstyle: style.hairstyle || '推荐发型',
-                reasons: style.reasons || '适合您的个人风格',
-                img: style.img || ''
-            })).filter(style => style.img) : [];  // 确保只保留有图片的发型
-
-            const processedGeneratedHairstyles = Array.isArray(generatedHairstyles) ? generatedHairstyles.map(style => ({
-                hairstyle: style.hairstyle || '推荐发型',
-                reasons: style.reasons || '符合AI推荐的整体造型',
-                img: style.img || ''
-            })).filter(style => style.img) : [];  // 确保只保留有图片的发型
-
-            console.log('最终处理后的自选搭配发型:', processedCustomHairstyles);
-            console.log('最终处理后的AI推荐发型:', processedGeneratedHairstyles);
-
-            setHairstyles({
-                custom: processedCustomHairstyles,
-                generated: processedGeneratedHairstyles
-            });
-
-
-
-
-        } catch (error) {
-            if (error instanceof Error) {
-                if (error.name === 'AbortError') {
-                    console.log('Request cancelled');
-                    return;
-                }
-                console.error('Error:', error);
-                showError(error.message);
-            } else {
-                console.error('Unknown error:', error);
-                showError(t.error.general[language]);
-            }
-        } finally {
-            setLoading(false);
-            abortControllerRef.current = null;
-        }
+    } finally {
+        setLoading(false);
+        abortControllerRef.current = null;
+    }
     };
 
     const renderCustomHairstyles = useCallback(() => {
         if (hairstyles.custom.length === 0) {
-            return <p>{language === 'en' ? 'No hairstyle recommendations found for your selected outfit.' : '没有找到适合自选搭配的发型推荐。'}</p>;
+            return <p>{language === 'en' ? 'No hairstyle recommendations found.' : '没有找到适合的发型推荐。'}</p>;
         }
 
         return (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-6">
                 {hairstyles.custom.map((style, index) => (
-                    <div key={index} className="space-y-3">
-                        <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-500 to-teal-500">
+                    <div key={index} className="bg-white/90 rounded-lg p-4 space-y-4">
+                        <div className="aspect-[3/4] rounded-lg overflow-hidden">
                             <img
                                 src={style.img}
                                 alt={style.hairstyle}
@@ -540,8 +368,12 @@ function App() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <h4 className="font-medium text-gray-900">{style.hairstyle}</h4>
-                            <p className="text-sm text-gray-600">{style.reasons}</p>
+                            <h4 className="font-medium text-gray-900">
+                                {style.hairstyle}
+                            </h4>
+                            <p className="text-sm text-gray-600">
+                                {style.reasons}
+                            </p>
                         </div>
                     </div>
                 ))}
@@ -550,17 +382,15 @@ function App() {
     }, [hairstyles.custom, language]);
 
     const renderGeneratedHairstyles = useCallback(() => {
-        console.log('Generated hairstyles:', hairstyles.generated);
-        
         if (hairstyles.generated.length === 0) {
             return <p>{language === 'en' ? 'No hairstyle recommendations found for AI-generated outfit.' : '没有找到适合 AI 搭配的发型推荐。'}</p>;
         }
 
         return (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-6">
                 {hairstyles.generated.map((style, index) => (
-                    <div key={index} className="space-y-3">
-                        <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-500 to-teal-500">
+                    <div key={index} className="bg-white/90 rounded-lg p-4 space-y-4">
+                        <div className="aspect-[3/4] rounded-lg overflow-hidden">
                             <img
                                 src={style.img}
                                 alt={style.hairstyle}
@@ -568,8 +398,12 @@ function App() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <h4 className="font-medium text-gray-900">{style.hairstyle}</h4>
-                            <p className="text-sm text-gray-600">{style.reasons}</p>
+                            <h4 className="font-medium text-gray-900">
+                                {style.hairstyle}
+                            </h4>
+                            <p className="text-sm text-gray-600">
+                                {style.reasons}
+                            </p>
                         </div>
                     </div>
                 ))}
@@ -612,99 +446,56 @@ function App() {
         </div>
     ), [language, handleFileChange]);
 
-    const renderOutfitResult = useCallback((
-        outfit: OutfitResult,
-        title: { en: string; zh: string }
-    ) => {
-        const commentaryLines = outfit.commentary.split('\n').filter(line => line.trim());
-        // 修复正则表达式格式
-        const scorePattern = /综合评分[：:]\s*(\d+(?:\.\d+)?)\s*分/;
-        const commentaryWithoutScore = commentaryLines
-            .filter(line => !scorePattern.test(line))
-            .join('\n');
-
+    const renderOutfitResult = useCallback((outfit: OutfitResult, title: { en: string; zh: string }) => {
         return (
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
-                <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-teal-500/10 mix-blend-overlay"></div>
-                    <h3 className="text-lg font-semibold p-4 bg-gradient-to-r from-orange-500 to-teal-500 text-white flex items-center justify-between">
-                        <span className="flex items-center gap-2">
-                            <Palette className="w-5 h-5" />
-                            {title[language]}
-                        </span>
-                        <div className="flex items-center gap-1 bg-white/20 px-3 py-1 rounded-full">
-                            <Star className="w-4 h-4" />
-                            <span className="font-bold">{outfit.score}</span>
-                        </div>
-                    </h3>
-                </div>
-
-                <div className="p-4 space-y-6">
-                    <div className="relative aspect-[3/4] rounded-xl overflow-hidden group">
+            <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden">
+                <h3 className="text-lg font-semibold p-4 bg-gradient-to-r from-orange-500 to-teal-500 text-white">
+                    {title[language]}
+                </h3>
+                <div className="p-4 space-y-4">
+                    <div className="relative aspect-[3/4] rounded-xl overflow-hidden">
                         <img
                             src={outfit.tryOnUrl}
                             alt="Try-on result"
-                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            className="w-full h-full object-cover"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     </div>
-
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-2 text-lg font-semibold text-gray-900">
-                            <TrendingUp className="w-5 h-5 text-orange-500" />
-                            {t.results.commentary[language]}
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-4">
-                            {commentaryLines.map((line, index) => {
-                                if (line.includes('综合评分')) return null;
-
-                                const icons = [ThumbsUp, Star, Scale, Palette];
-                                const Icon = icons[index % icons.length];
-
-                                return (
-                                    <div
-                                        key={index}
-                                        className="p-4 rounded-lg bg-gradient-to-r from-orange-50 to-teal-50 border border-gray-100"
-                                    >
-                                        <div className="flex gap-3">
-                                            <div className="flex-shrink-0">
-                                                <Icon className="w-5 h-5 text-orange-500" />
-                                            </div>
-                                            <p className="text-sm text-gray-700 leading-relaxed">
-                                                {line}
-                                            </p>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-
-                        <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-orange-500 to-teal-500 text-white">
-                            <div className="flex items-center justify-between">
-                                <span className="font-medium">{t.results.score[language]}</span>
-                                <div className="flex items-center gap-2">
-                                    <div className="flex">
-                                        {[1, 2, 3, 4, 5].map((star) => (
-                                            <Star
-                                                key={star}
-                                                className={`w-4 h-4 ${
-                                                    star <= outfit.score / 2
-                                                        ? 'fill-white'
-                                                        : 'fill-white/30'
-                                                }`}
-                                            />
-                                        ))}
-                                    </div>
-                                    <span className="font-bold text-xl">{outfit.score}</span>
-                                </div>
+                    {/* 时尚指数 */}
+                    <div className="flex items-center justify-between p-3 bg-gradient-to-r from-orange-50 to-teal-50 rounded-lg">
+                        <span className="text-gray-700">时尚指数</span>
+                        <div className="flex items-center gap-2">
+                            <div className="flex">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                    <Star
+                                        key={star}
+                                        className={`w-4 h-4 ${
+                                            star <= outfit.score / 2
+                                                ? 'text-orange-500 fill-orange-500'
+                                                : 'text-gray-300 fill-gray-300'
+                                        }`}
+                                    />
+                                ))}
                             </div>
+                            <span className="font-bold">{outfit.score}</span>
                         </div>
+                    </div>
+                    {/* 专业点评 */}
+                    <div className="space-y-3">
+                        <h4 className="font-medium text-gray-900">专业点评：</h4>
+                        <ul className="list-disc list-inside space-y-2">
+                            {outfit.commentary.split('\n').map((line, index) => (
+                                line.trim() && (
+                                    <li key={index} className="p-3 bg-gradient-to-r from-orange-50 to-teal-50 rounded-lg">
+                                        <p className="text-sm text-gray-600">{line}</p>
+                                    </li>
+                                )
+                            ))}
+                        </ul>
                     </div>
                 </div>
             </div>
         );
-    }, [language, t.results]);
+    }, [language]);
 
     const renderProgressBar = useCallback(() => {
         if (!loading) return null;
@@ -920,7 +711,7 @@ function App() {
                                 {/* 虚拟换衣结果 */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     {/* 自选搭配结果 */}
-                                    <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
+                                    <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden">
                                         <h3 className="text-lg font-semibold p-4 bg-gradient-to-r from-orange-500 to-teal-500 text-white">
                                             {t.results.custom[language]}
                                         </h3>
@@ -956,7 +747,7 @@ function App() {
                                         </div>
                                     </div>
                                     {/* AI推荐搭配结果 */}
-                                    <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
+                                    <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden">
                                         <h3 className="text-lg font-semibold p-4 bg-gradient-to-r from-orange-500 to-teal-500 text-white">
                                             {t.results.generated[language]}
                                         </h3>
@@ -993,27 +784,27 @@ function App() {
                                     </div>
                                 </div>
                                 {/* 发型推荐部分 */}
-                                <div className="mt-12 space-y-12">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     {/* 自选搭配发型 */}
-                                    <div className="space-y-8">
-                                        <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
-                                            <h3 className="text-xl font-semibold p-4 bg-gradient-to-r from-orange-600 to-teal-600 text-white">
-                                                {language === 'en' ? 'Recommended Hairstyles' : '推荐发型'}
+                                    <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden">
+                                        <div className="p-4 bg-gradient-to-r from-orange-500 to-teal-500">
+                                            <h3 className="text-lg font-semibold text-white">
+                                                {t.results.custom[language]}
                                             </h3>
-                                            <div className="p-4">
-                                                {renderCustomHairstyles()}
-                                            </div>
+                                        </div>
+                                        <div className="p-4">
+                                            {renderCustomHairstyles()}
                                         </div>
                                     </div>
-                                    {/* AI推荐搭配发型 */}
-                                    <div className="space-y-8">
-                                        <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
-                                            <h3 className="text-xl font-semibold p-4 bg-gradient-to-r from-orange-600 to-teal-600 text-white">
-                                                {language === 'en' ? 'AI Recommended Hairstyles' : 'AI推荐发型'}
+                                    {/* AI推荐发型 */}
+                                    <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden">
+                                        <div className="p-4 bg-gradient-to-r from-orange-500 to-teal-500">
+                                            <h3 className="text-lg font-semibold text-white">
+                                                {t.results.generated[language]}
                                             </h3>
-                                            <div className="p-4">
-                                                {renderGeneratedHairstyles()}
-                                            </div>
+                                        </div>
+                                        <div className="p-4">
+                                            {renderGeneratedHairstyles()}
                                         </div>
                                     </div>
                                 </div>
