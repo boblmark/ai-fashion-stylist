@@ -481,61 +481,19 @@ function App() {
             <div className="grid grid-cols-2 gap-4">
                 {hairstyles.custom.map((style, index) => (
                     <div key={index} className="space-y-3">
-                        <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-500/80 rounded-3xl shadow-2xl overflow-hidden border border-white/20">
-                            <div className="relative px-6 py-8 sm:p-10">
-                                <div className="relative backdrop-blur-sm bg-white/80 rounded-3xl shadow-2xl overflow-hidden border border-white/20">
-                                    <div className="relative px-6 py-8 sm:p-10">
-                                        <div className="flex items-center gap-2 text-lg font-semibold text-gray-900">
-                                            <TrendingUp className="w-5 h-5 text-orange-500" />
-                                            {t.results.commentary[language]}
-                                        </div>
-
-                                        <div className="grid grid-cols-1 gap-4">
-                                            {commentaryLines.map((line, index) => {
-                                                if (line.includes('综合评分')) return null;
-
-                                                const icons = [ThumbsUp, Star, Scale, Palette];
-                                                const Icon = icons[index % icons.length];
-
-                                                return (
-                                                    <div
-                                                        key={index}
-                                                        className="p-4 rounded-lg bg-gradient-to-r from-orange-50 to-teal-50 border border-gray-100"
-                                                    >
-                                                        <div className="flex gap-3">
-                                                            <div className="flex-shrink-0">
-                                                                <Icon className="w-5 h-5 text-orange-500" />
-                                                            </div>
-                                                            <p className="text-sm text-gray-700 leading-relaxed">
-                                                                {line}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-
-                                        <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-orange-500 to-teal-500 text-white">
-                                            <div className="flex items-center justify-between">
-                                                <span className="font-medium">{t.results.score[language]}</span>
-                                                <div className="flex items-center gap-2">
-                                                    <div className="flex">
-                                                        {[1, 2, 3, 4, 5].map((star) => (
-                                                            <Star
-                                                                key={star}
-                                                                className={`w-4 h-4 ${
-                                                                    star <= outfit.score / 2
-                                                                        ? 'fill-white'
-                                                                        : 'fill-white/30'
-                                                                }`}
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                    <span className="font-bold text-xl">{outfit.score}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                        {/* 修复嵌套结构 */}
+                        <div className="aspect-[3/4] rounded-3xl shadow-2xl overflow-hidden border border-white/20 bg-gradient-to-r from-orange-500/80">
+                            <div className="relative h-full p-4 bg-white/80 backdrop-blur-sm">
+                                <div className="aspect-[3/4] rounded-xl overflow-hidden">
+                                    <img
+                                        src={style.img}
+                                        alt={style.hairstyle}
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+                                <div className="space-y-2 pt-4">
+                                    <h4 className="font-medium text-gray-900">{style.hairstyle}</h4>
+                                    <p className="text-sm text-gray-600">{style.reasons}</p>
                                 </div>
                             </div>
                         </div>
@@ -556,61 +514,19 @@ function App() {
             <div className="grid grid-cols-2 gap-4">
                 {hairstyles.generated.map((style, index) => (
                     <div key={index} className="space-y-3">
-                        <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-500/80 rounded-3xl shadow-2xl overflow-hidden border border-white/20">
-                            <div className="relative px-6 py-8 sm:p-10">
-                                <div className="relative backdrop-blur-sm bg-white/80 rounded-3xl shadow-2xl overflow-hidden border border-white/20">
-                                    <div className="relative px-6 py-8 sm:p-10">
-                                        <div className="flex items-center gap-2 text-lg font-semibold text-gray-900">
-                                            <TrendingUp className="w-5 h-5 text-orange-500" />
-                                            {t.results.commentary[language]}
-                                        </div>
-
-                                        <div className="grid grid-cols-1 gap-4">
-                                            {commentaryLines.map((line, index) => {
-                                                if (line.includes('综合评分')) return null;
-
-                                                const icons = [ThumbsUp, Star, Scale, Palette];
-                                                const Icon = icons[index % icons.length];
-
-                                                return (
-                                                    <div
-                                                        key={index}
-                                                        className="p-4 rounded-lg bg-gradient-to-r from-orange-50 to-teal-50 border border-gray-100"
-                                                    >
-                                                        <div className="flex gap-3">
-                                                            <div className="flex-shrink-0">
-                                                                <Icon className="w-5 h-5 text-orange-500" />
-                                                            </div>
-                                                            <p className="text-sm text-gray-700 leading-relaxed">
-                                                                {line}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-
-                                        <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-orange-500 to-teal-500 text-white">
-                                            <div className="flex items-center justify-between">
-                                                <span className="font-medium">{t.results.score[language]}</span>
-                                                <div className="flex items-center gap-2">
-                                                    <div className="flex">
-                                                        {[1, 2, 3, 4, 5].map((star) => (
-                                                            <Star
-                                                                key={star}
-                                                                className={`w-4 h-4 ${
-                                                                    star <= outfit.score / 2
-                                                                        ? 'fill-white'
-                                                                        : 'fill-white/30'
-                                                                }`}
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                    <span className="font-bold text-xl">{outfit.score}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                        {/* 保持相同结构 */}
+                        <div className="aspect-[3/4] rounded-3xl shadow-2xl overflow-hidden border border-white/20 bg-gradient-to-r from-orange-500/80">
+                            <div className="relative h-full p-4 bg-white/80 backdrop-blur-sm">
+                                <div className="aspect-[3/4] rounded-xl overflow-hidden">
+                                    <img
+                                        src={style.img}
+                                        alt={style.hairstyle}
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+                                <div className="space-y-2 pt-4">
+                                    <h4 className="font-medium text-gray-900">{style.hairstyle}</h4>
+                                    <p className="text-sm text-gray-600">{style.reasons}</p>
                                 </div>
                             </div>
                         </div>
