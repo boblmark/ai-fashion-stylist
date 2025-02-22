@@ -22,12 +22,6 @@ import FashionBackground from './components/FashionBackground';
 // 1. 更新 ProgressStage 类型
 type ProgressStage = 'UPLOAD' | 'ANALYSIS' | 'GENERATE_TOP' | 'GENERATE_BOTTOM' | 'TRYON_CUSTOM' | 'TRYON_GENERATED' | 'COMMENTARY' | 'HAIRSTYLE_ANALYSIS' | 'HAIRSTYLE_GENERATION' | 'COMPLETE';
 
-// 2. 更新 PROGRESS_STAGES 常量
-const PROGRESS_STAGES = {
-    // ... 其他阶段保持不变 ...
-    HAIRSTYLE_ANALYSIS: { percent: 85, en: 'Analyzing hairstyle...', zh: '正在分析发型...' },
-    HAIRSTYLE_GENERATION: { percent: 95, en: 'Generating hairstyle recommendations...', zh: '正在生成发型推荐...' }
-};
 
 // 3. 确保 AI 推荐发型部分正确渲染
 {result && (
