@@ -299,68 +299,67 @@ function App() {
                     console.error('Unknown error:', error);
                     showError(t.error.general[language]);
                 }
-            } finally {
-                setLoading(false);
-                abortControllerRef.current = null;
-            }
-        };  // Remove this semicolon and add closing bracket
-
-        const handleSubmit = async (event: React.FormEvent) => {
-            event.preventDefault();
-            setLoading(true);
-            setResult(null);
-            setError({ message: '', visible: false });
-            abortControllerRef.current = new AbortController();
-            const signal = abortControllerRef.current.signal;
-
-            try {
-                // Validate if all required images are uploaded
-                if (!personPhoto || !topGarment || !bottomGarment) {
-                    showError(t.error.upload[language]);
-                    return;
-                }
-
-                updateProgress('UPLOAD');
-
-                // Create FormData
-                const formDataToSend = new FormData();
-                formDataToSend.append('personPhoto', personPhoto.file);
-                formDataToSend.append('topGarment', topGarment.file);
-                formDataToSend.append('bottomGarment', bottomGarment.file);
-                Object.entries(formData).forEach(([key, value]) => {
-                    formDataToSend.append(key, value);
-                });
-
-                const response = await fetchWithRetry('/api/generate', {
-                    method: 'POST',
-                    body: formDataToSend,
-                    signal
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to generate outfit');
-                }
-
-                const data = await response.json();
-                setResult(data);
-                updateProgress('COMPLETE');
-            } catch (error) {
-                if (error instanceof Error) {
-                    if (error.name === 'AbortError') {
-                        console.log('Request cancelled');
-                        return;
-                    }
-                    console.error('Error:', error);
-                    showError(error.message);
-                } else {
-                    console.error('Unknown error:', error);
-                    showError(t.error.general[language]);
-                }
-            } finally {
-                setLoading(false);
-                abortControllerRef.current = null;
             }
         }
+        throw new Error(`Failed after ${retries} retries`);
+    };  // 修复：删除多余分号，添加闭合括号
+
+    const handleSubmit = async (event: React.FormEvent) => {
+        event.preventDefault();
+        setLoading(true);
+        setResult(null);
+        setError({ message: '', visible: false });
+        abortControllerRef.current = new AbortController();
+        const signal = abortControllerRef.current.signal;
+
+        try {
+            // Validate if all required images are uploaded
+            if (!personPhoto || !topGarment || !bottomGarment) {
+                showError(t.error.upload[language]);
+                return;
+            }
+
+            updateProgress('UPLOAD');
+
+            // Create FormData
+            const formDataToSend = new FormData();
+            formDataToSend.append('personPhoto', personPhoto.file);
+            formDataToSend.append('topGarment', topGarment.file);
+            formDataToSend.append('bottomGarment', bottomGarment.file);
+            Object.entries(formData).forEach(([key, value]) => {
+                formDataToSend.append(key, value);
+            });
+
+            const response = await fetchWithRetry('/api/generate', {
+                method: 'POST',
+                body: formDataToSend,
+                signal
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to generate outfit');
+            }
+
+            const data = await response.json();
+            setResult(data);
+            updateProgress('COMPLETE');
+        } catch (error) {
+            if (error instanceof Error) {
+                if (error.name === 'AbortError') {
+                    console.log('Request cancelled');
+                    return;
+                }
+                console.error('Error:', error);
+                showError(error.message);
+            } else {
+                console.error('Unknown error:', error);
+                showError(t.error.general[language]);
+            }
+        } finally {
+            setLoading(false);
+            abortControllerRef.current = null;
+        }
+    };  // 修复：添加闭合括号
 
         const renderCustomHairstyles = useCallback(() => {
             if (hairstyles.custom.length === 0) {
