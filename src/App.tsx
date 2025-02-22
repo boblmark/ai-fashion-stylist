@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback, useRef } from 'react';
 import { Upload, Camera, Sparkles, Star, Palette, TrendingUp, ThumbsUp, Scale, Scissors, Brain, Wand, Crown } from 'lucide-react';
 import FashionBackground from './components/FashionBackground';
@@ -737,6 +738,20 @@ function App() {
 
     // 添加语言切换按钮
     const renderLanguageSwitch = useCallback(() => (
+        <div>
+            <button
+                type="submit"
+                disabled={loading}
+                className={`w-full flex items-center justify-center py-3 px-4 rounded-lg text-sm font-semibold text-white transition-all duration-200 ${
+                    loading
+                        ? 'bg-gray-400 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-orange-600 to-teal-600 hover:from-orange-500 hover:to-teal-500 transform hover:scale-[1.02]'
+                }`}
+            >
+                <Sparkles className={`w-5 h-5 mr-2 ${loading ? 'animate-spin' : 'animate-pulse'}`} />
+                {loading ? t.button.generating[language] : t.button.generate[language]}
+            </button>
+        </div>
         <button
             onClick={() => setLanguage(prev => prev === 'zh' ? 'en' : 'zh')}
             className="fixed top-4 right-4 z-50 px-4 py-2 rounded-full bg-white/80 backdrop-blur-sm border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300 group"
