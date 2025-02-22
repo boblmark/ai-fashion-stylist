@@ -917,25 +917,104 @@ function App() {
 
                         {result && (
                             <div className="mt-12 space-y-12">
-                                {/* 自选搭配结果和发型 */}
-                                <div className="space-y-8">
-                                    {renderOutfitResult(result.custom, t.results.custom)}
-                                    <div className="mt-8">
-                                        <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
-                                            {language === 'en' ? 'Recommended Hairstyles' : '推荐发型'}
+                                {/* 虚拟换衣结果 */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    {/* 自选搭配结果 */}
+                                    <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
+                                        <h3 className="text-lg font-semibold p-4 bg-gradient-to-r from-orange-500 to-teal-500 text-white">
+                                            {t.results.custom[language]}
                                         </h3>
-                                        {renderCustomHairstyles()}
+                                        <div className="p-4 space-y-4">
+                                            <div className="relative aspect-[3/4] rounded-xl overflow-hidden">
+                                                <img
+                                                    src={result.custom.tryOnUrl}
+                                                    alt="Custom outfit try-on"
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-gray-700">{t.results.score[language]}</span>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="flex">
+                                                        {[1, 2, 3, 4, 5].map((star) => (
+                                                            <Star
+                                                                key={star}
+                                                                className={`w-4 h-4 ${
+                                                                    star <= result.custom.score / 2
+                                                                        ? 'text-orange-500 fill-orange-500'
+                                                                        : 'text-gray-300 fill-gray-300'
+                                                                }`}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                    <span className="font-bold">{result.custom.score}</span>
+                                                </div>
+                                            </div>
+                                            <div className="text-sm text-gray-600">
+                                                {result.custom.commentary}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {/* AI推荐搭配结果 */}
+                                    <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
+                                        <h3 className="text-lg font-semibold p-4 bg-gradient-to-r from-orange-500 to-teal-500 text-white">
+                                            {t.results.generated[language]}
+                                        </h3>
+                                        <div className="p-4 space-y-4">
+                                            <div className="relative aspect-[3/4] rounded-xl overflow-hidden">
+                                                <img
+                                                    src={result.generated.tryOnUrl}
+                                                    alt="AI generated outfit try-on"
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-gray-700">{t.results.score[language]}</span>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="flex">
+                                                        {[1, 2, 3, 4, 5].map((star) => (
+                                                            <Star
+                                                                key={star}
+                                                                className={`w-4 h-4 ${
+                                                                    star <= result.generated.score / 2
+                                                                        ? 'text-orange-500 fill-orange-500'
+                                                                        : 'text-gray-300 fill-gray-300'
+                                                                }`}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                    <span className="font-bold">{result.generated.score}</span>
+                                                </div>
+                                            </div>
+                                            <div className="text-sm text-gray-600">
+                                                {result.generated.commentary}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                                
-                                {/* AI推荐搭配结果和发型 */}
-                                <div className="space-y-8">
-                                    {renderOutfitResult(result.generated, t.results.generated)}
-                                    <div className="mt-8">
-                                        <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
-                                            {language === 'en' ? 'AI Recommended Hairstyles' : 'AI推荐发型'}
-                                        </h3>
-                                        {renderGeneratedHairstyles()}
+                                {/* 发型推荐部分 */}
+                                <div className="mt-12 space-y-12">
+                                    {/* 自选搭配发型 */}
+                                    <div className="space-y-8">
+                                        <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
+                                            <h3 className="text-xl font-semibold p-4 bg-gradient-to-r from-orange-600 to-teal-600 text-white">
+                                                {language === 'en' ? 'Recommended Hairstyles' : '推荐发型'}
+                                            </h3>
+                                            <div className="p-4">
+                                                {renderCustomHairstyles()}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {/* AI推荐搭配发型 */}
+                                    <div className="space-y-8">
+                                        <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
+                                            <h3 className="text-xl font-semibold p-4 bg-gradient-to-r from-orange-600 to-teal-600 text-white">
+                                                {language === 'en' ? 'AI Recommended Hairstyles' : 'AI推荐发型'}
+                                            </h3>
+                                            <div className="p-4">
+                                                {renderGeneratedHairstyles()}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
