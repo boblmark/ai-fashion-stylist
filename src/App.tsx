@@ -29,14 +29,16 @@ interface OutfitResult {
     score: number;
 }
 
+// 修复 Result 接口，保持原有结构
 interface Result {
     recommendations: string;
     custom: OutfitResult;
     generated: OutfitResult;
 }
 
+// 修改 ProgressState 接口确保类型安全
 interface ProgressState {
-    stage: string;
+    stage: keyof typeof PROGRESS_STAGES;
     percent: number;
     message: string;
 }
@@ -564,12 +566,13 @@ function App() {
         title: { en: string; zh: string }
     ) => {
         const commentaryLines = outfit.commentary.split('\n').filter(line => line.trim());
-        // 修复正则表达式格式
-        const scorePattern = /综合评分[：:]\s*(\d+(?:\.\d+)?)\s*分/;
+        // 优化正则表达式，使其更准确地匹配评分
+        const scoreMatch = outfit.commentary.match(/综合评分[：:]\s*(\d+(?:\.\d+)?)\s*分/);
+        const score = scoreMatch ? parseFloat(scoreMatch[1]) : outfit.score;
         const commentaryWithoutScore = commentaryLines
-            .filter(line => !scorePattern.test(line))
+            .filter(line => !line.includes('综合评分'))
             .join('\n');
-
+    
         return (
             <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
                 <div className="relative">
@@ -698,6 +701,7 @@ function App() {
             <div className="max-w-5xl mx-auto relative z-10">
                 <div className="relative backdrop-blur-sm bg-white/80 rounded-3xl shadow-2xl overflow-hidden border border-white/20">
                     <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-teal-500/10 animate-pulse"></div>
+                    // 修复嵌套的 div 结构
                     <div className="relative px-6 py-8 sm:p-10">
                         <div className="flex items-center justify-center mb-8">
                             <div className="w-32 h-32 relative animate-float">
