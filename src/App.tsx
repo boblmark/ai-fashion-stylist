@@ -19,7 +19,49 @@ import {
 import FashionBackground from './components/FashionBackground';
 
 // 补充类型定义
-type ProgressStage = 'UPLOAD' | 'ANALYSIS' | 'GENERATE_TOP' | 'GENERATE_BOTTOM' | 'TRYON_CUSTOM' | 'TRYON_GENERATED' | 'COMMENTARY' | 'HAIRSTYLE' | 'COMPLETE';
+// 1. 更新 ProgressStage 类型
+type ProgressStage = 'UPLOAD' | 'ANALYSIS' | 'GENERATE_TOP' | 'GENERATE_BOTTOM' | 'TRYON_CUSTOM' | 'TRYON_GENERATED' | 'COMMENTARY' | 'HAIRSTYLE_ANALYSIS' | 'HAIRSTYLE_GENERATION' | 'COMPLETE';
+
+// 2. 更新 PROGRESS_STAGES 常量
+const PROGRESS_STAGES = {
+    // ... 其他阶段保持不变 ...
+    HAIRSTYLE_ANALYSIS: { percent: 85, en: 'Analyzing hairstyle...', zh: '正在分析发型...' },
+    HAIRSTYLE_GENERATION: { percent: 95, en: 'Generating hairstyle recommendations...', zh: '正在生成发型推荐...' }
+};
+
+// 3. 确保 AI 推荐发型部分正确渲染
+{result && (
+    <div className="mt-12 space-y-12">
+        {/* 虚拟换衣结果 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* 自选搭配结果 */}
+            {renderOutfitResult(result.custom, t.results.custom)}
+            {/* AI推荐搭配结果 */}
+            {renderOutfitResult(result.generated, t.results.generated)}
+        </div>
+        {/* 发型推荐部分 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* 自选搭配发型 */}
+            <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
+                <h3 className="text-xl font-semibold p-4 bg-gradient-to-r from-orange-600 to-teal-600 text-white">
+                    {language === 'en' ? 'Recommended Hairstyles' : '推荐发型'}
+                </h3>
+                <div className="p-4">
+                    {renderCustomHairstyles()}
+                </div>
+            </div>
+            {/* AI推荐搭配发型 */}
+            <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
+                <h3 className="text-xl font-semibold p-4 bg-gradient-to-r from-orange-600 to-teal-600 text-white">
+                    {language === 'en' ? 'AI Recommended Hairstyles' : 'AI推荐发型'}
+                </h3>
+                <div className="p-4">
+                    {renderGeneratedHairstyles()}
+                </div>
+            </div>
+        </div>
+    </div>
+)}
 
 interface Result {
     custom: {
@@ -433,10 +475,20 @@ function App() {
             setResult(data);
 
             // 直接使用生成的换衣效果图片URL进行虚拟换发
+            // ... 修改 handleHairstyleRecommendation 调用方式，改为串行执行
+            const customHairstyles = await handleHairstyleRecommendation(data.custom.tryOnUrl);
+            const generatedHairstyles = await handleHairstyleRecommendation(data.generated.tryOnUrl);
+            
+            // 添加请求间隔
+            const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+            
             const handleHairstyleRecommendation = async (image: string) => {
                 updateProgress('HAIRSTYLE_ANALYSIS');
                 
                 try {
+                    // 添加 1 秒延迟
+                    await delay(1000);
+                    
                     // 发送发型分析请求
                     const response = await fetch('https://api.coze.cn/v1/workflow/run', {
                         method: 'POST',
@@ -451,54 +503,27 @@ function App() {
                             }
                         })
                     });
-    
+            
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
-    
+            
                     const responseData = await response.json();
                     console.log('发型推荐原始响应:', responseData);
-    
-                    // 更新到发型生成阶段
-                    updateProgress('HAIRSTYLE_GENERATION');
-    
-                    // 处理响应数据
-                    let hairstyles = [];
-                    if (responseData.code === 0 && responseData.data) {
-                        const parsedData = typeof responseData.data === 'string' 
-                            ? JSON.parse(responseData.data) 
-                            : responseData.data;
-                    
-                        if (Array.isArray(parsedData)) {
-                            hairstyles = parsedData;
-                        } else if (parsedData.output && Array.isArray(parsedData.output)) {
-                            hairstyles = parsedData.output;
-                        } else if (parsedData.hairstyles && Array.isArray(parsedData.hairstyles)) {
-                            hairstyles = parsedData.hairstyles;
-                        }
-                    }
-                    
-                    // 格式化发型数据
-                    const formattedHairstyles = hairstyles.map(style => ({
-                        hairstyle: typeof style === 'string' ? style : style.hairstyle || '推荐发型',
-                        reasons: style.reasons || '根据您的风格特点推荐此发型',
-                        img: style.img || ''
-                    }));
-                    
-                    return formattedHairstyles;
-                } catch (error) {
-                    console.error('获取发型推荐失败:', error);
-                    throw error;
-                } finally {
-                    setLoading(false);
-                }
-            };
             
-            // 并行获取两种搭配的发型推荐
-            const [customHairstyles, generatedHairstyles] = await Promise.all([
-                handleHairstyleRecommendation(data.custom.tryOnUrl),
-                handleHairstyleRecommendation(data.generated.tryOnUrl)
-            ]);
+                    // 检查 API 错误
+                    if (responseData.code !== 0) {
+                        throw new Error(responseData.msg || 'API request failed');
+                    }
+            
+                    // ... rest of the code ...
+    } catch (error) {
+        console.error('获取发型推荐失败:', error);
+        throw error;
+    } finally {
+        setLoading(false);
+    }
+};
 
             console.log('自选搭配发型:', customHairstyles); // 添加日志
             console.log('AI推荐搭配发型:', generatedHairstyles); // 添加日志
@@ -951,8 +976,7 @@ function App() {
                                     {/* AI推荐搭配结果 */}
                                     {renderOutfitResult(result.generated, t.results.generated)}
                                 </div>
-                                {/* 发型推荐部分保持不变 */}
-
+                                {/* 发型推荐部分 */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     {/* 自选搭配发型 */}
                                     <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl">
