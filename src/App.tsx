@@ -38,6 +38,12 @@ interface Result {
     };
 }
 
+interface HairStyle {
+    hairstyle: string;
+    reasons: string;
+    img: string;
+}
+
 interface HairStyles {
     custom: Array<{
         hairstyle: string;
@@ -335,31 +341,12 @@ function App() {
         }));
     }, []);
 
-    const handleSubmit = async (event: React.FormEvent) => {
-        event.preventDefault();
-        console.log('表单提交开始');
-    
-        if (!personPhoto?.file || !topGarment?.file || !bottomGarment?.file) {
-            console.log('缺少必要的图片文件:', { 
-                personPhoto: !!personPhoto, 
-                topGarment: !!topGarment, 
-                bottomGarment: !!bottomGarment 
-            }); // 添加日志
-            showError(t.error.upload[language]);
-            return;
-        }
-
-        // Cancel any existing request
-        if (abortControllerRef.current) {
-            abortControllerRef.current.abort();
-        }
-
-        // Create new AbortController for this request
-        abortControllerRef.current = new AbortController();
-
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        console.log('表单提交开始', { formData, personPhoto, topGarment, bottomGarment });
         setLoading(true);
-        updateProgress('UPLOAD');
-
+        abortControllerRef.current = new AbortController();
+    
         try {
             const formDataToSend = new FormData();
             formDataToSend.append('person_photo', personPhoto.file);
@@ -495,9 +482,31 @@ function App() {
             };
             
             // 并行获取两种搭配的发型推荐
-            const [customHairstyles, generatedHairstyles] = await Promise.all([
-                handleHairstyleRecommendation(data.custom.tryOnUrl),
-                handleHairstyleRecommendation(data.generated.tryOnUrl)
+            const processHairstyleRecommendations = async (images: string[]): Promise<HairStyle[][]> => {
+                const batchSize = 2; // 每批次最多2个请求
+                const results: HairStyle[][] = [];
+    
+                for (let i = 0; i < images.length; i += batchSize) {
+                    const batch = images.slice(i, i + batchSize);
+                    try {
+                        const batchResults = await Promise.all(
+                            batch.map(image => handleHairstyleRecommendation(image))
+                        );
+                        results.push(...batchResults);
+                    } catch (error) {
+                        console.error('批处理请求失败:', error);
+                        // 如果某个批次失败，返回空数组
+                        results.push([]);
+                    }
+                }
+    
+                return results;
+            };
+    
+            // 在 handleSubmit 中调用
+            const [customHairstyles, generatedHairstyles] = await processHairstyleRecommendations([
+                data.custom.tryOnUrl,
+                data.generated.tryOnUrl
             ]);
 
             console.log('自选搭配发型:', customHairstyles); // 添加日志
