@@ -17,6 +17,7 @@ import {
     Info 
 } from 'lucide-react';
 import FashionBackground from './components/FashionBackground';
+import { Semaphore } from 'async-mutex';
 
 // 补充类型定义
 type ProgressStage = 'UPLOAD' | 'ANALYSIS' | 'GENERATE_TOP' | 'GENERATE_BOTTOM' | 'TRYON_CUSTOM' | 'TRYON_GENERATED' | 'COMMENTARY' | 'HAIRSTYLE' | 'COMPLETE';
@@ -424,57 +425,65 @@ function App() {
                 updateProgress('HAIRSTYLE_ANALYSIS');
                 
                 try {
-                    // 发送发型分析请求
-                    const response = await fetch('https://api.coze.cn/v1/workflow/run', {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': 'Bearer pat_XCdzRC2c6K7oMcc2xVJv37KYJR311nrU8uUCPbdnAPlWKaDY9TikL2W8nnkW9cbY',
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            workflow_id: '7472218638747467817',
-                            parameters: {
-                                input_image: image
-                            }
-                        })
-                    });
+                    // Acquire a semaphore lock before making the request
+                    const [value, release] = await semaphore.acquire();
     
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
+                    try {
+                        // Send hairstyle analysis request
+                        const response = await fetch('https://api.coze.cn/v1/workflow/run', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': 'Bearer pat_XCdzRC2c6K7oMcc2xVJv37KYJR311nrU8uUCPbdnAPlWKaDY9TikL2W8nnkW9cbY',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                workflow_id: '7472218638747467817',
+                                parameters: {
+                                    input_image: image
+                                }
+                            })
+                        });
     
-                    const responseData = await response.json();
-                    console.log('发型推荐原始响应:', responseData);
-    
-                    // 更新到发型生成阶段
-                    updateProgress('HAIRSTYLE_GENERATION');
-    
-                    // 处理响应数据
-                    let hairstyles = [];
-                    if (responseData.code === 0 && responseData.data) {
-                        const parsedData = typeof responseData.data === 'string' 
-                            ? JSON.parse(responseData.data) 
-                            : responseData.data;
-                    
-                        if (Array.isArray(parsedData)) {
-                            hairstyles = parsedData;
-                        } else if (parsedData.output && Array.isArray(parsedData.output)) {
-                            hairstyles = parsedData.output;
-                        } else if (parsedData.hairstyles && Array.isArray(parsedData.hairstyles)) {
-                            hairstyles = parsedData.hairstyles;
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
                         }
+    
+                        const responseData = await response.json();
+                        console.log('Hairstyle recommendation response:', responseData);
+    
+                        // Update to hairstyle generation stage
+                        updateProgress('HAIRSTYLE_GENERATION');
+    
+                        // Process response data
+                        let hairstyles = [];
+                        if (responseData.code === 0 && responseData.data) {
+                            const parsedData = typeof responseData.data === 'string' 
+                                ? JSON.parse(responseData.data) 
+                                : responseData.data;
+                        
+                            if (Array.isArray(parsedData)) {
+                                hairstyles = parsedData;
+                            } else if (parsedData.output && Array.isArray(parsedData.output)) {
+                                hairstyles = parsedData.output;
+                            } else if (parsedData.hairstyles && Array.isArray(parsedData.hairstyles)) {
+                                hairstyles = parsedData.hairstyles;
+                            }
+                        }
+                        
+                        // Format hairstyle data
+                        const formattedHairstyles = hairstyles.map(style => ({
+                            hairstyle: typeof style === 'string' ? style : style.hairstyle || 'Recommended Hairstyle',
+                            reasons: style.reasons || 'Recommended based on your style',
+                            img: style.img || ''
+                        }));
+                        
+                        return formattedHairstyles;
+                    } finally {
+                        // Release the semaphore lock
+                        release();
                     }
-                    
-                    // 格式化发型数据
-                    const formattedHairstyles = hairstyles.map(style => ({
-                        hairstyle: typeof style === 'string' ? style : style.hairstyle || '推荐发型',
-                        reasons: style.reasons || '根据您的风格特点推荐此发型',
-                        img: style.img || ''
-                    }));
-                    
-                    return formattedHairstyles;
                 } catch (error) {
-                    console.error('获取发型推荐失败:', error);
+                    console.error('Failed to get hairstyle recommendation:', error);
                     throw error;
                 } finally {
                     setLoading(false);
