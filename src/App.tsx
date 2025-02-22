@@ -639,57 +639,92 @@ function App() {
                 </div>
 
                 <div className="p-4 space-y-6">
+                    {/* 图片展示区域 */}
                     <div className="relative aspect-[3/4] rounded-xl overflow-hidden group">
                         <img
                             src={outfit.tryOnUrl}
                             alt="Try-on result"
-                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    </div>
-
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-2 text-lg font-semibold text-gray-900">
-                            <TrendingUp className="w-5 h-5 text-orange-500" />
-                            {t.results.commentary[language]}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300">
+                            <div className="absolute bottom-4 left-4 right-4">
+                                <div className="flex items-center gap-2 text-white">
+                                    <Crown className="w-5 h-5 text-yellow-400" />
+                                    <span className="font-medium">时尚评分</span>
+                                    <div className="ml-auto flex items-center gap-1">
+                                        <div className="flex">
+                                            {[1, 2, 3, 4, 5].map((star) => (
+                                                <Star
+                                                    key={star}
+                                                    className={`w-5 h-5 ${
+                                                        star <= outfit.score / 2
+                                                            ? 'text-yellow-400 fill-yellow-400 animate-pulse'
+                                                            : 'text-gray-400/50 fill-gray-400/50'
+                                                    }`}
+                                                />
+                                            ))}
+                                        </div>
+                                        <span className="text-2xl font-bold text-yellow-400 animate-bounce">
+                                            {outfit.score}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-
-                        <div className="grid grid-cols-1 gap-4">
-                            {commentaryLines.map((line, index) => {
-                                if (line.includes('综合评分')) return null;
+                    </div>
     
-                                const icons = [ThumbsUp, Star, Scale, Palette];
+                    {/* 风格分析区域 */}
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-orange-500 to-teal-500 rounded-lg text-white">
+                            <div className="flex items-center gap-2">
+                                <TrendingUp className="w-5 h-5" />
+                                <span className="font-semibold">风格分析</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm opacity-75">时尚指数</span>
+                                <div className="w-24 h-2 bg-white/20 rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-white animate-width-expand"
+                                        style={{
+                                            width: `${(outfit.score / 10) * 100}%`,
+                                            transition: 'width 1.5s ease-out'
+                                        }}
+                                    />
+                                </div>
+                                <span className="font-bold">{outfit.score}</span>
+                            </div>
+                        </div>
+    
+                        {/* 详细评论区域 */}
+                        <div className="grid gap-4">
+                            {outfit.commentary.split('\n').filter(line => line.trim()).map((comment, index) => {
+                                if (comment.includes('综合评分')) return null;
+                                const icons = [Sparkles, Palette, Scale, ThumbsUp];
                                 const Icon = icons[index % icons.length];
-                                const bgColors = [
-                                    'from-orange-50 to-amber-50',
-                                    'from-teal-50 to-emerald-50',
-                                    'from-purple-50 to-pink-50',
-                                    'from-blue-50 to-cyan-50'
-                                ];
-                                const borderColors = [
-                                    'border-orange-100',
-                                    'border-teal-100',
-                                    'border-purple-100',
-                                    'border-blue-100'
+                                const animations = [
+                                    'hover:-translate-y-1',
+                                    'hover:scale-105',
+                                    'hover:rotate-1',
+                                    'hover:-rotate-1'
                                 ];
     
                                 return (
                                     <div
                                         key={index}
-                                        className={`p-4 rounded-lg bg-gradient-to-r ${bgColors[index % bgColors.length]} border ${borderColors[index % borderColors.length]} hover:shadow-md transition-all duration-300`}
+                                        className={`p-4 rounded-lg bg-gradient-to-r from-white/80 to-white/60 backdrop-blur-sm shadow-lg border border-white/50 transition-all duration-300 ${animations[index % animations.length]}`}
                                     >
-                                        <div className="flex gap-3">
-                                            <div className="flex-shrink-0">
+                                        <div className="flex gap-3 items-start">
+                                            <div className="flex-shrink-0 p-2 bg-gradient-to-br from-orange-500/10 to-teal-500/10 rounded-lg">
                                                 <Icon className="w-5 h-5 text-orange-500" />
                                             </div>
-                                            <div className="space-y-2">
-                                                <p className="text-sm text-gray-700 leading-relaxed">
-                                                    {line}
+                                            <div className="flex-1">
+                                                <p className="text-gray-700 leading-relaxed">
+                                                    {comment}
                                                 </p>
                                                 {index === 0 && (
-                                                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                                                        <ThumbsUp className="w-3 h-3" />
-                                                        <span>{language === 'en' ? 'AI Verified' : 'AI验证'}</span>
+                                                    <div className="mt-2 flex items-center gap-2 text-xs text-orange-500">
+                                                        <Badge className="w-3 h-3" />
+                                                        <span>AI 专业点评</span>
                                                     </div>
                                                 )}
                                             </div>
@@ -697,27 +732,6 @@ function App() {
                                     </div>
                                 );
                             })}
-                        </div>
-
-                        <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-orange-500 to-teal-500 text-white">
-                            <div className="flex items-center justify-between">
-                                <span className="font-medium">{t.results.score[language]}</span>
-                                <div className="flex items-center gap-2">
-                                    <div className="flex">
-                                        {[1, 2, 3, 4, 5].map((star) => (
-                                            <Star
-                                                key={star}
-                                                className={`w-4 h-4 ${
-                                                    star <= outfit.score / 2
-                                                        ? 'fill-white'
-                                                        : 'fill-white/30'
-                                                }`}
-                                            />
-                                        ))}
-                                    </div>
-                                    <span className="font-bold text-xl">{outfit.score}</span>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
