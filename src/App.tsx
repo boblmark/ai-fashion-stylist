@@ -451,7 +451,9 @@ function App() {
                 ) : (
                     <div className="h-full flex flex-col items-center justify-center bg-gradient-to-r from-gray-50 to-gray-100 group-hover:from-orange-50 group-hover:to-teal-50 transition-all duration-300">
                         {icon}
-                        <span className="mt-2 text-sm text-gray-500 group-hover:text-gray-700">{placeholder[language]}</span>
+                        <span className="mt-2 text-sm text-gray-500 group-hover:text-gray-700">
+                            {placeholder[language]}
+                        </span>
                     </div>
                 )}
                 <input
