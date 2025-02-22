@@ -186,16 +186,6 @@ const lucideIcons = {
   Crown
 };
 
-// 添加 fetchWithTimeout 工具函数
-const fetchWithTimeout = async (url: string, options: RequestInit, timeout: number) => {
-    return Promise.race([
-        fetch(url, options),
-        new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('请求超时')), timeout)
-        )
-    ]);
-};
-
 function App() {
     const [personPhoto, setPersonPhoto] = useState<UploadPreview | null>(null);
     const [topGarment, setTopGarment] = useState<UploadPreview | null>(null);
@@ -205,32 +195,86 @@ function App() {
     const [language, setLanguage] = useState<'en' | 'zh'>('zh');
     const [error, setError] = useState<ErrorState>({ message: '', visible: false });
     const [hairstyles, setHairstyles] = useState<HairStyles>({ custom: [], generated: [] });
-    const [clothingProgress, setClothingProgress] = useState<ProgressState>({
+    const [progress, setProgress] = useState<ProgressState>({
         stage: 'UPLOAD',
         percent: 0,
         message: PROGRESS_STAGES.UPLOAD.zh
     });
-    const [hairstyleProgress, setHairstyleProgress] = useState<ProgressState>({
-        stage: 'IDLE',
-        percent: 0,
-        message: '空闲'
+    const abortControllerRef = useRef<AbortController | null>(null);
+
+    const [formData, setFormData] = useState<FormData>({
+        height: '',
+        weight: '',
+        bust: '',
+        waist: '',
+        hips: '',
+        style_preference: STYLE_PREFERENCES[0].zh
     });
 
-    const updateClothingProgress = useCallback((stage: ProgressStage) => {
-        setClothingProgress({
+    const updateProgress = useCallback((stage: ProgressStage) => {
+        setProgress({
             stage,
             percent: PROGRESS_STAGES[stage].percent,
             message: PROGRESS_STAGES[stage][language]
         });
     }, [language]);
 
-    const updateHairstyleProgress = useCallback((stage: ProgressStage) => {
-        setHairstyleProgress({
-            stage,
-            percent: PROGRESS_STAGES[stage].percent,
-            message: PROGRESS_STAGES[stage][language]
-        });
-    }, [language]);
+    const showError = useCallback((message: string) => {
+        setError({ message, visible: true });
+        setTimeout(() => setError({ message: '', visible: false }), 5000);
+    }, []);
+
+    const validateFile = useCallback((file: File): boolean => {
+        if (file.size > MAX_FILE_SIZE) {
+            showError(t.error.fileSize[language]);
+            return false;
+        }
+        if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+            showError(t.error.fileType[language]);
+            return false;
+        }
+        return true;
+    }, [language, showError]);
+
+    const handleFileChange = useCallback((
+        event: React.ChangeEvent<HTMLInputElement>,
+        setPreview: (preview: UploadPreview | null) => void
+    ) => {
+        try {
+            const file = event.target.files?.[0];
+            if (file) {
+                if (!validateFile(file)) {
+                    event.target.value = '';
+                    return;
+                }
+
+                setPreview(prev => {
+                    if (prev?.preview) {
+                        URL.revokeObjectURL(prev.preview);
+                    }
+                    return null;
+                });
+
+                const preview: UploadPreview = {
+                    file,
+                    preview: URL.createObjectURL(file)
+                };
+                setPreview(preview);
+            }
+        } catch (err) {
+            console.error('File upload error:', err);
+            showError(language === 'en' ? 'Failed to upload file' : '文件上传失败');
+            event.target.value = '';
+        }
+    }, [language, validateFile, showError]);
+
+    const handleInputChange = useCallback((event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = event.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    }, []);
 
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
@@ -248,7 +292,7 @@ function App() {
         abortControllerRef.current = new AbortController();
 
         setLoading(true);
-        updateClothingProgress('UPLOAD');
+        updateProgress('UPLOAD');
 
         try {
             const formDataToSend = new FormData();
@@ -269,17 +313,13 @@ function App() {
 
             console.log('Sending request to:', fullUrl);
 
-            const response = await fetchWithTimeout(
-                fullUrl,
-                {
-                    method: 'POST',
-                    body: formDataToSend,
-                    signal: abortControllerRef.current.signal,
-                    credentials: 'include',
-                    mode: 'cors'
-                },
-                30000 // 30 秒超时
-            );
+            const response = await fetch(fullUrl, {
+                method: 'POST',
+                body: formDataToSend,
+                signal: abortControllerRef.current.signal,
+                credentials: 'include',
+                mode: 'cors'
+            });
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({ error: 'Failed to parse error response' }));
@@ -289,7 +329,7 @@ function App() {
             const data = await response.json();
             console.log('Received response:', data);
 
-            const clothingStages: ProgressStage[] = [
+            const stages: ProgressStage[] = [
                 'UPLOAD',
                 'ANALYSIS',
                 'GENERATE_TOP',
@@ -297,73 +337,170 @@ function App() {
                 'TRYON_CUSTOM',
                 'TRYON_GENERATED',
                 'COMMENTARY',
+                'HAIRSTYLE',
                 'COMPLETE'
             ];
 
-            for (const stage of clothingStages) {
+            for (const stage of stages) {
                 if (abortControllerRef.current?.signal.aborted) {
                     throw new Error('Request cancelled');
                 }
-                updateClothingProgress(stage);
+                updateProgress(stage);
                 await new Promise(resolve => setTimeout(resolve, 500));
             }
 
             setResult(data);
 
-            // 开始换发任务
-            updateHairstyleProgress('START');
-
+            // 获取发型推荐
+            // 修改并发处理逻辑
             const getHairstyleRecommendation = async (image: string) => {
                 try {
-                    updateHairstyleProgress('REQUESTING');
-                    const response = await fetchWithTimeout(
-                        'https://api.coze.cn/v1/workflow/run',
-                        {
-                            method: 'POST',
-                            headers: {
-                                'Authorization': 'Bearer pat_XCdzRC2c6K7oMcc2xVJv37KYJR311nrU8uUCPbdnAPlWKaDY9TikL2W8nnkW9cbY',
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                workflow_id: '7472218638747467817',
-                                parameters: {
-                                    input_image: image,
-                                    type: 'hairstyle'  // 指示工作流生成发型推荐和换发效果
-                                }
-                            })
+                    // 先获取发型推荐
+                    console.log('开始获取发型推荐，输入图片:', image);
+                    const response = await fetch('https://api.coze.cn/v1/workflow/run', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer pat_XCdzRC2c6K7oMcc2xVJv37KYJR311nrU8uUCPbdnAPlWKaDY9TikL2W8nnkW9cbY',
+                            'Content-Type': 'application/json'
                         },
-                        30000 // 30 秒超时
-                    );
-            
+                        body: JSON.stringify({
+                            workflow_id: '7472218638747467817',  // 使用同一个 workflow_id
+                            parameters: {
+                                input_image: image
+                            }
+                        })
+                    });
+                
                     const responseData = await response.json();
+                    console.log('发型推荐原始响应:', responseData);
+                    
                     if (responseData.code === 0 && responseData.data) {
-                        updateHairstyleProgress('PROCESSING');
-                        // 直接使用工作流返回的结果，包含发型名称、推荐理由和换发后的图片
-                        const hairstyles = responseData.data.hairstyles || [];
-                        return hairstyles.map(style => ({
-                            hairstyle: style.name,
-                            reasons: style.reason,
-                            img: style.image_url
-                        }));
+                        try {
+                            // 尝试解析返回的数据
+                            let parsedData;
+                            if (typeof responseData.data === 'string') {
+                                parsedData = JSON.parse(responseData.data);
+                            } else {
+                                parsedData = responseData.data;
+                            }
+                            
+                            console.log('解析后的发型数据:', parsedData);
+                            
+                            // 获取推荐的发型列表
+                            let hairstyles = [];
+                            if (Array.isArray(parsedData)) {
+                                hairstyles = parsedData;
+                            } else if (parsedData.output && Array.isArray(parsedData.output)) {
+                                hairstyles = parsedData.output;
+                            } else if (parsedData.hairstyles && Array.isArray(parsedData.hairstyles)) {
+                                hairstyles = parsedData.hairstyles;
+                            } else if (typeof parsedData === 'string') {
+                                // 尝试从字符串中提取发型信息
+                                try {
+                                    const extractedData = JSON.parse(parsedData);
+                                    hairstyles = Array.isArray(extractedData) ? extractedData : 
+                                    (extractedData.output && Array.isArray(extractedData.output)) ? extractedData.output :
+                                    (extractedData.hairstyles && Array.isArray(extractedData.hairstyles)) ? extractedData.hairstyles : [];
+                                } catch (e) {
+                                    console.error('解析字符串数据失败:', e);
+                                }
+                            }
+                            
+                            // 确保每个发型对象都有必要的字段
+                            hairstyles = hairstyles.map(style => ({
+                                hairstyle: typeof style === 'string' ? style : style.hairstyle || '推荐发型',
+                                reasons: style.reasons || '根据您的风格特点推荐此发型',
+                                img: style.img || ''  // 这个字段会在虚拟换发后更新
+                            }));
+                            
+                            console.log('标准化后的发型列表:', hairstyles);
+                            
+                            // 使用 Promise.all 并行处理每个发型的虚拟换发
+                            const virtualHairstyles = await Promise.all(
+                                hairstyles.map(async (style) => {
+                                    try {
+                                        console.log(`开始处理发型: ${style.hairstyle}`);
+                                        const tryOnResponse = await fetch('https://api.coze.cn/v1/workflow/run', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Authorization': 'Bearer pat_XCdzRC2c6K7oMcc2xVJv37KYJR311nrU8uUCPbdnAPlWKaDY9TikL2W8nnkW9cbY',
+                                                'Content-Type': 'application/json'
+                                            },
+                                            body: JSON.stringify({
+                                                workflow_id: '7472218638747467817',  // 使用同一个 workflow_id
+                                                parameters: {
+                                                    input_image: image,
+                                                    hairstyle: style.hairstyle
+                                                }
+                                            })
+                                        });
+
+                                        const tryOnData = await tryOnResponse.json();
+                                        console.log(`发型 ${style.hairstyle} 换发响应:`, tryOnData);
+
+                                        if (tryOnData.code === 0 && tryOnData.data) {
+                                            const outputImage = tryOnData.data.output_image || 
+                                                 (tryOnData.data.output && tryOnData.data.output.image) ||
+                                                 (typeof tryOnData.data === 'string' && tryOnData.data) ||
+                                                 tryOnData.data.image;
+                                            
+                                            if (outputImage) {
+                                                return {
+                                                    ...style,
+                                                    img: outputImage
+                                                };
+                                            }
+                                        }
+                                        return null;
+                                    } catch (e) {
+                                        console.error(`处理发型 ${style.hairstyle} 失败:`, e);
+                                        return null;
+                                    }
+                                })
+                            );
+
+                            // 过滤掉失败的结果
+                            return virtualHairstyles.filter(style => style !== null);
+                        } catch (e) {
+                            console.error('解析发型数据失败:', e);
+                            return [];
+                        }
                     }
                     return [];
-                } catch (error) {
-                    console.error('获取发型推荐失败:', error);
+                } catch (e) {
+                    console.error('获取发型推荐失败:', e);
                     return [];
-                } finally {
-                    updateHairstyleProgress('COMPLETE');
                 }
             };
             
-            // 获取两种搭配的发型推荐
+            // 并行获取两种搭配的发型推荐
             const [customHairstyles, generatedHairstyles] = await Promise.all([
                 getHairstyleRecommendation(data.custom.tryOnUrl),
                 getHairstyleRecommendation(data.generated.tryOnUrl)
             ]);
-            
+
+            console.log('自选搭配发型:', customHairstyles); // 添加日志
+            console.log('AI推荐搭配发型:', generatedHairstyles); // 添加日志
+
+            // 修改数据设置逻辑
+            const processedCustomHairstyles = Array.isArray(customHairstyles) ? customHairstyles.map(style => ({
+                hairstyle: style.hairstyle || '推荐发型',
+                reasons: style.reasons || '适合您的个人风格',
+                img: style.img || ''
+            })).filter(style => style.img) : [];  // 确保只保留有图片的发型
+
+            const processedGeneratedHairstyles = Array.isArray(generatedHairstyles) ? generatedHairstyles.map(style => ({
+                hairstyle: style.hairstyle || '推荐发型',
+                reasons: style.reasons || '符合AI推荐的整体造型',
+                img: style.img || ''
+            })).filter(style => style.img) : [];  // 确保只保留有图片的发型
+
+            console.log('最终处理后的自选搭配发型:', processedCustomHairstyles);
+            console.log('最终处理后的AI推荐发型:', processedGeneratedHairstyles);
+
             setHairstyles({
-                custom: customHairstyles,
-                generated: generatedHairstyles
+                custom: processedCustomHairstyles,
+                generated: processedGeneratedHairstyles
             });
 
 
@@ -387,47 +524,59 @@ function App() {
         }
     };
 
-    const renderClothingProgressBar = useCallback(() => {
-        if (!loading) return null;
+    const renderCustomHairstyles = useCallback(() => {
+        if (hairstyles.custom.length === 0) {
+            return <p>{language === 'en' ? 'No hairstyle recommendations found for your selected outfit.' : '没有找到适合自选搭配的发型推荐。'}</p>;
+        }
 
         return (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <div className="bg-white rounded-lg p-6 w-11/12 max-w-md">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold text-gray-900">{clothingProgress.message}</h3>
-                        <span className="text-sm font-medium text-orange-600">{clothingProgress.percent}%</span>
+            <div className="grid grid-cols-2 gap-4">
+                {hairstyles.custom.map((style, index) => (
+                    <div key={index} className="space-y-3">
+                        <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-500 to-teal-500">
+                            <img
+                                src={style.img}
+                                alt={style.hairstyle}
+                                className="w-full h-full object-cover"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <h4 className="font-medium text-gray-900">{style.hairstyle}</h4>
+                            <p className="text-sm text-gray-600">{style.reasons}</p>
+                        </div>
                     </div>
-                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div
-                            className="h-full bg-gradient-to-r from-orange-500 to-teal-500 transition-all duration-500 ease-out"
-                            style={{ width: `${clothingProgress.percent}%` }}
-                        />
-                    </div>
-                </div>
+                ))}
             </div>
         );
-    }, [loading, clothingProgress]);
+    }, [hairstyles.custom, language]);
 
-    const renderHairstyleProgressBar = useCallback(() => {
-        if (hairstyleProgress.stage === 'IDLE') return null;
+    const renderGeneratedHairstyles = useCallback(() => {
+        console.log('Generated hairstyles:', hairstyles.generated);
+        
+        if (hairstyles.generated.length === 0) {
+            return <p>{language === 'en' ? 'No hairstyle recommendations found for AI-generated outfit.' : '没有找到适合 AI 搭配的发型推荐。'}</p>;
+        }
 
         return (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <div className="bg-white rounded-lg p-6 w-11/12 max-w-md">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold text-gray-900">{hairstyleProgress.message}</h3>
-                        <span className="text-sm font-medium text-orange-600">{hairstyleProgress.percent}%</span>
+            <div className="grid grid-cols-2 gap-4">
+                {hairstyles.generated.map((style, index) => (
+                    <div key={index} className="space-y-3">
+                        <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gradient-to-r from-orange-500 to-teal-500">
+                            <img
+                                src={style.img}
+                                alt={style.hairstyle}
+                                className="w-full h-full object-cover"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <h4 className="font-medium text-gray-900">{style.hairstyle}</h4>
+                            <p className="text-sm text-gray-600">{style.reasons}</p>
+                        </div>
                     </div>
-                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div
-                            className="h-full bg-gradient-to-r from-orange-500 to-teal-500 transition-all duration-500
-                            style={{ width: `${hairstyleProgress.percent}%` }}
-                        />
-                    </div>
-                </div>
+                ))}
             </div>
         );
-    }, [loading, hairstyleProgress]);
+    }, [hairstyles.generated, language]);
 
     const renderUploadBox = useCallback((
         preview: UploadPreview | null,
@@ -435,7 +584,7 @@ function App() {
         label: { en: string; zh: string },
         placeholder: { en: string; zh: string },
         icon: React.ReactNode
-    ): JSX.Element => (
+    ) => (
         <div className="group">
             <label className="block text-sm font-medium bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent mb-2">
                 {label[language]}
@@ -451,9 +600,7 @@ function App() {
                 ) : (
                     <div className="h-full flex flex-col items-center justify-center bg-gradient-to-r from-gray-50 to-gray-100 group-hover:from-orange-50 group-hover:to-teal-50 transition-all duration-300">
                         {icon}
-                        <span className="mt-2 text-sm text-gray-500 group-hover:text-gray-700">
-                            {placeholder[language]}
-                        </span>
+                        <span className="mt-2 text-sm text-gray-500 group-hover:text-gray-700">{placeholder[language]}</span>
                     </div>
                 )}
                 <input
