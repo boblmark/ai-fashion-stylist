@@ -120,13 +120,25 @@ interface Result {
     // 其他可能的字段
 }
 
-function App() {
-    const [result, setResult] = useState<Result | null>(null);
+const App = () => {
+    const [language, setLanguage] = useState<'zh' | 'en'>('zh');
+    const [formData, setFormData] = useState({
+        height: '',
+        weight: '',
+        bust: '',
+        waist: '',
+        hips: '',
+        style_preference: STYLE_PREFERENCES[0].zh
+    });
+    const [result, setResult] = useState<OutfitResult | null>(null); // Add this line
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState({ message: '', visible: false });
+    const [progress, setProgress] = useState({ stage: 'UPLOAD', percent: 0, message: '' });
+
     const [personPhoto, setPersonPhoto] = useState<UploadPreview | null>(null);
     const [topGarment, setTopGarment] = useState<UploadPreview | null>(null);
     const [bottomGarment, setBottomGarment] = useState<UploadPreview | null>(null);
     const [loading, setLoading] = useState(false);
-    const [language, setLanguage] = useState<'en' | 'zh'>('zh');
     const [error, setError] = useState<ErrorState>({ message: '', visible: false });
     const [hairstyles, setHairstyles] = useState<HairStyles>({ custom: [], generated: [] });
     const [progress, setProgress] = useState<ProgressState>({
