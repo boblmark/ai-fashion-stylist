@@ -288,140 +288,61 @@ function App() {
                 }
                 return response;
             } catch (error) {
-                if (i === retries - 1) throw error;
-                await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+                if (error instanceof Error) {
+                    if (error.name === 'AbortError') {
+                        console.log('Request cancelled');
+                        return;
+                    }
+                    console.error('Error:', error);
+                    showError(error.message);
+                } else {
+                    console.error('Unknown error:', error);
+                    showError(t.error.general[language]);
+                }
+            } finally {
+                setLoading(false);
+                abortControllerRef.current = null;
             }
-        }
-        throw new Error('Maximum retries reached');
-    };
+        };  // Remove this semicolon and add closing bracket
 
-    // 修改 handleSubmit 函数
-    const handleSubmit = async (event: React.FormEvent) => {
-        event.preventDefault();
-        setLoading(true);
-        setResult(null);
-        setError({ message: '', visible: false });
-        abortControllerRef.current = new AbortController();
-        const signal = abortControllerRef.current.signal;
+        const handleSubmit = async (event: React.FormEvent) => {
+            event.preventDefault();
+            setLoading(true);
+            setResult(null);
+            setError({ message: '', visible: false });
+            abortControllerRef.current = new AbortController();
+            const signal = abortControllerRef.current.signal;
 
-        try {
-            // Validate if all required images are uploaded
-            if (!personPhoto || !topGarment || !bottomGarment) {
-                showError(t.error.upload[language]);
-                return;
-            }
-
-            updateProgress('UPLOAD');
-
-            // Create FormData
-            const formDataToSend = new FormData();
-            formDataToSend.append('personPhoto', personPhoto.file);
-            formDataToSend.append('topGarment', topGarment.file);
-            formDataToSend.append('bottomGarment', bottomGarment.file);
-            Object.entries(formData).forEach(([key, value]) => {
-                formDataToSend.append(key, value);
-            });
-
-            // 删除重复的 response 声明
-            const response = await fetchWithRetry('/api/generate', {
-                method: 'POST',
-                body: formDataToSend,
-                signal
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to generate outfit');
-            }
-
-            // 添加 JSON 解析错误处理
-            let data;
             try {
-                data = await response.json();
-            } catch (e) {
-                console.error('JSON Parse Error:', e);
-                throw new Error(language === 'en' 
-                    ? 'Invalid server response format' 
-                    : '服务器返回数据格式不正确');
-            }
+                // Validate if all required images are uploaded
+                if (!personPhoto || !topGarment || !bottomGarment) {
+                    showError(t.error.upload[language]);
+                    return;
+                }
 
-            // 验证返回数据结构
-            if (!data || typeof data !== 'object' || 
-                !data.custom || !data.generated) {
-                throw new Error(language === 'en'
-                    ? 'Invalid response data structure'
-                    : '返回数据结构无效');
-            }
+                updateProgress('UPLOAD');
 
-            setResult(data);
+                // Create FormData
+                const formDataToSend = new FormData();
+                formDataToSend.append('personPhoto', personPhoto.file);
+                formDataToSend.append('topGarment', topGarment.file);
+                formDataToSend.append('bottomGarment', bottomGarment.file);
+                Object.entries(formData).forEach(([key, value]) => {
+                    formDataToSend.append(key, value);
+                });
 
-            // 发型推荐部分（独立错误处理）
-            try {
-                const hairstyleResponse = await fetchWithRetry('/api/hairstyles', {
+                const response = await fetchWithRetry('/api/generate', {
                     method: 'POST',
                     body: formDataToSend,
                     signal
                 });
 
-                let hairstyleData;
-                try {
-                    hairstyleData = await hairstyleResponse.json();
-                } catch (e) {
-                    console.error('Hairstyle JSON Parse Error:', e);
-                    throw new Error(language === 'en'
-                        ? 'Invalid hairstyle data format'
-                        : '发型数据格式不正确');
+                if (!response.ok) {
+                    throw new Error('Failed to generate outfit');
                 }
 
-                // 验证发型数据结构
-                if (!hairstyleData || 
-                    !Array.isArray(hairstyleData.customHairstyles) || 
-                    !Array.isArray(hairstyleData.generatedHairstyles)) {
-                    throw new Error(language === 'en'
-                        ? 'Invalid hairstyle data structure'
-                        : '发型数据结构无效');
-                }
-
-                const { customHairstyles, generatedHairstyles } = hairstyleData;
-
-                // Validate hairstyle data
-                const validateHairstyle = (style: any) => {
-                    const isValid = style &&
-                        typeof style.hairstyle === 'string' &&
-                        typeof style.reasons === 'string' &&
-                        typeof style.img === 'string';
-
-                    if (!isValid) {
-                        console.warn('Invalid hairstyle data:', style);
-                    }
-                    return isValid;
-                };
-
-                // Process and validate data
-                const processedCustomHairstyles = Array.isArray(customHairstyles)
-                   ? customHairstyles
-                        .filter(validateHairstyle)
-                        .map(style => ({
-                            hairstyle: style.hairstyle,
-                            reasons: style.reasons,
-                            img: style.img
-                        }))
-                    : [];
-
-                const processedGeneratedHairstyles = Array.isArray(generatedHairstyles)
-                   ? generatedHairstyles
-                        .filter(validateHairstyle)
-                        .map(style => ({
-                            hairstyle: style.hairstyle,
-                            reasons: style.reasons,
-                            img: style.img
-                        }))
-                    : [];
-
-                setHairstyles({
-                    custom: processedCustomHairstyles,
-                    generated: processedGeneratedHairstyles
-                });
-
+                const data = await response.json();
+                setResult(data);
                 updateProgress('COMPLETE');
             } catch (error) {
                 if (error instanceof Error) {
@@ -439,7 +360,7 @@ function App() {
                 setLoading(false);
                 abortControllerRef.current = null;
             }
-        };
+        }
 
         const renderCustomHairstyles = useCallback(() => {
             if (hairstyles.custom.length === 0) {
@@ -501,34 +422,35 @@ function App() {
             label: { en: string; zh: string },
             placeholder: { en: string; zh: string },
             icon: React.ReactNode
-        ) => (
-            <div className="group">
-                <label className="block text-sm font-medium bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent mb-2">
-                    {label[language]}
-                </label>
-                <div className="relative h-48 rounded-2xl overflow-hidden transition-all duration-300 group-hover:scale-[1.02]">
-                    <div className="absolute inset-0 bg-gradient-to-br from-orange-500/20 to-teal-500/20 group-hover:opacity-0 transition-opacity"></div>
-                    {preview ? (
-                        <img
-                            src={preview.preview}
-                            alt="Preview"
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+        ) => {
+            return (
+                <div className="group">
+                    <label className="block text-sm font-medium bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent mb-2">
+                        {label[language]}
+                    </label>
+                    <div className="relative h-48 rounded-2xl overflow-hidden transition-all duration-300 group-hover:scale-[1.02]">
+                        {preview ? (
+                            <img
+                                src={preview.preview}
+                                alt="Preview"
+                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                            />
+                        ) : (
+                            <div className="h-full flex flex-col items-center justify-center bg-gradient-to-r from-gray-50 to-gray-100 group-hover:from-orange-50 group-hover:to-teal-50 transition-all duration-300">
+                                {icon}
+                                <span className="mt-2 text-sm text-gray-500 group-hover:text-gray-700">{placeholder[language]}</span>
+                            </div>
+                        )}
+                        <input
+                            type="file"
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                            onChange={(e) => handleFileChange(e, setPreview)}
+                            accept={ALLOWED_FILE_TYPES.join(',')}
                         />
-                    ) : (
-                        <div className="h-full flex flex-col items-center justify-center bg-gradient-to-r from-gray-50 to-gray-100 group-hover:from-orange-50 group-hover:to-teal-50 transition-all duration-300">
-                            {icon}
-                            <span className="mt-2 text-sm text-gray-500 group-hover:text-gray-700">{placeholder[language]}</span>
-                        </div>
-                    )}
-                    <input
-                        type="file"
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        onChange={(e) => handleFileChange(e, setPreview)}
-                        accept={ALLOWED_FILE_TYPES.join(',')}
-                    />
+                    </div>
                 </div>
-            </div>
-        ), [language, handleFileChange]);
+            );
+        }, [language, handleFileChange]);
 
         const renderOutfitResult = useCallback((outfit: OutfitResult, title: { en: string; zh: string }) => {
             return (
