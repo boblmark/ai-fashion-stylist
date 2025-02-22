@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback, useRef } from 'react';
 import { 
     Upload, 
@@ -17,7 +18,6 @@ import {
     Info 
 } from 'lucide-react';
 import FashionBackground from './components/FashionBackground';
-import { Semaphore } from 'async-mutex';
 
 // 补充类型定义
 type ProgressStage = 'UPLOAD' | 'ANALYSIS' | 'GENERATE_TOP' | 'GENERATE_BOTTOM' | 'TRYON_CUSTOM' | 'TRYON_GENERATED' | 'COMMENTARY' | 'HAIRSTYLE' | 'COMPLETE';
@@ -37,12 +37,6 @@ interface Result {
         commentary: string;
         score: number;
     };
-}
-
-interface HairStyle {
-    hairstyle: string;
-    reasons: string;
-    img: string;
 }
 
 interface HairStyles {
@@ -248,9 +242,6 @@ const lucideIcons = {
 };
 
 function App() {
-    // 实例化 Semaphore，限制并发请求数量为 4
-    const semaphore = new Semaphore(4);
-
     const [personPhoto, setPersonPhoto] = useState<UploadPreview | null>(null);
     const [topGarment, setTopGarment] = useState<UploadPreview | null>(null);
     const [bottomGarment, setBottomGarment] = useState<UploadPreview | null>(null);
@@ -345,12 +336,31 @@ function App() {
         }));
     }, []);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        console.log('表单提交开始', { formData, personPhoto, topGarment, bottomGarment });
-        setLoading(true);
-        abortControllerRef.current = new AbortController();
+    const handleSubmit = async (event: React.FormEvent) => {
+        event.preventDefault();
+        console.log('表单提交开始');
     
+        if (!personPhoto?.file || !topGarment?.file || !bottomGarment?.file) {
+            console.log('缺少必要的图片文件:', { 
+                personPhoto: !!personPhoto, 
+                topGarment: !!topGarment, 
+                bottomGarment: !!bottomGarment 
+            }); // 添加日志
+            showError(t.error.upload[language]);
+            return;
+        }
+
+        // Cancel any existing request
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+
+        // Create new AbortController for this request
+        abortControllerRef.current = new AbortController();
+
+        setLoading(true);
+        updateProgress('UPLOAD');
+
         try {
             const formDataToSend = new FormData();
             formDataToSend.append('person_photo', personPhoto.file);
@@ -428,65 +438,57 @@ function App() {
                 updateProgress('HAIRSTYLE_ANALYSIS');
                 
                 try {
-                    // 获取信号量锁
-                    const [value, release] = await semaphore.acquire();
-    
-                    try {
-                        // 发送发型分析请求
-                        const response = await fetch('https://api.coze.cn/v1/workflow/run', {
-                            method: 'POST',
-                            headers: {
-                                'Authorization': 'Bearer pat_XCdzRC2c6K7oMcc2xVJv37KYJR311nrU8uUCPbdnAPlWKaDY9TikL2W8nnkW9cbY',
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                workflow_id: '7472218638747467817',
-                                parameters: {
-                                    input_image: image
-                                }
-                            })
-                        });
-    
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-    
-                        const responseData = await response.json();
-                        console.log('Hairstyle recommendation response:', responseData);
-    
-                        // Update to hairstyle generation stage
-                        updateProgress('HAIRSTYLE_GENERATION');
-    
-                        // Process response data
-                        let hairstyles = [];
-                        if (responseData.code === 0 && responseData.data) {
-                            const parsedData = typeof responseData.data === 'string' 
-                                ? JSON.parse(responseData.data) 
-                                : responseData.data;
-                        
-                            if (Array.isArray(parsedData)) {
-                                hairstyles = parsedData;
-                            } else if (parsedData.output && Array.isArray(parsedData.output)) {
-                                hairstyles = parsedData.output;
-                            } else if (parsedData.hairstyles && Array.isArray(parsedData.hairstyles)) {
-                                hairstyles = parsedData.hairstyles;
+                    // 发送发型分析请求
+                    const response = await fetch('https://api.coze.cn/v1/workflow/run', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer pat_XCdzRC2c6K7oMcc2xVJv37KYJR311nrU8uUCPbdnAPlWKaDY9TikL2W8nnkW9cbY',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            workflow_id: '7472218638747467817',
+                            parameters: {
+                                input_image: image
                             }
-                        }
-                        
-                        // Format hairstyle data
-                        const formattedHairstyles = hairstyles.map(style => ({
-                            hairstyle: typeof style === 'string' ? style : style.hairstyle || 'Recommended Hairstyle',
-                            reasons: style.reasons || 'Recommended based on your style',
-                            img: style.img || ''
-                        }));
-                        
-                        return formattedHairstyles;
-                    } finally {
-                        // Release the semaphore lock
-                        release();
+                        })
+                    });
+    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
                     }
+    
+                    const responseData = await response.json();
+                    console.log('发型推荐原始响应:', responseData);
+    
+                    // 更新到发型生成阶段
+                    updateProgress('HAIRSTYLE_GENERATION');
+    
+                    // 处理响应数据
+                    let hairstyles = [];
+                    if (responseData.code === 0 && responseData.data) {
+                        const parsedData = typeof responseData.data === 'string' 
+                            ? JSON.parse(responseData.data) 
+                            : responseData.data;
+                    
+                        if (Array.isArray(parsedData)) {
+                            hairstyles = parsedData;
+                        } else if (parsedData.output && Array.isArray(parsedData.output)) {
+                            hairstyles = parsedData.output;
+                        } else if (parsedData.hairstyles && Array.isArray(parsedData.hairstyles)) {
+                            hairstyles = parsedData.hairstyles;
+                        }
+                    }
+                    
+                    // 格式化发型数据
+                    const formattedHairstyles = hairstyles.map(style => ({
+                        hairstyle: typeof style === 'string' ? style : style.hairstyle || '推荐发型',
+                        reasons: style.reasons || '根据您的风格特点推荐此发型',
+                        img: style.img || ''
+                    }));
+                    
+                    return formattedHairstyles;
                 } catch (error) {
-                    console.error('Failed to get hairstyle recommendation:', error);
+                    console.error('获取发型推荐失败:', error);
                     throw error;
                 } finally {
                     setLoading(false);
@@ -494,31 +496,9 @@ function App() {
             };
             
             // 并行获取两种搭配的发型推荐
-            const processHairstyleRecommendations = async (images: string[]): Promise<HairStyle[][]> => {
-                const batchSize = 2; // 每批次最多2个请求
-                const results: HairStyle[][] = [];
-    
-                for (let i = 0; i < images.length; i += batchSize) {
-                    const batch = images.slice(i, i + batchSize);
-                    try {
-                        const batchResults = await Promise.all(
-                            batch.map(image => handleHairstyleRecommendation(image))
-                        );
-                        results.push(...batchResults);
-                    } catch (error) {
-                        console.error('批处理请求失败:', error);
-                        // 如果某个批次失败，返回空数组
-                        results.push([]);
-                    }
-                }
-    
-                return results;
-            };
-    
-            // 在 handleSubmit 中调用
-            const [customHairstyles, generatedHairstyles] = await processHairstyleRecommendations([
-                data.custom.tryOnUrl,
-                data.generated.tryOnUrl
+            const [customHairstyles, generatedHairstyles] = await Promise.all([
+                handleHairstyleRecommendation(data.custom.tryOnUrl),
+                handleHairstyleRecommendation(data.generated.tryOnUrl)
             ]);
 
             console.log('自选搭配发型:', customHairstyles); // 添加日志
