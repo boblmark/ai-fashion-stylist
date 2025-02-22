@@ -307,7 +307,7 @@ function App() {
                 }
             }
         }
-        throw new Error(`Failed after ${retries} retries`);
+        throw new Error(`Failed after ${retries} retries`);  // 删除分号
     };  // 修复：删除多余分号，添加闭合括号
 
     const handleSubmit = async (event: React.FormEvent) => {
