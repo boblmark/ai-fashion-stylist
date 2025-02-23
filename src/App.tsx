@@ -494,37 +494,79 @@ function App() {
                     setLoading(false);
                 }
             };
-            
-            // 并行获取两种搭配的发型推荐
-            const [customHairstyles, generatedHairstyles] = await Promise.all([
-                handleHairstyleRecommendation(data.custom.tryOnUrl),
-                handleHairstyleRecommendation(data.generated.tryOnUrl)
-            ]);
-
-            console.log('自选搭配发型:', customHairstyles); // 添加日志
-            console.log('AI推荐搭配发型:', generatedHairstyles); // 添加日志
-
-            // 修改数据设置逻辑
-            const processedCustomHairstyles = Array.isArray(customHairstyles) ? customHairstyles.map(style => ({
-                hairstyle: style.hairstyle || '推荐发型',
-                reasons: style.reasons || '适合您的个人风格',
-                img: style.img || ''
-            })).filter(style => style.img) : [];  // 确保只保留有图片的发型
-
-            const processedGeneratedHairstyles = Array.isArray(generatedHairstyles) ? generatedHairstyles.map(style => ({
-                hairstyle: style.hairstyle || '推荐发型',
-                reasons: style.reasons || '符合AI推荐的整体造型',
-                img: style.img || ''
-            })).filter(style => style.img) : [];  // 确保只保留有图片的发型
-
-            console.log('最终处理后的自选搭配发型:', processedCustomHairstyles);
-            console.log('最终处理后的AI推荐发型:', processedGeneratedHairstyles);
-
-            setHairstyles({
-                custom: processedCustomHairstyles,
-                generated: processedGeneratedHairstyles
-            });
-
+            const executeRequest = async (task: () => Promise<any>, signal?: AbortSignal) => {
+                if (activeRequests >= MAX_CONCURRENT_REQUESTS) {
+                    return new Promise((resolve, reject) => {
+                        const wrappedTask = async () => {
+                            try {
+                                const result = await task();
+                                resolve(result);
+                            } catch (error) {
+                                reject(error);
+                            } finally {
+                                activeRequests--;
+                                processQueue();
+                            }
+                        };
+                        requestQueue.push(wrappedTask);
+                    });
+                }
+    
+                activeRequests++;
+                try {
+                    const result = await task();
+                    return result;
+                } catch (error) {
+                    throw error;
+                } finally {
+                    activeRequests--;
+                    processQueue();
+                }
+            };
+    
+            // 在 handleHairstyleRecommendation 中使用 AbortController
+            const handleHairstyleRecommendation = async (image, signal?: AbortSignal) => {
+                try {
+                    const response = await fetch('https://api.coze.cn/v1/workflow/run', {
+                        method: 'POST',
+                        headers: { /* ... */ },
+                        body: JSON.stringify({ /* ... */ }),
+                        signal // 传递 AbortSignal
+                    });
+                    // ... 处理响应
+                } catch (error) {
+            if (error.name === 'AbortError') {
+                console.log('Request was aborted');
+            } else {
+                console.error('发型推荐请求失败:', error);
+                throw error;
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+    
+    // 在组件卸载时取消所有请求
+    useEffect(() => {
+        return () => {
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+        };
+    }, []);
+    const PROGRESS_STAGES = {
+        UPLOAD: { percent: 10, en: 'Uploading files...', zh: '正在上传文件...' },
+        ANALYSIS: { percent: 20, en: 'Analyzing...', zh: '正在分析...' },
+        GENERATE_TOP: { percent: 35, en: 'Generating top...', zh: '正在生成上衣...' },
+        GENERATE_BOTTOM: { percent: 50, en: 'Generating bottom...', zh: '正在生成下装...' },
+        TRYON_CUSTOM: { percent: 65, en: 'Trying on custom outfit...', zh: '正在试穿自选搭配...' },
+        TRYON_GENERATED: { percent: 80, en: 'Trying on AI-generated outfit...', zh: '正在试穿AI推荐搭配...' },
+        COMMENTARY: { percent: 90, en: 'Generating commentary...', zh: '正在生成点评...' },
+        HAIRSTYLE: { percent: 95, en: 'Generating hairstyle recommendations...', zh: '正在生成发型推荐...' },
+        HAIRSTYLE_GENERATION: { percent: 97, en: 'Generating hairstyles...', zh: '正在生成发型...' }, // 添加此行
+        COMPLETE: { percent: 100, en: 'Complete!', zh: '完成！' }
+            };
+    
     return (
         <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-orange-100 via-gray-50 to-teal-50 relative">
             {renderLanguageSwitch()}
@@ -743,115 +785,3 @@ function App() {
 
 export default App;
 
-const executeRequest = async (task: () => Promise<any>, signal?: AbortSignal) => {
-    if (activeRequests >= MAX_CONCURRENT_REQUESTS) {
-        return new Promise((resolve, reject) => {
-            const wrappedTask = async () => {
-                try {
-                    const result = await task();
-                    resolve(result);
-                } catch (error) {
-                    reject(error);
-                } finally {
-                    activeRequests--;
-                    processQueue();
-                }
-            };
-            requestQueue.push(wrappedTask);
-        });
-    }
-
-    activeRequests++;
-    try {
-        const result = await task();
-        return result;
-    } catch (error) {
-        throw error;
-    } finally {
-        activeRequests--;
-        processQueue();
-    }
-};
-
-// 在 handleHairstyleRecommendation 中使用 AbortController
-const handleHairstyleRecommendation = async (image: string) => {
-    const abortController = new AbortController();
-    try {
-        const response = await fetch('https://api.coze.cn/v1/workflow/run', {
-            method: 'POST',
-            headers: { /* ... */ },
-            body: JSON.stringify({ /* ... */ }),
-            signal: abortController.signal
-        });
-        const executeRequest = async (task: () => Promise<any>, signal?: AbortSignal) => {
-            if (activeRequests >= MAX_CONCURRENT_REQUESTS) {
-                return new Promise((resolve, reject) => {
-                    const wrappedTask = async () => {
-                        try {
-                            const result = await task();
-                            resolve(result);
-                        } catch (error) {
-                            reject(error);
-                        } finally {
-                            activeRequests--;
-                            processQueue();
-                        }
-                    };
-                    requestQueue.push(wrappedTask);
-                });
-            }
-
-            activeRequests++;
-            try {
-                const result = await task();
-                return result;
-            } catch (error) {
-                throw error;
-            } finally {
-                activeRequests--;
-                processQueue();
-            }
-        };
-
-        // 在 handleHairstyleRecommendation 中使用 AbortController
-        const handleHairstyleRecommendation = async (image, signal?: AbortSignal) => {
-            try {
-                const response = await fetch('https://api.coze.cn/v1/workflow/run', {
-                    method: 'POST',
-                    headers: { /* ... */ },
-                    body: JSON.stringify({ /* ... */ }),
-                    signal // 传递 AbortSignal
-                });
-                // ... 处理响应
-            } catch (error) {
-        if (error.name === 'AbortError') {
-            console.log('Request was aborted');
-        } else {
-            console.error('发型推荐请求失败:', error);
-            throw error;
-        }
-    } finally {
-        setLoading(false);
-    }
-};
-
-// 在组件卸载时取消所有请求
-useEffect(() => {
-    return () => {
-        if (abortControllerRef.current) {
-            abortControllerRef.current.abort();
-        }
-    };
-}, []);
-const PROGRESS_STAGES = {
-    UPLOAD: { percent: 10, en: 'Uploading files...', zh: '正在上传文件...' },
-    ANALYSIS: { percent: 20, en: 'Analyzing...', zh: '正在分析...' },
-    GENERATE_TOP: { percent: 35, en: 'Generating top...', zh: '正在生成上衣...' },
-    GENERATE_BOTTOM: { percent: 50, en: 'Generating bottom...', zh: '正在生成下装...' },
-    TRYON_CUSTOM: { percent: 65, en: 'Trying on custom outfit...', zh: '正在试穿自选搭配...' },
-    TRYON_GENERATED: { percent: 80, en: 'Trying on AI-generated outfit...', zh: '正在试穿AI推荐搭配...' },
-    COMMENTARY: { percent: 90, en: 'Generating commentary...', zh: '正在生成点评...' },
-    HAIRSTYLE: { percent: 95, en: 'Generating hairstyle recommendations...', zh: '正在生成发型推荐...' },
-    HAIRSTYLE_GENERATION: { percent: 97, en: 'Generating hairstyles...', zh: '正在生成发型...' }, // 添加此行
-    COMPLETE: { percent: 100, en: 'Complete!', zh: '完成！' }
-        };
