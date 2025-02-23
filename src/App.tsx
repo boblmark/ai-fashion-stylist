@@ -363,137 +363,65 @@ function App() {
         setLoading(true);
         updateProgress('UPLOAD');
 
-        try {
-            const formDataToSend = new FormData();
-            formDataToSend.append('person_photo', personPhoto.file);
-            formDataToSend.append('custom_top_garment', topGarment.file);
-            formDataToSend.append('custom_bottom_garment', bottomGarment.file);
-    
-            console.log('表单数据:', {
-                height: formData.height,
-                weight: formData.weight,
-                bust: formData.bust,
-                waist: formData.waist,
-                hips: formData.hips,
-                style_preference: formData.style_preference
-            }); // 添加日志
-    
-            Object.entries(formData).forEach(([key, value]) => {
-                if (!value) {
-                    console.log('缺少必要的表单字段:', key); // 添加日志
-                    throw new Error('All measurements are required');
-                }
-                formDataToSend.append(key, value);
-            });
-    
-            const apiUrl = import.meta.env.VITE_API_URL || '';
-            const baseUrl = apiUrl || window.location.origin;
-            const fullUrl = `${baseUrl}/api/generate-clothing`;
-    
-            console.log('发送请求到:', fullUrl); // 添加日志
-            console.log('请求配置:', {
-                method: 'POST',
-                credentials: 'include',
-                mode: 'cors'
-            }); // 添加日志
-    
-            const response = await fetch(fullUrl, {
-                method: 'POST',
-                body: formDataToSend,
-                signal: abortControllerRef.current.signal,
-                credentials: 'include',
-                mode: 'cors'
-            });
-    
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ error: 'Failed to parse error response' }));
-                throw new Error(errorData.error || `Server error: ${response.status}`);
-            }
-
-            const data = await response.json();
-            console.log('Received response:', data);
-
-            const stages: ProgressStage[] = [
-                'UPLOAD',
-                'ANALYSIS',
-                'GENERATE_TOP',
-                'GENERATE_BOTTOM',
-                'TRYON_CUSTOM',
-                'TRYON_GENERATED',
-                'COMMENTARY',
-                'HAIRSTYLE',
-                'COMPLETE'
-            ];
-
-            for (const stage of stages) {
-                if (abortControllerRef.current?.signal.aborted) {
-                    throw new Error('Request cancelled');
-                }
-                updateProgress(stage);
-                await new Promise(resolve => setTimeout(resolve, 500));
-            }
-
-            setResult(data);
-
-            // 直接使用生成的换衣效果图片URL进行虚拟换发
-            const executeRequest = async (task: () => Promise<any>) => {
-                console.log('当前活跃请求数:', activeRequests);
-                console.log('等待队列长度:', requestQueue.length);
-                const handleHairstyleRecommendation = async (image: string) => {
-                    console.log('开始发型推荐请求，图片URL:', image);
-                    return executeRequest(async () => {
-                        try {
-                            // 验证图片URL
-                            if (!image || !image.startsWith('http')) {
-                                throw new Error('无效的图片URL');
-                            }
-                            const apiUrl = import.meta.env.VITE_API_URL || '';
-                            const baseUrl = apiUrl || window.location.origin;
-                            // 强制使用HTTPS并去除可能的尾部斜杠
-                            const fullUrl = `${baseUrl.replace(/^http:/, 'https:').replace(/\/$/, '')}/api/generate-hairstyle`;
-                            
-                            console.log('发送发型推荐请求到:', fullUrl);
-                            const controller = new AbortController();
-                            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
-                            const response = await fetch(fullUrl, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify({
-                                    image,
-                                    style: formData.style_preference
-                                }),
-                                credentials: 'include',
-                                mode: 'cors',
-                                signal: controller.signal
-                            });
-                            clearTimeout(timeoutId);
-                            if (!response.ok) {
-                                const errorText = await response.text();
-                                console.error('发型推荐请求失败:', {
-                                    status: response.status,
-                                    statusText: response.statusText,
-                                    errorText
-                                });
-                                throw new Error(`发型推荐请求失败: ${response.status}`);
-                            }
-                            const data = await response.json();
-                            // 验证响应数据结构
-                            if (!Array.isArray(data)) {
-                                throw new Error('无效的响应数据格式');
-                            }
-                            console.log('发型推荐响应数据:', data);
-                            return data;
-                        } catch (error) {
-                            console.error('发型推荐请求异常:', error);
-                            if (error instanceof Error && error.name === 'AbortError') {
-                                throw new Error('请求超时，请稍后重试');
-                            }
-                            throw error;
-                        }
+        const executeRequest = async (task: () => Promise<any>) => {
+            console.log('当前活跃请求数:', activeRequests);
+            console.log('等待队列长度:', requestQueue.length);
+            // 这里可以添加 executeRequest 函数的具体实现逻辑
+            return task(); // 示例返回执行任务的结果
+        };
+        const handleHairstyleRecommendation = async (image: string) => {
+            console.log('开始发型推荐请求，图片URL:', image);
+            return executeRequest(async () => {
+                try {
+                    // 验证图片URL
+                    if (!image || !image.startsWith('http')) {
+                        throw new Error('无效的图片URL');
+                    }
+                    const apiUrl = import.meta.env.VITE_API_URL || '';
+                    const baseUrl = apiUrl || window.location.origin;
+                    // 强制使用HTTPS并去除可能的尾部斜杠
+                    const fullUrl = `${baseUrl.replace(/^http:/, 'https:').replace(/\/$/, '')}/api/generate-hairstyle`;
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
+                    const response = await fetch(fullUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            image,
+                            style: formData.style_preference
+                        }),
+                        credentials: 'include',
+                        mode: 'cors',
+                        signal: controller.signal
                     });
-                };
+                    clearTimeout(timeoutId);
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error('发型推荐请求失败:', {
+                            status: response.status,
+                            statusText: response.statusText,
+                            errorText
+                        });
+                        throw new Error(`发型推荐请求失败: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    // 验证响应数据结构
+                    if (!Array.isArray(data)) {
+                        throw new Error('无效的响应数据格式');
+                    }
+                    console.log('发型推荐响应数据:', data);
+                    return data;
+                } catch (error) {
+                    console.error('发型推荐请求异常:', error);
+                    if (error instanceof Error && error.name === 'AbortError') {
+                        throw new Error('请求超时，请稍后重试');
+                    }
+                    throw error;
+                }
+            });
+        };
     } catch (error) {
         if (error instanceof Error) {
             if (error.name === 'AbortError') {
