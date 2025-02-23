@@ -1,45 +1,115 @@
 
 
 import React, { useState, useCallback, useRef } from 'react';
-import { 
-    Upload, 
-    Camera, 
-    Sparkles, 
-    Star, 
-    Palette, 
-    TrendingUp, 
-    ThumbsUp, 
-    Scale, 
-    Scissors, 
-    Brain, 
-    Wand, 
+import {
+    Upload,
+    Camera,
+    Sparkles,
+    Star,
+    Palette,
+    TrendingUp,
+    ThumbsUp,
+    Scale,
+    Scissors,
+    Brain,
+    Wand,
     Crown,
     Check,
-    Info 
+    Info
 } from 'lucide-react';
 import FashionBackground from './components/FashionBackground';
 
-// 补充类型定义
-type ProgressStage = 'UPLOAD' | 'ANALYSIS' | 'GENERATE_TOP' | 'GENERATE_BOTTOM' | 'TRYON_CUSTOM' | 'TRYON_GENERATED' | 'COMMENTARY' | 'HAIRSTYLE' | 'COMPLETE';
+// ... 类型定义和接口保持不变 ...  
 
-interface Result {
-    custom: {
-        topUrl: string;
-        bottomUrl: string;
-        tryOnUrl: string;
-        commentary: string;
-        score: number;
-    };
-    generated: {
-        topUrl: string;
-        bottomUrl: string;
-        tryOnUrl: string;
-        commentary: string;
-        score: number;
-    };
+const PROGRESS_STAGES = {
+    // ... 保持不变 ...  
+};
+
+// ... 其他常量和变量保持不变 ...  
+
+function App() {
+    // ... 状态定义和其他常量保持不变 ...  
+
+    const handleSubmit = async (event: React.FormEvent) => {
+        event.preventDefault();
+
+        // ... 表单验证和文件上传逻辑保持不变 ...  
+
+        try {
+            // ... 发送请求和处理响应的逻辑保持不变 ...  
+
+            // 并发控制相关的代码移到组件外部  
+            const [customHairstyles, generatedHairstyles] = await Promise.all([
+                handleHairstyleRecommendation(data.custom.tryOnUrl),
+                handleHairstyleRecommendation(data.generated.tryOnUrl)
+            ]);
+
+            // ... 设置发型推荐结果保持不变 ...  
+        } catch (error) {
+            // ... 错误处理保持不变 ...  
+        }
+        import React, { useState, useCallback, useRef } from 'react';
+        import {
+            Upload,
+            Camera,
+            Sparkles,
+            Star,
+            Palette,
+            TrendingUp,
+            ThumbsUp,
+            Scale,
+            Scissors,
+            Brain,
+            Wand,
+            Crown,
+            Check,
+            Info
+        } from 'lucide-react';
+        import FashionBackground from './components/FashionBackground';
+
+        // ... 类型定义和接口保持不变 ...
+
+        const PROGRESS_STAGES = {
+            // ... 保持不变 ...
+        };
+
+        // ... 其他常量和变量保持不变 ...
+
+        function App() {
+            // ... 状态定义和其他常量保持不变 ...
+
+            const handleSubmit = async (event: React.FormEvent) => {
+                event.preventDefault();
+
+                // ... 表单验证和文件上传逻辑保持不变 ...
+
+                try {
+                    // ... 发送请求和处理响应的逻辑保持不变 ...
+
+                    // 并发控制相关的代码移到组件外部
+                    const [customHairstyles, generatedHairstyles] = await Promise.all([
+                        handleHairstyleRecommendation(data.custom.tryOnUrl),
+                        handleHairstyleRecommendation(data.generated.tryOnUrl)
+                    ]);
+
+                    // ... 设置发型推荐结果保持不变 ...
+                } catch (error) {
+                    // ... 错误处理保持不变 ...
+                }
+            };
+
+            // ... 渲染函数和其他辅助函数保持不变 ...
+
+            return (
+        <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-orange-100 via-gray-50 to-teal-50 relative">
+            {/* ... JSX 代码保持不变 ... */}
+        </div>
+    );
 }
 
-interface HairStyles {
+        export default App;
+
+        interface HairStyles {
     custom: Array<{
         hairstyle: string;
         reasons: string;
@@ -434,6 +504,37 @@ function App() {
             setResult(data);
 
             // 直接使用生成的换衣效果图片URL进行虚拟换发
+            // 简单的并发控制
+            const MAX_CONCURRENT_REQUESTS = 4;
+            let activeRequests = 0;
+            const requestQueue: (() => void)[] = [];
+
+            const executeRequest = async (task: () => Promise<any>) => {
+                // 如果当前活跃请求达到上限，加入队列等待
+                if (activeRequests >= MAX_CONCURRENT_REQUESTS) {
+                    return new Promise((resolve) => {
+                        requestQueue.push(() => {
+                            task().then(resolve);
+                        });
+                    });
+                }
+
+                // 否则直接执行
+                activeRequests++;
+                try {
+                    const result = await task();
+                    return result;
+                } finally {
+                    activeRequests--;
+                    // 检查队列中是否有等待的请求
+                    if (requestQueue.length > 0) {
+                        const nextRequest = requestQueue.shift();
+                        nextRequest?.();
+                    }
+                }
+            };
+
+            // 修改发型推荐函数
             const handleHairstyleRecommendation = async (image: string) => {
                 updateProgress('HAIRSTYLE_ANALYSIS');
                 
