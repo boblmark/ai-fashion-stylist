@@ -351,18 +351,18 @@ function App() {
             showError(t.error.upload[language]);
             return;
         }
-
+    
         // Cancel any existing request
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
         }
-
+    
         // Create new AbortController for this request
         abortControllerRef.current = new AbortController();
-
+    
         setLoading(true);
         updateProgress('UPLOAD');
-
+    
         const executeRequest = async (task: () => Promise<any>) => {
             console.log('当前活跃请求数:', activeRequests);
             console.log('等待队列长度:', requestQueue.length);
