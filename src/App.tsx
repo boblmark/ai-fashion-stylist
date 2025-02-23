@@ -1,48 +1,22 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
-import {
-    Upload,
-    Camera,
-    Sparkles,
-    Star,
-    Palette,
-    TrendingUp,
-    ThumbsUp,
-    Scale,
-    Scissors,
-    Brain,
-    Wand,
+
+import React, { useState, useCallback, useRef } from 'react';
+import { 
+    Upload, 
+    Camera, 
+    Sparkles, 
+    Star, 
+    Palette, 
+    TrendingUp, 
+    ThumbsUp, 
+    Scale, 
+    Scissors, 
+    Brain, 
+    Wand, 
     Crown,
     Check,
-    Info
+    Info 
 } from 'lucide-react';
 import FashionBackground from './components/FashionBackground';
-
-// 添加全局变量和工具函数，用于并发控制
-const MAX_CONCURRENT_REQUESTS = 4;
-let activeRequests = 0;
-const requestQueue: (() => void)[] = [];
-
-const executeRequest = async (task: () => Promise<any>) => {
-    if (activeRequests >= MAX_CONCURRENT_REQUESTS) {
-        return new Promise((resolve) => {
-            requestQueue.push(() => {
-                task().then(resolve).catch(resolve);
-            });
-        });
-    }
-
-    activeRequests++;
-    try {
-        const result = await task();
-        return result;
-    } finally {
-        activeRequests--;
-        if (requestQueue.length > 0) {
-            const nextRequest = requestQueue.shift();
-            nextRequest?.();
-        }
-    }
-};
 
 // 补充类型定义
 type ProgressStage = 'UPLOAD' | 'ANALYSIS' | 'GENERATE_TOP' | 'GENERATE_BOTTOM' | 'TRYON_CUSTOM' | 'TRYON_GENERATED' | 'COMMENTARY' | 'HAIRSTYLE' | 'COMPLETE';
@@ -77,6 +51,7 @@ interface HairStyles {
     }>;
 }
 
+// 在文件顶部统一类型定义
 interface UploadPreview {
     file: File;
     preview: string;
@@ -147,6 +122,18 @@ const STYLE_PREFERENCES = [
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
+// 在现有的 interface 定义中添加
+interface HairStyle {
+    hairstyle: string;
+    reasons: string;
+    img: string;
+}
+
+interface HairStyles {
+    custom: HairStyle[];
+    generated: HairStyle[];
+}
+
 // 定义 feature 类型
 interface Feature {
     icon: 'Brain' | 'Wand' | 'Scissors' | 'Crown';
@@ -197,13 +184,13 @@ const t = {
         fileSize: { en: 'File size must be less than 5MB', zh: '文件大小必须小于5MB' },
         fileType: { en: 'Only JPG, PNG and WebP images are allowed', zh: '仅支持JPG、PNG和WebP格式的图片' }
     },
-    features: {
+     features: {
         title: { en: 'Why Choose MirrorMuse?', zh: '为什么选择魅影衣橱？' },
         items: [
             {
                 icon: 'Brain',
                 title: { en: 'AI-Powered Style Analysis', zh: 'AI智能风格分析' },
-                desc: {
+                desc: { 
                     en: 'Advanced algorithms analyze your body features and personal style',
                     zh: '先进算法分析身材特征与个人风格'
                 }
@@ -239,19 +226,25 @@ const t = {
 const FEATURES: Feature[] = t.features.items;
 
 const lucideIcons = {
-    Upload,
-    Camera,
-    Sparkles,
-    Star,
-    Palette,
-    TrendingUp,
-    ThumbsUp,
-    Scale,
-    Scissors,
-    Brain,
-    Wand,
-    Crown
+  Upload,
+  Camera,
+  Sparkles,
+  Star,
+  Palette,
+  TrendingUp,
+  ThumbsUp,
+  Scale,
+  Scissors,
+  Brain,
+  Wand,
+  Crown
 };
+// ... existing code ...
+
+// 在组件外部定义并发控制相关的变量
+const MAX_CONCURRENT_REQUESTS = 4;
+let activeRequests = 0;
+const requestQueue: (() => void)[] = [];
 
 function App() {
     const [personPhoto, setPersonPhoto] = useState<UploadPreview | null>(null);
@@ -351,12 +344,12 @@ function App() {
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
         console.log('表单提交开始');
-
+    
         if (!personPhoto?.file || !topGarment?.file || !bottomGarment?.file) {
-            console.log('缺少必要的图片文件:', {
-                personPhoto: !!personPhoto,
-                topGarment: !!topGarment,
-                bottomGarment: !!bottomGarment
+            console.log('缺少必要的图片文件:', { 
+                personPhoto: !!personPhoto, 
+                topGarment: !!topGarment, 
+                bottomGarment: !!bottomGarment 
             }); // 添加日志
             showError(t.error.upload[language]);
             return;
@@ -378,7 +371,7 @@ function App() {
             formDataToSend.append('person_photo', personPhoto.file);
             formDataToSend.append('custom_top_garment', topGarment.file);
             formDataToSend.append('custom_bottom_garment', bottomGarment.file);
-
+    
             console.log('表单数据:', {
                 height: formData.height,
                 weight: formData.weight,
@@ -387,7 +380,7 @@ function App() {
                 hips: formData.hips,
                 style_preference: formData.style_preference
             }); // 添加日志
-
+    
             Object.entries(formData).forEach(([key, value]) => {
                 if (!value) {
                     console.log('缺少必要的表单字段:', key); // 添加日志
@@ -395,223 +388,18 @@ function App() {
                 }
                 formDataToSend.append(key, value);
             });
-
+    
             const apiUrl = import.meta.env.VITE_API_URL || '';
             const baseUrl = apiUrl || window.location.origin;
             const fullUrl = `${baseUrl}/api/generate-clothing`;
-
-            console.log('发送请求到:', fullUrl); // 添加日志
-
-            const response = await fetch(fullUrl, {
-                method: 'POST',
-                body: formDataToSend,
-                signal: abortControllerRef.current.signal,
-                credentials: 'include',
-                mode: 'cors'
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ error: 'Failed to parse error response' }));
-                throw new Error(errorData.error || `Server error: ${response.status}`);
-            }
-
-            const data = await response.json();
-            console.log('Received response:', data);
-
-            const stages: ProgressStage[] = [
-                'UPLOAD',
-                'ANALYSIS',
-                'GENERATE_TOP',
-                'GENERATE_BOTTOM',
-                'TRYON_CUSTOM',
-                'TRYON_GENERATED',
-                'COMMENTARY',
-                'HAIRSTYLE',
-                'COMPLETE'
-            ];
-
-            for (const stage of stages) {
-                if (abortControllerRef.current?.signal.aborted) {
-                    throw new Error('Request cancelled');
-                }
-                updateProgress(stage);
-                await new Promise(resolve => setTimeout(resolve, 500));
-            }
-
-            setResult(data);
-
-            // 使用 executeRequest 包裹发型推荐请求
-            const handleHairstyleRecommendation = async (image: string) => {
-                return executeRequest(async () => {
-                    try {
-                        const response = await fetch('https://api.coze.cn/v1/workflow/run', {
-                            method: 'POST',
-                            headers: {
-                                'Authorization': 'Bearer pat_XCdzRC2c6K7oMcc2xVJv37KYJR311nrU8uUCPbdnAPlWKaDY9TikL2W8nnkW9cbY',
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                workflow_id: '7472218638747467817',
-                                parameters: {
-                                    input_image: image
-                                }
-                            })
-                        });
-
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-
-                        const data = await response.json();
-                        return data;
-                    } catch (error) {
-                        console.error('发型推荐请求失败:', error);
-                        throw error;
-                    }
-                });
-            };
-
-            // 自选搭配推荐
-            if (result.custom.tryOnUrl) {
-                try {
-                    const customHairstyles = await handleHairstyleRecommendation(result.custom.tryOnUrl);
-                    setHairstyles(prev => ({
-                        ...prev,
-                        custom: customHairstyles ?? []
-                    }));
-                } catch (error) {
-                    console.error('自选搭配发型推荐失败:', error);
-                }
-            }
-
-            // AI 推荐搭配
-            if (result.generated.tryOnUrl) {
-                try {
-                    const generatedHairstyles = await handleHairstyleRecommendation(result.generated.tryOnUrl);
-                    setHairstyles(prev => ({
-                        ...prev,
-                        generated: generatedHairstyles ?? []
-                    }));
-                } catch (error) {
-                    console.error('AI 推荐搭配发型推荐失败:', error);
-                }
-            }
-
-            setLoading(false);
-        } catch (error) {
-            console.error('请求失败:', error);
-            setLoading(false);
-        }
-    };
-    return false;
-    const validateFile = useCallback((file: File): boolean => {
-        if (file.size > MAX_FILE_SIZE) {
-            showError(t.error.fileSize[language]);
-            return false;
-        }
-        if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-            showError(t.error.fileType[language]);
-            return false;
-        }
-        return true;
-    }, [language, showError]);
     
-    const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>, setPreview: (preview: UploadPreview | null) => void) => {
-        try {
-            const file = event.target.files?.[0];
-            if (file) {
-                if (!validateFile(file)) {
-                    event.target.value = '';
-                    return;
-                }
-    
-                setPreview(prev => {
-                    if (prev?.preview) {
-                        URL.revokeObjectURL(prev.preview);
-                    }
-                    return null;
-                });
-    
-                const preview: UploadPreview = {
-                    file,
-                    preview: URL.createObjectURL(file)
-                };
-                setPreview(preview);
-            }
-        } catch (err) {
-            console.error('File upload error:', err);
-            showError(language === 'en' ? 'Failed to upload file' : '文件上传失败');
-            event.target.value = '';
-        }
-    }, [language, validateFile, showError]);
-    
-    const handleInputChange = useCallback((event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        const { name, value } = event.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
-    }, []);
-    
-    const handleSubmit = async (event: React.FormEvent) => {
-        event.preventDefault();
-        console.log('表单提交开始');
-
-        if (!personPhoto?.file || !topGarment?.file || !bottomGarment?.file) {
-            console.log('缺少必要的图片文件:', {
-                personPhoto: !!personPhoto,
-                topGarment: !!topGarment,
-                bottomGarment: !!bottomGarment
-            }); // 添加日志
-            showError(t.error.upload[language]);
-            return;
-        }
-
-        // Cancel any existing request
-        if (abortControllerRef.current) {
-            abortControllerRef.current.abort();
-        }
-
-        // Create new AbortController for this request
-        abortControllerRef.current = new AbortController();
-
-        setLoading(true);
-        updateProgress('UPLOAD');
-
-        try {
-            const formDataToSend = new FormData();
-            formDataToSend.append('person_photo', personPhoto.file);
-            formDataToSend.append('custom_top_garment', topGarment.file);
-            formDataToSend.append('custom_bottom_garment', bottomGarment.file);
-
-            console.log('表单数据:', {
-                height: formData.height,
-                weight: formData.weight,
-                bust: formData.bust,
-                waist: formData.waist,
-                hips: formData.hips,
-                style_preference: formData.style_preference
-            }); // 添加日志
-
-            Object.entries(formData).forEach(([key, value]) => {
-                if (!value) {
-                    console.log('缺少必要的表单字段:', key); // 添加日志
-                    throw new Error('All measurements are required');
-                }
-                formDataToSend.append(key, value);
-            });
-
-            const apiUrl = import.meta.env.VITE_API_URL || '';
-            const baseUrl = apiUrl || window.location.origin;
-            const fullUrl = `${baseUrl}/api/generate-clothing`;
-
             console.log('发送请求到:', fullUrl); // 添加日志
             console.log('请求配置:', {
                 method: 'POST',
                 credentials: 'include',
                 mode: 'cors'
             }); // 添加日志
-
+    
             const response = await fetch(fullUrl, {
                 method: 'POST',
                 body: formDataToSend,
@@ -619,7 +407,7 @@ function App() {
                 credentials: 'include',
                 mode: 'cors'
             });
-
+    
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({ error: 'Failed to parse error response' }));
                 throw new Error(errorData.error || `Server error: ${response.status}`);
@@ -653,7 +441,7 @@ function App() {
             // 直接使用生成的换衣效果图片URL进行虚拟换发
             const handleHairstyleRecommendation = async (image: string) => {
                 updateProgress('HAIRSTYLE_ANALYSIS');
-
+                
                 try {
                     // 发送发型分析请求
                     const response = await fetch('https://api.coze.cn/v1/workflow/run', {
@@ -669,24 +457,24 @@ function App() {
                             }
                         })
                     });
-
+    
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
-
+    
                     const responseData = await response.json();
                     console.log('发型推荐原始响应:', responseData);
-
+    
                     // 更新到发型生成阶段
                     updateProgress('HAIRSTYLE_GENERATION');
-
+    
                     // 处理响应数据
                     let hairstyles = [];
                     if (responseData.code === 0 && responseData.data) {
-                        const parsedData = typeof responseData.data === 'string'
-                            ? JSON.parse(responseData.data)
+                        const parsedData = typeof responseData.data === 'string' 
+                            ? JSON.parse(responseData.data) 
                             : responseData.data;
-
+                    
                         if (Array.isArray(parsedData)) {
                             hairstyles = parsedData;
                         } else if (parsedData.output && Array.isArray(parsedData.output)) {
@@ -695,14 +483,14 @@ function App() {
                             hairstyles = parsedData.hairstyles;
                         }
                     }
-
+                    
                     // 格式化发型数据
                     const formattedHairstyles = hairstyles.map(style => ({
                         hairstyle: typeof style === 'string' ? style : style.hairstyle || '推荐发型',
                         reasons: style.reasons || '根据您的风格特点推荐此发型',
                         img: style.img || ''
                     }));
-
+                    
                     return formattedHairstyles;
                 } catch (error) {
                     console.error('获取发型推荐失败:', error);
@@ -711,7 +499,7 @@ function App() {
                     setLoading(false);
                 }
             };
-
+            
             // 并行获取两种搭配的发型推荐
             const [customHairstyles, generatedHairstyles] = await Promise.all([
                 handleHairstyleRecommendation(data.custom.tryOnUrl),
@@ -741,6 +529,8 @@ function App() {
                 custom: processedCustomHairstyles,
                 generated: processedGeneratedHairstyles
             });
+
+
 
 
 
@@ -791,7 +581,7 @@ function App() {
 
     const renderGeneratedHairstyles = useCallback(() => {
         console.log('Generated hairstyles:', hairstyles.generated);
-
+        
         if (hairstyles.generated.length === 0) {
             return <p>{language === 'en' ? 'No hairstyle recommendations found for AI-generated outfit.' : '没有找到适合 AI 搭配的发型推荐。'}</p>;
         }
@@ -890,10 +680,11 @@ function App() {
                                         {[1, 2, 3, 4, 5].map((star) => (
                                             <Star
                                                 key={star}
-                                                className={`w-5 h-5 ${star <= outfit.score / 2
+                                                className={`w-5 h-5 ${
+                                                    star <= outfit.score / 2
                                                         ? 'text-yellow-400 fill-yellow-400 animate-pulse'
                                                         : 'text-gray-400/50 fill-gray-400/50'
-                                                    }`}
+                                                }`}
                                             />
                                         ))}
                                     </div>
@@ -990,7 +781,7 @@ function App() {
                 <div className="absolute inset-0 bg-[url('/bg-pattern.svg')] opacity-5 animate-slide"></div>
                 <div className="absolute -inset-[100%] bg-gradient-conic from-orange-500/30 via-teal-500/30 to-orange-500/30 animate-spin-slow blur-3xl"></div>
             </div>
-
+            
             {renderProgressBar()}
             <div className="max-w-5xl mx-auto relative z-10">
                 <div className="relative backdrop-blur-sm bg-white/80 rounded-3xl shadow-2xl overflow-hidden border border-white/20">
@@ -1015,7 +806,7 @@ function App() {
                                 <div className="absolute -inset-1 bg-gradient-to-r from-orange-600 via-purple-500 to-teal-600 rounded-lg blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200 animate-gradient-xy"></div>
                                 <p className="relative px-7 py-4 bg-black bg-opacity-80 rounded-lg leading-none">
                                     <span className="text-lg bg-gradient-to-r from-orange-400 via-pink-500 to-teal-400 bg-clip-text text-transparent font-medium animate-pulse">
-                                        {language === 'en'
+                                        {language === 'en' 
                                             ? 'Where Style Meets Innovation'
                                             : '魅影随行，演绎时尚'}
                                     </span>
@@ -1146,10 +937,11 @@ function App() {
                                     <button
                                         type="submit"
                                         disabled={loading}
-                                        className={`w-full flex items-center justify-center py-3 px-4 rounded-lg text-sm font-semibold text-white transition-all duration-200 ${loading
+                                        className={`w-full flex items-center justify-center py-3 px-4 rounded-lg text-sm font-semibold text-white transition-all duration-200 ${
+                                            loading
                                                 ? 'bg-gray-400 cursor-not-allowed'
                                                 : 'bg-gradient-to-r from-orange-600 to-teal-600 hover:from-orange-500 hover:to-teal-500 transform hover:scale-[1.02]'
-                                            }`}
+                                        }`}
                                     >
                                         <Sparkles className={`w-5 h-5 mr-2 ${loading ? 'animate-spin' : 'animate-pulse'}`} />
                                         {loading ? t.button.generating[language] : t.button.generate[language]}
