@@ -528,6 +528,9 @@ function App() {
 
 
 
+
+
+
         } catch (error) {
             if (error instanceof Error) {
                 if (error.name === 'AbortError') {
@@ -1056,7 +1059,7 @@ const handleHairstyleRecommendation = async (image: string) => {
         };
 
         // 在 handleHairstyleRecommendation 中使用 AbortController
-        const handleHairstyleRecommendation = async (image: string, signal?: AbortSignal) => {
+        const handleHairstyleRecommendation = async (image, signal?: AbortSignal) => {
             try {
                 const response = await fetch('https://api.coze.cn/v1/workflow/run', {
                     method: 'POST',
@@ -1071,53 +1074,29 @@ const handleHairstyleRecommendation = async (image: string) => {
         } else {
             console.error('发型推荐请求失败:', error);
             throw error;
-            const PROGRESS_STAGES = {
-                UPLOAD: { percent: 10, en: 'Uploading files...', zh: '正在上传文件...' },
-                ANALYSIS: { percent: 20, en: 'Analyzing...', zh: '正在分析...' },
-                GENERATE_TOP: { percent: 35, en: 'Generating top...', zh: '正在生成上衣...' },
-                GENERATE_BOTTOM: { percent: 50, en: 'Generating bottom...', zh: '正在生成下装...' },
-                TRYON_CUSTOM: { percent: 65, en: 'Trying on custom outfit...', zh: '正在试穿自选搭配...' },
-                TRYON_GENERATED: { percent: 80, en: 'Trying on AI-generated outfit...', zh: '正在试穿AI推荐搭配...' },
-                COMMENTARY: { percent: 90, en: 'Generating commentary...', zh: '正在生成点评...' },
-                HAIRSTYLE: { percent: 95, en: 'Generating hairstyle recommendations...', zh: '正在生成发型推荐...' },
-                HAIRSTYLE_GENERATION: { percent: 97, en: 'Generating hairstyles...', zh: '正在生成发型...' }, // 添加此行
-                COMPLETE: { percent: 100, en: 'Complete!', zh: '完成！' }
-                    };
+        }
+    } finally {
+        setLoading(false);
+    }
+};
 
-                    // ... 其他代码 ...
-
-                    const handleHairstyleRecommendation = async (image: string) => {
-                        const abortController = new AbortController();
-                        try {
-                            const response = await fetch('https://api.coze.cn/v1/workflow/run', {
-                                method: 'POST',
-                                headers: { /* ... */ },
-                                body: JSON.stringify({ /* ... */ }),
-                                signal: abortController.signal
-                            });
-
-                            // 处理响应数据
-                            // ... (省略处理逻辑)
-
-                        } catch (error) {
-                            if (error.name === 'AbortError') {
-                                console.log('Request was aborted');
-                            } else {
-                                console.error('发型推荐请求失败:', error);
-                                throw error;
-                            }
-                        } finally {
-                            setLoading(false);
-                        }
-                    };
-
-                    // 在组件卸载时取消所有请求
-                    useEffect(() => {
-                        return () => {
-                            if (abortControllerRef.current) {
-                                abortControllerRef.current.abort();
-                            }
-                        };
-                    }, []);
-
-// ... 其他代码 ...
+// 在组件卸载时取消所有请求
+useEffect(() => {
+    return () => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+    };
+}, []);
+const PROGRESS_STAGES = {
+    UPLOAD: { percent: 10, en: 'Uploading files...', zh: '正在上传文件...' },
+    ANALYSIS: { percent: 20, en: 'Analyzing...', zh: '正在分析...' },
+    GENERATE_TOP: { percent: 35, en: 'Generating top...', zh: '正在生成上衣...' },
+    GENERATE_BOTTOM: { percent: 50, en: 'Generating bottom...', zh: '正在生成下装...' },
+    TRYON_CUSTOM: { percent: 65, en: 'Trying on custom outfit...', zh: '正在试穿自选搭配...' },
+    TRYON_GENERATED: { percent: 80, en: 'Trying on AI-generated outfit...', zh: '正在试穿AI推荐搭配...' },
+    COMMENTARY: { percent: 90, en: 'Generating commentary...', zh: '正在生成点评...' },
+    HAIRSTYLE: { percent: 95, en: 'Generating hairstyle recommendations...', zh: '正在生成发型推荐...' },
+    HAIRSTYLE_GENERATION: { percent: 97, en: 'Generating hairstyles...', zh: '正在生成发型...' }, // 添加此行
+    COMPLETE: { percent: 100, en: 'Complete!', zh: '完成！' }
+        };
