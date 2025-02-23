@@ -504,12 +504,16 @@ function App() {
         }
     };
     return false;
-}
-if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-    showError(t.error.fileType[language]);
-    return false;
-}
-return true;
+const validateFile = useCallback((file: File): boolean => {
+    if (file.size > MAX_FILE_SIZE) {
+        showError(t.error.fileSize[language]);
+        return false;
+    }
+    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+        showError(t.error.fileType[language]);
+        return false;
+    }
+    return true;
 }, [language, showError]);
 
 const handleFileChange = useCallback((
