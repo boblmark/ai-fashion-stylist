@@ -1082,13 +1082,42 @@ const handleHairstyleRecommendation = async (image: string) => {
                 HAIRSTYLE: { percent: 95, en: 'Generating hairstyle recommendations...', zh: '正在生成发型推荐...' },
                 HAIRSTYLE_GENERATION: { percent: 97, en: 'Generating hairstyles...', zh: '正在生成发型...' }, // 添加此行
                 COMPLETE: { percent: 100, en: 'Complete!', zh: '完成！' }
-            };
+                    };
 
-            // 在组件卸载时取消所有请求
-        useEffect(() => {
-            return () => {
-                if (abortControllerRef.current) {
-                    abortControllerRef.current.abort();
-                }
-            };
-        }, []);
+                    // ... 其他代码 ...
+
+                    const handleHairstyleRecommendation = async (image: string) => {
+                        const abortController = new AbortController();
+                        try {
+                            const response = await fetch('https://api.coze.cn/v1/workflow/run', {
+                                method: 'POST',
+                                headers: { /* ... */ },
+                                body: JSON.stringify({ /* ... */ }),
+                                signal: abortController.signal
+                            });
+
+                            // 处理响应数据
+                            // ... (省略处理逻辑)
+
+                        } catch (error) {
+                            if (error.name === 'AbortError') {
+                                console.log('Request was aborted');
+                            } else {
+                                console.error('发型推荐请求失败:', error);
+                                throw error;
+                            }
+                        } finally {
+                            setLoading(false);
+                        }
+                    };
+
+                    // 在组件卸载时取消所有请求
+                    useEffect(() => {
+                        return () => {
+                            if (abortControllerRef.current) {
+                                abortControllerRef.current.abort();
+                            }
+                        };
+                    }, []);
+
+// ... 其他代码 ...
