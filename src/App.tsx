@@ -439,12 +439,11 @@ function App() {
         abortControllerRef.current = null;
     }
 };
-
     const renderCustomHairstyles = useCallback(() => {
         if (hairstyles.custom.length === 0) {
             return <p>{language === 'en' ? 'No hairstyle recommendations found for your selected outfit.' : '没有找到适合自选搭配的发型推荐。'}</p>;
         }
-
+    
         return (
             <div className="grid grid-cols-2 gap-4">
                 {hairstyles.custom.map((style, index) => (
@@ -472,7 +471,7 @@ function App() {
         if (hairstyles.generated.length === 0) {
             return <p>{language === 'en' ? 'No hairstyle recommendations found for AI-generated outfit.' : '没有找到适合 AI 搭配的发型推荐。'}</p>;
         }
-
+    
         return (
             <div className="grid grid-cols-2 gap-4">
                 {hairstyles.generated.map((style, index) => (
