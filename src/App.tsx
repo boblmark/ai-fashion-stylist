@@ -443,7 +443,9 @@ function App() {
                 body: JSON.stringify({
                     workflow_id: '7472218638747467817',
                     parameters: {
-                        input_image: image
+                        input_image: image,
+                        image_type: 'portrait',
+                        style_preference: 'modern'
                     }
                 })
             });
