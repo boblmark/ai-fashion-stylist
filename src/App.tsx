@@ -99,14 +99,17 @@ interface ProgressState {
 }
 
 const PROGRESS_STAGES = {
-    UPLOAD: { percent: 10, en: 'Uploading files...', zh: '正在上传文件...' },
-    ANALYSIS: { percent: 20, en: 'Analyzing...', zh: '正在分析...' },
-    GENERATE_TOP: { percent: 35, en: 'Generating top...', zh: '正在生成上衣...' },
-    GENERATE_BOTTOM: { percent: 50, en: 'Generating bottom...', zh: '正在生成下装...' },
-    TRYON_CUSTOM: { percent: 65, en: 'Trying on custom outfit...', zh: '正在试穿自选搭配...' },
-    TRYON_GENERATED: { percent: 80, en: 'Trying on AI-generated outfit...', zh: '正在试穿AI推荐搭配...' },
-    COMMENTARY: { percent: 90, en: 'Generating commentary...', zh: '正在生成点评...' },
-    HAIRSTYLE: { percent: 95, en: 'Generating hairstyle recommendations...', zh: '正在生成发型推荐...' },
+    UPLOAD: { percent: 5, en: 'Uploading files...', zh: '正在上传文件...' },
+    ANALYSIS: { percent: 15, en: 'Analyzing...', zh: '正在分析图片...' },
+    GENERATE_TOP: { percent: 25, en: 'Generating top...', zh: '正在生成上衣...' },
+    GENERATE_BOTTOM: { percent: 35, en: 'Generating bottom...', zh: '正在生成下装...' },
+    TRYON_CUSTOM: { percent: 45, en: 'Trying on custom outfit...', zh: '正在试穿自选搭配...' },
+    TRYON_GENERATED: { percent: 55, en: 'Trying on AI-generated outfit...', zh: '正在试穿AI推荐搭配...' },
+    COMMENTARY: { percent: 65, en: 'Generating commentary...', zh: '正在生成点评...' },
+    HAIRSTYLE_ANALYSIS: { percent: 75, en: 'Analyzing hairstyle...', zh: '正在分析发型...' },
+    HAIRSTYLE_GENERATION: { percent: 85, en: 'Generating hairstyle recommendations...', zh: '正在生成发型推荐...' },
+    HAIRSTYLE_CUSTOM: { percent: 90, en: 'Applying custom hairstyles...', zh: '正在应用自选发型...' },
+    HAIRSTYLE_GENERATED: { percent: 95, en: 'Applying AI-generated hairstyles...', zh: '正在应用AI推荐发型...' },
     COMPLETE: { percent: 100, en: 'Complete!', zh: '完成！' }
 };
 
@@ -337,214 +340,189 @@ function App() {
     }, []);
 
     const handleSubmit = async (event: React.FormEvent) => {
-        event.preventDefault();
-        console.log('表单提交开始');
-    
-        if (!personPhoto?.file || !topGarment?.file || !bottomGarment?.file) {
-            console.log('缺少必要的图片文件:', { 
-                personPhoto: !!personPhoto, 
-                topGarment: !!topGarment, 
-                bottomGarment: !!bottomGarment 
-            }); // 添加日志
-            showError(t.error.upload[language]);
-            return;
-        }
+    event.preventDefault();
+    console.log('表单提交开始');
 
-        // Cancel any existing request
-        if (abortControllerRef.current) {
-            abortControllerRef.current.abort();
-        }
+    if (!personPhoto?.file || !topGarment?.file || !bottomGarment?.file) {
+        console.log('缺少必要的图片文件:', { 
+            personPhoto: !!personPhoto, 
+            topGarment: !!topGarment, 
+            bottomGarment: !!bottomGarment 
+        });
+        showError(t.error.upload[language]);
+        return;
+    }
 
-        // Create new AbortController for this request
-        abortControllerRef.current = new AbortController();
+    if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+    }
 
-        setLoading(true);
+    abortControllerRef.current = new AbortController();
+
+    setLoading(true);
+    updateProgress('UPLOAD');
+
+    try {
+        const formDataToSend = new FormData();
+        formDataToSend.append('person_photo', personPhoto.file);
+        formDataToSend.append('custom_top_garment', topGarment.file);
+        formDataToSend.append('custom_bottom_garment', bottomGarment.file);
+
+        Object.entries(formData).forEach(([key, value]) => {
+            if (!value) {
+                console.log('缺少必要的表单字段:', key);
+                throw new Error('All measurements are required');
+            }
+            formDataToSend.append(key, value);
+        });
+
+        const apiUrl = import.meta.env.VITE_API_URL || '';
+        const baseUrl = apiUrl || window.location.origin;
+        const fullUrl = `${baseUrl}/api/generate-clothing`;
+
+        // 开始上传文件
         updateProgress('UPLOAD');
+        const response = await fetch(fullUrl, {
+            method: 'POST',
+            body: formDataToSend,
+            signal: abortControllerRef.current.signal,
+            credentials: 'include',
+            mode: 'cors'
+        });
 
-        try {
-            const formDataToSend = new FormData();
-            formDataToSend.append('person_photo', personPhoto.file);
-            formDataToSend.append('custom_top_garment', topGarment.file);
-            formDataToSend.append('custom_bottom_garment', bottomGarment.file);
-    
-            console.log('表单数据:', {
-                height: formData.height,
-                weight: formData.weight,
-                bust: formData.bust,
-                waist: formData.waist,
-                hips: formData.hips,
-                style_preference: formData.style_preference
-            }); // 添加日志
-    
-            Object.entries(formData).forEach(([key, value]) => {
-                if (!value) {
-                    console.log('缺少必要的表单字段:', key); // 添加日志
-                    throw new Error('All measurements are required');
-                }
-                formDataToSend.append(key, value);
-            });
-    
-            const apiUrl = import.meta.env.VITE_API_URL || '';
-            const baseUrl = apiUrl || window.location.origin;
-            const fullUrl = `${baseUrl}/api/generate-clothing`;
-    
-            console.log('发送请求到:', fullUrl); // 添加日志
-            console.log('请求配置:', {
-                method: 'POST',
-                credentials: 'include',
-                mode: 'cors'
-            }); // 添加日志
-    
-            const response = await fetch(fullUrl, {
-                method: 'POST',
-                body: formDataToSend,
-                signal: abortControllerRef.current.signal,
-                credentials: 'include',
-                mode: 'cors'
-            });
-    
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ error: 'Failed to parse error response' }));
-                throw new Error(errorData.error || `Server error: ${response.status}`);
-            }
-
-            const data = await response.json();
-            console.log('Received response:', data);
-
-            const stages: ProgressStage[] = [
-                'UPLOAD',
-                'ANALYSIS',
-                'GENERATE_TOP',
-                'GENERATE_BOTTOM',
-                'TRYON_CUSTOM',
-                'TRYON_GENERATED',
-                'COMMENTARY',
-                'HAIRSTYLE',
-                'COMPLETE'
-            ];
-
-            for (const stage of stages) {
-                if (abortControllerRef.current?.signal.aborted) {
-                    throw new Error('Request cancelled');
-                }
-                updateProgress(stage);
-                await new Promise(resolve => setTimeout(resolve, 500));
-            }
-
-            setResult(data);
-
-            // 直接使用生成的换衣效果图片URL进行虚拟换发
-            const handleHairstyleRecommendation = async (image: string) => {
-                updateProgress('HAIRSTYLE_ANALYSIS');
-                
-                try {
-                    // 发送发型分析请求
-                    const response = await fetch('https://api.coze.cn/v1/workflow/run', {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': 'Bearer pat_XCdzRC2c6K7oMcc2xVJv37KYJR311nrU8uUCPbdnAPlWKaDY9TikL2W8nnkW9cbY',
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            workflow_id: '7472218638747467817',
-                            parameters: {
-                                input_image: image
-                            }
-                        })
-                    });
-    
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-    
-                    const responseData = await response.json();
-                    console.log('发型推荐原始响应:', responseData);
-    
-                    // 更新到发型生成阶段
-                    updateProgress('HAIRSTYLE_GENERATION');
-    
-                    // 处理响应数据
-                    let hairstyles = [];
-                    if (responseData.code === 0 && responseData.data) {
-                        const parsedData = typeof responseData.data === 'string' 
-                            ? JSON.parse(responseData.data) 
-                            : responseData.data;
-                    
-                        if (Array.isArray(parsedData)) {
-                            hairstyles = parsedData;
-                        } else if (parsedData.output && Array.isArray(parsedData.output)) {
-                            hairstyles = parsedData.output;
-                        } else if (parsedData.hairstyles && Array.isArray(parsedData.hairstyles)) {
-                            hairstyles = parsedData.hairstyles;
-                        }
-                    }
-                    
-                    // 格式化发型数据
-                    const formattedHairstyles = hairstyles.map(style => ({
-                        hairstyle: typeof style === 'string' ? style : style.hairstyle || '推荐发型',
-                        reasons: style.reasons || '根据您的风格特点推荐此发型',
-                        img: style.img || ''
-                    }));
-                    
-                    return formattedHairstyles;
-                } catch (error) {
-                    console.error('获取发型推荐失败:', error);
-                    throw error;
-                } finally {
-                    setLoading(false);
-                }
-            };
-            
-            // 并行获取两种搭配的发型推荐
-            const [customHairstyles, generatedHairstyles] = await Promise.all([
-                handleHairstyleRecommendation(data.custom.tryOnUrl),
-                handleHairstyleRecommendation(data.generated.tryOnUrl)
-            ]);
-
-            console.log('自选搭配发型:', customHairstyles); // 添加日志
-            console.log('AI推荐搭配发型:', generatedHairstyles); // 添加日志
-
-            // 修改数据设置逻辑
-            const processedCustomHairstyles = Array.isArray(customHairstyles) ? customHairstyles.map(style => ({
-                hairstyle: style.hairstyle || '推荐发型',
-                reasons: style.reasons || '适合您的个人风格',
-                img: style.img || ''
-            })).filter(style => style.img) : [];  // 确保只保留有图片的发型
-
-            const processedGeneratedHairstyles = Array.isArray(generatedHairstyles) ? generatedHairstyles.map(style => ({
-                hairstyle: style.hairstyle || '推荐发型',
-                reasons: style.reasons || '符合AI推荐的整体造型',
-                img: style.img || ''
-            })).filter(style => style.img) : [];  // 确保只保留有图片的发型
-
-            console.log('最终处理后的自选搭配发型:', processedCustomHairstyles);
-            console.log('最终处理后的AI推荐发型:', processedGeneratedHairstyles);
-
-            setHairstyles({
-                custom: processedCustomHairstyles,
-                generated: processedGeneratedHairstyles
-            });
-
-
-
-
-        } catch (error) {
-            if (error instanceof Error) {
-                if (error.name === 'AbortError') {
-                    console.log('Request cancelled');
-                    return;
-                }
-                console.error('Error:', error);
-                showError(error.message);
-            } else {
-                console.error('Unknown error:', error);
-                showError(t.error.general[language]);
-            }
-        } finally {
-            setLoading(false);
-            abortControllerRef.current = null;
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: 'Failed to parse error response' }));
+            throw new Error(errorData.error || `Server error: ${response.status}`);
         }
-    };
+
+        // 开始分析图片
+        updateProgress('ANALYSIS');
+        const data = await response.json();
+        console.log('Received response:', data);
+
+        // 生成上衣
+        updateProgress('GENERATE_TOP');
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // 生成下装
+        updateProgress('GENERATE_BOTTOM');
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // 开始自选搭配虚拟换衣
+        updateProgress('TRYON_CUSTOM');
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // 开始AI推荐搭配虚拟换衣
+        updateProgress('TRYON_GENERATED');
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // 生成造型点评
+        updateProgress('COMMENTARY');
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        setResult(data);
+
+        // 处理发型推荐
+        const handleHairstyleRecommendation = async (image: string) => {
+    try {
+        // 开始发型分析
+        updateProgress('HAIRSTYLE_ANALYSIS');
+        
+        // 添加重试机制
+        const maxRetries = 3;
+        const delay = 2000; // 2秒延时
+        
+        // 处理单个发型推荐请求
+        const getHairstyleRecommendation = async () => {
+            const response = await fetch('https://api.coze.cn/v1/workflow/run', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer pat_XCdzRC2c6K7oMcc2xVJv37KYJR311nrU8uUCPbdnAPlWKaDY9TikL2W8nnkW9cbY',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    workflow_id: '7472218638747467817',
+                    parameters: {
+                        input_image: image
+                    }
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            return await response.json();
+        };
+
+        // 串行处理两次请求
+        let customHairstyles = [];
+        let generatedHairstyles = [];
+
+        // 第一次请求：自选搭配发型
+        for (let i = 0; i < maxRetries; i++) {
+            try {
+                const responseData = await getHairstyleRecommendation();
+                if (responseData.code === 0 && responseData.data) {
+                    const parsedData = typeof responseData.data === 'string' 
+                        ? JSON.parse(responseData.data) 
+                        : responseData.data;
+                    
+                    customHairstyles = Array.isArray(parsedData) ? parsedData :
+                        Array.isArray(parsedData.output) ? parsedData.output :
+                        Array.isArray(parsedData.hairstyles) ? parsedData.hairstyles : [];
+                    break;
+                }
+            } catch (error) {
+                if (i === maxRetries - 1) throw error;
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
+        }
+
+        // 等待一段时间再进行第二次请求
+        await new Promise(resolve => setTimeout(resolve, delay));
+
+        // 第二次请求：AI推荐搭配发型
+        for (let i = 0; i < maxRetries; i++) {
+            try {
+                const responseData = await getHairstyleRecommendation();
+                if (responseData.code === 0 && responseData.data) {
+                    const parsedData = typeof responseData.data === 'string' 
+                        ? JSON.parse(responseData.data) 
+                        : responseData.data;
+                    
+                    generatedHairstyles = Array.isArray(parsedData) ? parsedData :
+                        Array.isArray(parsedData.output) ? parsedData.output :
+                        Array.isArray(parsedData.hairstyles) ? parsedData.hairstyles : [];
+                    break;
+                }
+            } catch (error) {
+                if (i === maxRetries - 1) throw error;
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
+        }
+
+        // 格式化发型推荐结果
+        const formatHairstyles = (styles) => styles.map(style => ({
+            hairstyle: typeof style === 'string' ? style : style.hairstyle || '推荐发型',
+            reasons: style.reasons || '根据您的面部特征和整体造型推荐',
+            img: style.img || ''
+        }));
+
+        setHairstyles({
+            custom: formatHairstyles(customHairstyles),
+            generated: formatHairstyles(generatedHairstyles)
+        });
+
+        updateProgress('COMPLETE');
+    } catch (error) {
+        console.error('发型推荐失败:', error);
+        setError({
+            message: language === 'en' ? 'Failed to get hairstyle recommendations.' : '获取发型推荐失败。',
+            visible: true
+        });
+    }
+};
 
     const renderCustomHairstyles = useCallback(() => {
         if (hairstyles.custom.length === 0) {
