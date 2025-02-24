@@ -517,10 +517,23 @@ function App() {
         updateProgress('COMPLETE');
     } catch (error) {
         console.error('发型推荐失败:', error);
-        setError({
-            message: language === 'en' ? 'Failed to get hairstyle recommendations.' : '获取发型推荐失败。',
-            visible: true
-        });
+        showError(language === 'en' ? 'Failed to get hairstyle recommendations' : '获取发型推荐失败');
+    } finally {
+        setLoading(false);
+    }
+};
+
+// 调用发型推荐函数
+await handleHairstyleRecommendation(personPhoto.file);
+
+    } catch (error) {
+        console.error('处理失败:', error);
+        showError(language === 'en' ? 'Processing failed' : '处理失败');
+    } finally {
+        setLoading(false);
+        if (abortControllerRef.current) {
+            abortControllerRef.current = null;
+        }
     }
 };
 
